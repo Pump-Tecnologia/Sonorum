@@ -23,9 +23,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // suppressHydrationWarning no <body>: extensões de navegador (ColorZilla,
+  // Grammarly, etc.) injetam atributos antes do React hidratar. Aplica só ao
+  // elemento marcado — mismatches reais dentro da árvore continuam sendo reportados.
   return (
     <html lang="pt-BR" className={`${figtree.variable} h-full`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full" suppressHydrationWarning>{children}</body>
     </html>
   )
 }
