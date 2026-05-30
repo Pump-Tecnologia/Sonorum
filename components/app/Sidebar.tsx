@@ -49,8 +49,16 @@ export function Sidebar({ role, name, schoolName }: SidebarProps) {
       </nav>
 
       <div className="border-t border-hairline p-4">
-        <p className="truncate text-sm font-medium text-ink">{name}</p>
-        <p className="mb-3 text-xs text-ink-muted">{ROLE_LABEL[role]}</p>
+        <Link
+          href="/profile"
+          className={cn(
+            'block truncate rounded-lg px-2 py-1 -mx-2 text-sm font-medium hover:bg-surface-muted',
+            isActive('/profile') ? 'text-brand-700' : 'text-ink',
+          )}
+        >
+          {name}
+        </Link>
+        <p className="mb-3 px-2 -mx-2 text-xs text-ink-muted">{ROLE_LABEL[role]}</p>
         <form action={signOut}>
           <Button type="submit" variant="secondary" className="w-full justify-center text-sm">
             Sair

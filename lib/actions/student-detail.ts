@@ -26,8 +26,10 @@ export async function addGoal(formData: FormData) {
   revalidatePath(`/admin/students/${studentId}`)
 }
 
+// Toggle de meta — admin/teacher gerenciam (RLS staff), aluno pode marcar a SUA própria
+// (policy student_goals_student_update permite isso)
 export async function toggleGoal(formData: FormData) {
-  const me = await requireAdmin()
+  const me = await getCurrentUser()
   if (!me) return
   const goalId = String(formData.get('goalId') ?? '')
   const studentId = String(formData.get('studentId') ?? '')
@@ -36,6 +38,7 @@ export async function toggleGoal(formData: FormData) {
   const supabase = await createClient()
   await supabase.from('student_goals').update({ completed: !completed }).eq('id', goalId)
   revalidatePath(`/admin/students/${studentId}`)
+  revalidatePath('/student')
 }
 
 export async function deleteGoal(formData: FormData) {

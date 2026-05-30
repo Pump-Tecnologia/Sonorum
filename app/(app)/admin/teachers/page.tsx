@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
+import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
@@ -12,6 +13,7 @@ export const metadata = { title: 'Professores' }
 
 type TeacherRow = {
   id: string
+  user_id: string
   status: string
   instruments: string[] | null
   user: { name: string; email: string } | null
@@ -21,7 +23,7 @@ export default async function TeachersPage() {
   const supabase = await createClient()
   const { data } = await supabase
     .from('teachers')
-    .select('id, status, instruments, user:users(name, email)')
+    .select('id, user_id, status, instruments, user:users(name, email)')
     .order('created_at', { ascending: false })
 
   const teachers = (data ?? []) as unknown as TeacherRow[]
@@ -65,7 +67,8 @@ export default async function TeachersPage() {
                 </Badge>
               </Td>
               <Td className="text-right">
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center justify-end gap-3">
+                  <ImpersonateButton targetUserId={t.user_id} />
                   <Link href={`/admin/teachers/${t.id}/edit`}>
                     <Button variant="ghost" className="text-xs px-2 py-1">Editar</Button>
                   </Link>

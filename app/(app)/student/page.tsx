@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/app/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { toggleGoal } from '@/lib/actions/student-detail'
 import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
@@ -114,9 +115,18 @@ export default async function StudentDashboard() {
             <ul className="space-y-2">
               {goals.map((g) => (
                 <li key={g.id} className="flex items-center gap-3 text-sm">
-                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs ${g.completed ? 'border-accent-500 bg-accent-500 text-white' : 'border-hairline'}`}>
-                    {g.completed ? '✓' : ''}
-                  </span>
+                  <form action={toggleGoal}>
+                    <input type="hidden" name="goalId" value={g.id} />
+                    <input type="hidden" name="studentId" value={user!.id} />
+                    <input type="hidden" name="completed" value={String(g.completed)} />
+                    <button
+                      type="submit"
+                      aria-label={g.completed ? 'Marcar como pendente' : 'Concluir meta'}
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs transition-colors ${g.completed ? 'border-accent-500 bg-accent-500 text-white' : 'border-hairline hover:border-brand-400'}`}
+                    >
+                      {g.completed ? '✓' : ''}
+                    </button>
+                  </form>
                   <span className={g.completed ? 'text-ink-muted line-through' : 'text-ink'}>{g.text}</span>
                 </li>
               ))}

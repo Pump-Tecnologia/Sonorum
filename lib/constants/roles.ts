@@ -18,7 +18,7 @@ export const ROLE_HOME: Record<Role, string> = {
 
 // Prefixos de rota que cada papel pode acessar dentro da área autenticada.
 export const ROLE_ALLOWED_PREFIXES: Record<Role, string[]> = {
-  superadmin: ['/superadmin'],
+  superadmin: ['/superadmin', '/profile', '/resources'],
   admin: ['/admin', '/schedule', '/resources', '/financial', '/plans', '/lessons', '/profile', '/upgrade'],
   teacher: ['/teacher', '/schedule', '/resources', '/lessons', '/profile', '/upgrade'],
   student: ['/student', '/profile'],

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
+import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
@@ -49,11 +50,12 @@ export default async function StudentsPage() {
             <Th>Nome</Th>
             <Th>Instrumento</Th>
             <Th>Mensalidade</Th>
-            <Th className="text-right">Status</Th>
+            <Th>Status</Th>
+            <Th className="text-right"></Th>
           </Tr>
         </Thead>
         <tbody>
-          {students.length === 0 && <EmptyRow colSpan={4}>Nenhum aluno cadastrado.</EmptyRow>}
+          {students.length === 0 && <EmptyRow colSpan={5}>Nenhum aluno cadastrado.</EmptyRow>}
           {students.map((s) => {
             const st = STATUS[s.status] ?? { label: s.status, tone: 'neutral' as const }
             return (
@@ -66,8 +68,11 @@ export default async function StudentsPage() {
                 </Td>
                 <Td className="text-ink-muted">{instrumentLabel(s.instrument)}</Td>
                 <Td className="text-ink-muted">{s.monthly_fee ? formatBRL(Number(s.monthly_fee)) : '—'}</Td>
-                <Td className="text-right">
+                <Td>
                   <Badge tone={st.tone}>{st.label}</Badge>
+                </Td>
+                <Td className="text-right">
+                  <ImpersonateButton targetUserId={s.id} />
                 </Td>
               </Tr>
             )

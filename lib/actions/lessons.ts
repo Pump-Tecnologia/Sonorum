@@ -165,3 +165,71 @@ export async function cancelLesson(formData: FormData) {
   await supabase.from('lessons').update({ status: 'canceled' }).eq('id', lessonId)
   revalidatePath('/schedule')
 }
+
+// ── Lesson Plan (warmup/repertoire/homework/target_bpm) ─────────────────────
+export async function upsertLessonPlan(formData: FormData) {
+  const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
+
+  const lessonId = String(formData.get('lessonId') ?? '')
+  const supabase = await createClient()
+
+  const plan = {
+    school_id: me.schoolId,
+    lesson_id: lessonId,
+    warmup: String(formData.get('warmup') ?? '') || null,
+    repertoire: String(formData.get('repertoire') ?? '') || null,
+    homework: String(formData.get('homework') ?? '') || null,
+    target_bpm: String(formData.get('target_bpm') ?? '') || null,
+    notes: String(formData.get('plan_notes') ?? '') || null,
+  }
+
+  await supabase.from('lesson_plans').upsert(plan, { onConflict: 'lesson_id' })
+  revalidatePath(`/lessons/${lessonId}/planner`)
+}
+
+// ── Anexar / desanexar recursos pedagógicos à aula ───────────────────────────
+export async function attachResource(formData: FormData) {
+  const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
+
+  const lessonId = String(formData.get('lessonId') ?? '')
+  const resourceId = String(formData.get('resourceId') ?? '')
+  const section = String(formData.get('section') ?? 'general')
+
+  if (!lessonId || !resourceId) return
+
+  const supabase = await createClient()
+
+  // Evita duplicata (lesson + resource + section)
+  const { data: existing } = await supabase
+    .from('lesson_pedagogical_resource')
+    .select('id')
+    .eq('lesson_id', lessonId)
+    .eq('pedagogical_resource_id', resourceId)
+    .eq('section', section)
+    .maybeSingle()
+
+  if (existing) return
+
+  await supabase.from('lesson_pedagogical_resource').insert({
+    lesson_id: lessonId,
+    pedagogical_resource_id: resourceId,
+    section,
+  })
+  revalidatePath(`/lessons/${lessonId}/planner`)
+}
+
+export async function detachResource(formData: FormData) {
+  const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
+
+  const pivotId = String(formData.get('pivotId') ?? '')
+  const lessonId = String(formData.get('lessonId') ?? '')
+
+  if (!pivotId) return
+
+  const supabase = await createClient()
+  await supabase.from('lesson_pedagogical_resource').delete().eq('id', pivotId)
+  revalidatePath(`/lessons/${lessonId}/planner`)
+}
