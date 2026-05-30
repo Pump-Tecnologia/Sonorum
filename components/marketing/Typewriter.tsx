@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState } from 'react'
 
 import styles from '@/components/marketing/marketing.module.css'
 
@@ -12,22 +12,9 @@ interface TypewriterProps {
   startDelayMs?: number
 }
 
-// Lê prefers-reduced-motion sem efeito colateral.
-// useSyncExternalStore evita hydration mismatch e o lint do React 19.
-function useReducedMotion(): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-      mq.addEventListener('change', cb)
-      return () => mq.removeEventListener('change', cb)
-    },
-    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    () => false, // server snapshot
-  )
-}
-
 // Efeito máquina de escrever que cicla por vários finais.
-// Respeita prefers-reduced-motion (mostra a 1ª palavra estática).
+// Renderiza a 1ª palavra estática durante SSR/antes da hidratação para
+// evitar mismatch — depois entra no loop animado.
 export function Typewriter({
   words,
   typeSpeed = 70,
@@ -35,20 +22,20 @@ export function Typewriter({
   holdMs = 1800,
   startDelayMs = 400,
 }: TypewriterProps) {
-  const reducedMotion = useReducedMotion()
-  const [text, setText] = useState('')
+  const [mounted, setMounted] = useState(false)
+  const [text, setText] = useState(words[0])
   const [wordIdx, setWordIdx] = useState(0)
   const [phase, setPhase] = useState<'idle' | 'typing' | 'holding' | 'deleting'>('idle')
 
-  // Delay inicial após mount
+  // Marca como hidratado e arranca o ciclo pela fase de hold da 1ª palavra
   useEffect(() => {
-    if (reducedMotion) return
-    const t = setTimeout(() => setPhase('typing'), startDelayMs)
+    setMounted(true)
+    const t = setTimeout(() => setPhase('holding'), startDelayMs + holdMs)
     return () => clearTimeout(t)
-  }, [reducedMotion, startDelayMs])
+  }, [startDelayMs, holdMs])
 
   useEffect(() => {
-    if (reducedMotion || phase === 'idle') return
+    if (!mounted || phase === 'idle') return
     const current = words[wordIdx]
 
     if (phase === 'typing') {
@@ -67,8 +54,7 @@ export function Typewriter({
 
     if (phase === 'deleting') {
       if (text === '') {
-        // Combina avanço de palavra + nova fase num único callback assíncrono
-        // (React 19 faz batch dos dois setStates).
+        // Avança palavra + nova fase no mesmo callback (React 19 faz batch).
         const t = setTimeout(() => {
           setWordIdx((i) => (i + 1) % words.length)
           setPhase('typing')
@@ -78,12 +64,7 @@ export function Typewriter({
       const t = setTimeout(() => setText(current.slice(0, text.length - 1)), deleteSpeed)
       return () => clearTimeout(t)
     }
-  }, [phase, text, wordIdx, words, typeSpeed, deleteSpeed, holdMs, reducedMotion])
-
-  // Sem motion: renderiza estático a primeira palavra (acessível e crawlable).
-  if (reducedMotion) {
-    return <em className={styles.heroH1Em}>{words[0]}</em>
-  }
+  }, [phase, text, wordIdx, words, typeSpeed, deleteSpeed, holdMs, mounted])
 
   return (
     <em className={styles.heroH1Em} aria-live="polite" aria-atomic="true">
