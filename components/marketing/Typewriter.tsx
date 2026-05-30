@@ -27,12 +27,15 @@ export function Typewriter({
   const [wordIdx, setWordIdx] = useState(0)
   const [phase, setPhase] = useState<'idle' | 'typing' | 'holding' | 'deleting'>('idle')
 
-  // Marca como hidratado e arranca o ciclo pela fase de hold da 1ª palavra
+  // Marca como hidratado e arranca o ciclo após o delay inicial.
+  // Tudo dentro de setTimeout para não cair na regra set-state-in-effect.
   useEffect(() => {
-    setMounted(true)
-    const t = setTimeout(() => setPhase('holding'), startDelayMs + holdMs)
+    const t = setTimeout(() => {
+      setMounted(true)
+      setPhase('holding')
+    }, startDelayMs)
     return () => clearTimeout(t)
-  }, [startDelayMs, holdMs])
+  }, [startDelayMs])
 
   useEffect(() => {
     if (!mounted || phase === 'idle') return
