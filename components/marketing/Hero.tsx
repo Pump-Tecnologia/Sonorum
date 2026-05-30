@@ -2,7 +2,18 @@ import Link from 'next/link'
 
 import { HeroMockup } from '@/components/marketing/HeroMockup'
 import { IconArrow } from '@/components/marketing/icons'
+import { Typewriter } from '@/components/marketing/Typewriter'
 import styles from '@/components/marketing/marketing.module.css'
+
+// Finais que ciclam após a vírgula no H1.
+// Cada um mantém o tom "deixa o caos pra trás · entra no compasso".
+const HERO_ENDINGS = [
+  'sem a planilha.',
+  'sem o caderninho.',
+  'sem o WhatsApp lotado.',
+  'no compasso certo.',
+  'afinada de verdade.',
+]
 
 // Avatares na paleta do design system — variações da marca
 const AVATARS = [
@@ -23,7 +34,7 @@ export function Hero() {
           <h1 className={styles.heroH1}>
             Sua escola de música,
             <br />
-            <em>sem a planilha.</em>
+            <Typewriter words={HERO_ENDINGS} />
           </h1>
 
           <p className={styles.heroSub}>
