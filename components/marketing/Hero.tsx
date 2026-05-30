@@ -17,10 +17,8 @@ export function Hero() {
     <section className={styles.hero}>
       <div className={`${styles.container} ${styles.heroInner}`}>
         <div>
-          <span className={styles.heroTag}>
-            <span className={styles.heroTagDot} />
-            Primeiro mês gratuito
-          </span>
+          {/* Eyebrow no padrão do design system — sem cara de pill SaaS */}
+          <p className={styles.heroEyebrow}>Para escolas de música</p>
 
           <h1 className={styles.heroH1}>
             Sua escola de música,
@@ -42,6 +40,11 @@ export function Hero() {
               Ver como funciona
             </Link>
           </div>
+
+          {/* Reforço da oferta de grátis logo abaixo dos CTAs — texto humano */}
+          <p className={styles.heroOffer}>
+            Plano Essencial grátis para sempre · até 5 alunos · sem cartão de crédito
+          </p>
 
           <div className={styles.heroTrust}>
             <div className={styles.trustAvatars}>

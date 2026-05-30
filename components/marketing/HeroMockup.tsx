@@ -48,11 +48,12 @@ export function HeroMockup() {
         </div>
       </div>
 
+      {/* O ::after do badge verde adiciona um dot 'ao vivo' — não precisa de ícone */}
       <div className={`${styles.mockupBadge} ${styles.mockupBadgePaid}`}>
-        <IconCheck size={11} /> Mensalidade paga
+        <IconCheck size={12} /> Mensalidade paga
       </div>
       <div className={`${styles.mockupBadge} ${styles.mockupBadgeNext}`}>
-        <IconClock size={11} /> Aula em 15 min
+        <IconClock size={12} /> Aula em 15 min
       </div>
     </div>
   )
