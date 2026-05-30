@@ -505,8 +505,8 @@
 }
 
 .mockupBadgePaid {
-  top: -2.25rem;
-  left: -3rem;
+  top: -3.5rem;
+  left: -4.5rem;
   background: var(--ds-green);
   color: #fff;
   box-shadow:
@@ -515,8 +515,8 @@
   animation: floatA 6s ease-in-out infinite;
 }
 .mockupBadgeNext {
-  bottom: -2.25rem;
-  right: -3rem;
+  bottom: -3.5rem;
+  right: -4.5rem;
   background: var(--ds-surface);
   color: var(--ds-ink);
   border: 1px solid var(--ds-hairline);
