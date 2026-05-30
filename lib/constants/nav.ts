@@ -15,12 +15,20 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   // que já existem para não gerar 404.
   admin: [
     { label: 'Dashboard', href: '/admin' },
+    { label: 'Agenda', href: '/schedule' },
     { label: 'Professores', href: '/admin/teachers' },
     { label: 'Alunos', href: '/admin/students' },
     { label: 'Configurações', href: '/admin/settings' },
   ],
-  teacher: [{ label: 'Dashboard', href: '/teacher' }],
-  student: [{ label: 'Dashboard', href: '/student' }],
+  teacher: [
+    { label: 'Dashboard', href: '/teacher' },
+    { label: 'Agenda', href: '/schedule' },
+  ],
+  student: [
+    { label: 'Dashboard', href: '/student' },
+    { label: 'Minha agenda', href: '/student/schedule' },
+    { label: 'Materiais', href: '/student/materials' },
+  ],
 }
 
 export const ROLE_LABEL: Record<Role, string> = {

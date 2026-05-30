@@ -21,6 +21,8 @@ const APP_PREFIXES = [
   '/lessons',
   '/profile',
   '/upgrade',
+  '/student',
+  '/teacher',
 ]
 
 function isUnder(path: string, prefixes: string[]): boolean {
