@@ -1,0 +1,55 @@
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+import type { Database } from '@/lib/types/database'
+
+// Cliente Supabase para Server Components, Server Actions e Route Handlers.
+// Usa o cookie store da request (httpOnly) via @supabase/ssr.
+export async function createClient() {
+  const cookieStore = await cookies()
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          // Em Server Components o set lança — é esperado e seguro ignorar,
+          // pois o middleware já cuida do refresh do cookie de sessão.
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options),
+            )
+          } catch {
+            // chamado de um Server Component sem resposta mutável — ok
+          }
+        },
+      },
+    },
+  )
+}
+
+// Cliente com SERVICE ROLE — ignora RLS. Use SOMENTE no servidor, nunca exponha
+// a chave ao cliente. Necessário para impersonação, criação de usuários, etc.
+export async function createAdminClient() {
+  const cookieStore = await cookies()
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll() {
+          // service-role não persiste sessão
+        },
+      },
+    },
+  )
+}

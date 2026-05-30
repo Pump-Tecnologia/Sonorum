@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sonorum
 
-## Getting Started
+Plataforma de gestão para escolas de música. Migração de Laravel/Inertia → **Next.js 16 + Supabase + Vercel** (ver `SONORUM_MIGRATION.md` no repo Laravel original).
 
-First, run the development server:
+Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Supabase (Auth + Postgres + RLS) · Cloudflare R2 · Resend · Deploy na Vercel.
+
+---
+
+## ⚠️ Caminho com acento + Turbopack
+
+O Turbopack do Next 16 dá panic quando o caminho do projeto contém caracteres não-ASCII (este projeto vive em `.../Projetos de Código/`, com o `ó`). Por isso os scripts locais usam **webpack** (`next dev --webpack` / `next build --webpack`).
+
+- **Na Vercel o caminho é ASCII**, então o build padrão (Turbopack) funciona normalmente lá — sem mudança necessária.
+- Para reativar o Turbopack localmente, mova o repo para um caminho sem acentos (ex.: `~/dev/sonorum-app`) e remova os `--webpack` dos scripts.
+
+---
+
+## Setup
+
+### 1. Dependências
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Projeto Supabase (sa-east-1 / São Paulo)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+No dashboard do Supabase, crie um projeto novo na região **South America (São Paulo)** e rode, na ordem, no SQL Editor:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. `supabase/migrations/0001_schema.sql` — tabelas + índices
+2. `supabase/migrations/0002_rls.sql` — Row Level Security (substitui os middlewares de tenant/role do Laravel)
+3. `supabase/migrations/0003_auth_hook.sql` — sync `auth.users` → `public.users` + Custom Access Token Hook
 
-## Learn More
+Depois, **ative o hook**: Authentication → Hooks → *Custom Access Token* → selecione `public.custom_access_token_hook`. Sem isso, `role` e `school_id` não entram no JWT e o roteamento por papel não funciona.
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Variáveis de ambiente
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cp .env.example .env.local
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Preencha com as keys do projeto novo (Settings → API): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_ID`, além de R2, Resend e WhatsApp.
 
-## Deploy on Vercel
+### 4. Tipos do banco
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run types:gen   # sobrescreve lib/types/database.ts (stub) com os tipos reais
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 5. Rodar
+
+```bash
+npm run dev   # http://localhost:3000
+```
+
+---
+
+## Arquitetura
+
+```
+app/
+  (marketing)/      → landing pública (sonorum.com.br)
+  (auth)/           → login, register, forgot-password, reset-password
+  (app)/            → área autenticada (app.sonorum.com.br)
+    superadmin/ admin/ teacher/ student/ dashboard/
+  auth/callback/    → troca code→sessão (confirmação de e-mail, reset)
+components/
+  ui/ auth/ app/    → primitivas e componentes de negócio
+lib/
+  supabase/         → client (browser), server (RSC/actions), middleware (proxy), createAdminClient
+  auth/             → server actions, schemas zod, sessão (getCurrentUser)
+  constants/        → roles, nav
+  types/            → database (gerado) + app (curados)
+proxy.ts            → auth + roteamento por papel na borda
+supabase/migrations → schema, RLS, auth hook
+```
+
+### Segurança (substitui o Laravel)
+
+| Laravel | Aqui |
+|---|---|
+| Sessões PHP | Supabase Auth (JWT em cookie httpOnly via `@supabase/ssr`) |
+| `TenantScope` / `BelongsToSchool` | RLS por `school_id` em cada tabela |
+| Middlewares de role | RLS + roteamento por papel no `proxy.ts` |
+| `EnsureSchoolIsActive` | (a aplicar nas policies — ver TODO) |
+
+`role` e `school_id` ficam em **`app_metadata`** (só service-role escreve) → sem escalonamento de privilégio pelo cliente.
+
+---
+
+## Status da migração
+
+- ✅ **Fase 1** — Setup, clients Supabase, proxy, schema, RLS, auth hook
+- ✅ **Fase 2** — Auth (login, registro com criação de escola, reset de senha)
+- ✅ **Fase 3** — Layouts (marketing, shell autenticado com sidebar por papel)
+- ⬜ Fases 4–10 — SuperAdmin, Admin, Agenda, Teacher/Student, Financeiro, LP completa, deploy e migração de dados
