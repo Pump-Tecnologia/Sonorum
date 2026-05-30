@@ -5,11 +5,11 @@ import { IconArrow } from '@/components/marketing/icons'
 import { Typewriter } from '@/components/marketing/Typewriter'
 import styles from '@/components/marketing/marketing.module.css'
 
-// Finais que ciclam após a vírgula no H1.
+// Palavras que ciclam após "sem" no H1 (em verde, em nova linha).
 const HERO_ENDINGS = [
-  'sem planilhas.',
-  'sem desorganização.',
-  'sem controle manual.',
+  'planilhas.',
+  'desorganização.',
+  'controle manual.',
 ]
 
 // Avatares na paleta do design system — variações da marca
@@ -29,7 +29,8 @@ export function Hero() {
           <p className={styles.heroEyebrow}>Para escolas de música</p>
 
           <h1 className={styles.heroH1}>
-            Sua escola de música,{' '}
+            Sua escola de música, sem
+            <br />
             <Typewriter words={HERO_ENDINGS} />
           </h1>
 
