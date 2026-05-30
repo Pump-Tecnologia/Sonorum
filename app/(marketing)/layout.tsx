@@ -1,38 +1,41 @@
 import Link from 'next/link'
 
-import { Button } from '@/components/ui/Button'
+import { IconArrow } from '@/components/marketing/icons'
+import styles from '@/components/marketing/marketing.module.css'
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-canvas">
-      <header className="sticky top-0 z-10 border-b border-hairline/60 bg-canvas/80 backdrop-blur">
-        <nav
-          aria-label="Navegação principal"
-          className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4"
-        >
-          <Link href="/" className="text-xl font-bold tracking-tight text-brand-700">
-            Sonorum
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-ink-muted hover:text-ink"
-            >
-              Entrar
-            </Link>
-            <Link href="/register">
-              <Button>Criar conta</Button>
+    <div className={styles.page}>
+      <header className={styles.nav}>
+        <div className={`${styles.container} ${styles.navInner}`}>
+          <Link href="/" className={styles.brand}>Sonorum</Link>
+
+          <nav className={styles.navLinks} aria-label="Navegação principal">
+            <a href="#features" className={styles.navLink}>Recursos</a>
+            <a href="#pricing" className={styles.navLink}>Planos</a>
+            <a href="#contact" className={styles.navLink}>Contato</a>
+          </nav>
+
+          <div className={styles.navCta}>
+            <Link href="/login" className={styles.navSignIn}>Entrar</Link>
+            <Link href="/register" className={`${styles.btn} ${styles.btnPrimary}`}>
+              Criar conta
+              <IconArrow />
             </Link>
           </div>
-        </nav>
+        </div>
       </header>
 
-      <div className="flex-1">{children}</div>
+      <main>{children}</main>
 
-      <footer className="border-t border-hairline">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-8 text-sm text-ink-muted sm:flex-row">
-          <span className="font-semibold text-brand-700">Sonorum</span>
-          <span>© Sonorum · Gestão para escolas de música</span>
+      <footer className={styles.footer}>
+        <div className={`${styles.container} ${styles.footerInner}`}>
+          <span className={styles.brand}>Sonorum</span>
+          <nav className={styles.footerLinks} aria-label="Links do rodapé">
+            <a href="#">Termos de uso</a>
+            <a href="#">Privacidade</a>
+          </nav>
+          <p className={styles.footerCopy}>© Sonorum · Gestão para escolas de música</p>
         </div>
       </footer>
     </div>
