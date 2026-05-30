@@ -222,12 +222,22 @@
 /* ── Hero ────────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
+  /* overflow visible para que os badges possam ultrapassar o mockup;
+     o gradiente fica num ::before com overflow hidden próprio. */
+  background: var(--ds-canvas);
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
   overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
   background:
     radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in oklab, var(--ds-green-soft) 50%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 0% 100%, color-mix(in oklab, var(--ds-ink) 8%, transparent) 0%, transparent 70%),
-    var(--ds-canvas);
+    radial-gradient(ellipse 60% 50% at 0% 100%, color-mix(in oklab, var(--ds-ink) 8%, transparent) 0%, transparent 70%);
 }
+.heroInner { position: relative; z-index: 1; }
 .heroInner {
   display: grid;
   gap: 3rem;
@@ -495,8 +505,8 @@
 }
 
 .mockupBadgePaid {
-  top: -1.25rem;
-  left: -1.5rem;
+  top: -2.25rem;
+  left: -3rem;
   background: var(--ds-green);
   color: #fff;
   box-shadow:
@@ -505,8 +515,8 @@
   animation: floatA 6s ease-in-out infinite;
 }
 .mockupBadgeNext {
-  bottom: -1.25rem;
-  right: -1.5rem;
+  bottom: -2.25rem;
+  right: -3rem;
   background: var(--ds-surface);
   color: var(--ds-ink);
   border: 1px solid var(--ds-hairline);
