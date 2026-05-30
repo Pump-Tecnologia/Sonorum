@@ -24,10 +24,8 @@ export const metadata: Metadata = {
   },
   description:
     'Plataforma de gestão para escolas de música: agenda, alunos, professores, materiais e financeiro num só lugar.',
-  icons: {
-    icon: '/brand/favicon.png',
-    apple: '/brand/favicon.png',
-  },
+  // O Next gera os <link rel="icon"> automaticamente a partir de
+  // app/icon.png e app/apple-icon.png (convenção file-based).
 }
 
 export default function RootLayout({
