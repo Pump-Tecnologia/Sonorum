@@ -4,11 +4,12 @@ import { HeroMockup } from '@/components/marketing/HeroMockup'
 import { IconArrow } from '@/components/marketing/icons'
 import styles from '@/components/marketing/marketing.module.css'
 
+// Avatares na paleta do design system — variações da marca
 const AVATARS = [
-  { c: '#4E9AF1', l: 'D' },
-  { c: '#F16A4E', l: 'M' },
-  { c: '#A74EF1', l: 'R' },
-  { c: '#F1C84E', l: 'C' },
+  { c: '#1F3A5F', l: 'D' },
+  { c: '#63C08F', l: 'M' },
+  { c: '#4FAB78', l: 'R' },
+  { c: '#3A5A7F', l: 'C' },
 ]
 
 export function Hero() {

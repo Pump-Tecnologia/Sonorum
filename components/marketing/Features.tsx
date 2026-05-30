@@ -23,8 +23,8 @@ export function Features() {
                   <div key={i} className={styles.fvDay}>
                     <span className={styles.fvDayLabel}>{d}</span>
                     <div className={styles.fvLessons}>
-                      <span className={styles.fvLesson} style={{ height: 28, background: '#47D481', opacity: 0.9 }} />
-                      <span className={styles.fvLesson} style={{ height: 18, background: '#1E3A5F', opacity: 0.7, marginTop: 4 }} />
+                      <span className={styles.fvLesson} style={{ height: 28, background: '#63C08F', opacity: 0.9 }} />
+                      <span className={styles.fvLesson} style={{ height: 18, background: '#1F3A5F', opacity: 0.7, marginTop: 4 }} />
                     </div>
                   </div>
                 ))}
@@ -36,9 +36,9 @@ export function Features() {
                 </div>
               </div>
               <div className={styles.fvCalLegend}>
-                <span className={styles.fvDot} style={{ background: '#47D481' }} />Piano
+                <span className={styles.fvDot} style={{ background: '#63C08F' }} />Piano
                 <span style={{ width: 12 }} />
-                <span className={styles.fvDot} style={{ background: '#1E3A5F' }} />Violão
+                <span className={styles.fvDot} style={{ background: '#1F3A5F' }} />Violão
               </div>
             </div>
             <div className={styles.featureText}>
