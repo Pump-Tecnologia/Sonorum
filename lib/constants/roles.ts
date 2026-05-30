@@ -20,7 +20,7 @@ export const ROLE_HOME: Record<Role, string> = {
 export const ROLE_ALLOWED_PREFIXES: Record<Role, string[]> = {
   superadmin: ['/superadmin'],
   admin: ['/admin', '/schedule', '/resources', '/financial', '/plans', '/lessons', '/profile', '/upgrade'],
-  teacher: ['/teacher', '/schedule', '/resources', '/lessons', '/profile'],
+  teacher: ['/teacher', '/schedule', '/resources', '/lessons', '/profile', '/upgrade'],
   student: ['/student', '/profile'],
 }
 

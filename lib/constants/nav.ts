@@ -18,11 +18,16 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Agenda', href: '/schedule' },
     { label: 'Professores', href: '/admin/teachers' },
     { label: 'Alunos', href: '/admin/students' },
+    { label: 'Recursos', href: '/resources' },
+    { label: 'Planos', href: '/plans' },
+    { label: 'Financeiro', href: '/financial' },
+    { label: 'Relatórios', href: '/admin/reports' },
     { label: 'Configurações', href: '/admin/settings' },
   ],
   teacher: [
     { label: 'Dashboard', href: '/teacher' },
     { label: 'Agenda', href: '/schedule' },
+    { label: 'Recursos', href: '/resources' },
   ],
   student: [
     { label: 'Dashboard', href: '/student' },

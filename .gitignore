@@ -45,3 +45,5 @@ next-env.d.ts
 *.jpg
 *.jpeg
 Import.env
+logo-branco
+logo-branco.*
