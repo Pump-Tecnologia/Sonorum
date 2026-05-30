@@ -29,8 +29,7 @@ export function Hero() {
           <p className={styles.heroEyebrow}>Para escolas de música</p>
 
           <h1 className={styles.heroH1}>
-            Sua escola de música,
-            <br />
+            Sua escola de música,{' '}
             <Typewriter words={HERO_ENDINGS} />
           </h1>
 
