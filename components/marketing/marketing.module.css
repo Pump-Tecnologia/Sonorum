@@ -230,14 +230,14 @@
 }
 .heroInner {
   display: grid;
-  gap: 3.5rem;
+  gap: 3rem;
   align-items: center;
-  padding-block: 4rem 3rem;
+  padding-block: 2.5rem 3rem;
 }
 @media (min-width: 1024px) {
   .heroInner {
     grid-template-columns: 1.05fr 1fr;
-    padding-block: 6.5rem 5.5rem;
+    padding-block: 3.5rem 5rem;
   }
 }
 
@@ -495,19 +495,18 @@
 }
 
 .mockupBadgePaid {
-  top: -1.5rem;
-  left: -2rem;
+  top: -1.25rem;
+  left: -1.5rem;
   background: var(--ds-green);
   color: #fff;
   box-shadow:
     0 10px 30px -8px rgb(79 171 120 / 0.5),
     0 0 0 4px rgb(255 255 255 / 0.6);
   animation: floatA 6s ease-in-out infinite;
-  transform-origin: center;
 }
 .mockupBadgeNext {
-  bottom: -1.75rem;
-  right: -2.25rem;
+  bottom: -1.25rem;
+  right: -1.5rem;
   background: var(--ds-surface);
   color: var(--ds-ink);
   border: 1px solid var(--ds-hairline);
@@ -517,13 +516,14 @@
   animation: floatB 7s ease-in-out infinite;
 }
 
+/* Flutuação só vertical — sem rotação para os badges não ficarem entortados */
 @keyframes floatA {
-  0%, 100% { transform: rotate(-4deg) translateY(0); }
-  50%      { transform: rotate(-4deg) translateY(-6px); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
 }
 @keyframes floatB {
-  0%, 100% { transform: rotate(3deg) translateY(0); }
-  50%      { transform: rotate(3deg) translateY(-8px); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
