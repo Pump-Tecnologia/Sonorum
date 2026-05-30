@@ -6,13 +6,10 @@ import { Typewriter } from '@/components/marketing/Typewriter'
 import styles from '@/components/marketing/marketing.module.css'
 
 // Finais que ciclam após a vírgula no H1.
-// Cada um mantém o tom "deixa o caos pra trás · entra no compasso".
 const HERO_ENDINGS = [
-  'sem a planilha.',
-  'sem o caderninho.',
-  'sem o WhatsApp lotado.',
-  'no compasso certo.',
-  'afinada de verdade.',
+  'sem planilhas.',
+  'sem desorganização.',
+  'sem controle manual.',
 ]
 
 // Avatares na paleta do design system — variações da marca
