@@ -65,7 +65,10 @@ export default async function TeachersPage() {
                 </Badge>
               </Td>
               <Td className="text-right">
-                <div className="flex justify-end">
+                <div className="flex items-center justify-end gap-1">
+                  <Link href={`/admin/teachers/${t.id}/edit`}>
+                    <Button variant="ghost" className="text-xs px-2 py-1">Editar</Button>
+                  </Link>
                   <DeleteButton
                     action={deleteTeacher}
                     hidden={{ teacherId: t.id }}

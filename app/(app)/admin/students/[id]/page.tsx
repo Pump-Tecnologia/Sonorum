@@ -1,12 +1,16 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
+import { StudentEnrollment } from '@/components/admin/StudentEnrollment'
 import { StudentGoals } from '@/components/admin/StudentGoals'
 import { StudentNotes } from '@/components/admin/StudentNotes'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { deleteStudent } from '@/lib/actions/students'
+import { getPlanContext } from '@/lib/auth/plan'
 import { formatBRL } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 
@@ -29,6 +33,7 @@ export default async function StudentDetailPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+  const plan = await getPlanContext()
 
   const { data: student } = await supabase
     .from('users')
@@ -44,6 +49,24 @@ export default async function StudentDetailPage({
     supabase.from('student_notes').select('id, content, date').eq('user_id', id).order('date', { ascending: false }),
   ])
 
+  // Matrícula e planos — só carrega se o plano da escola suportar financeiro
+  let enrollment: Parameters<typeof StudentEnrollment>[0]['enrollment'] = null
+  let plans: Parameters<typeof StudentEnrollment>[0]['plans'] = []
+
+  if (plan.features.financial) {
+    const [{ data: enr }, { data: plansData }] = await Promise.all([
+      supabase
+        .from('enrollments')
+        .select('id, status, due_day, custom_amount, plan:plans(id, name, amount)')
+        .eq('student_id', id)
+        .eq('status', 'active')
+        .maybeSingle(),
+      supabase.from('plans').select('id, name, amount').order('amount'),
+    ])
+    enrollment = enr as typeof enrollment
+    plans = (plansData ?? []) as typeof plans
+  }
+
   const st = STATUS[student.status] ?? { label: student.status, tone: 'neutral' as const }
 
   return (
@@ -52,16 +75,22 @@ export default async function StudentDetailPage({
         title={student.name}
         subtitle={student.email}
         action={
-          <DeleteButton
-            action={deleteStudent}
-            hidden={{ studentId: student.id }}
-            label="Excluir aluno"
-            confirmText={`Excluir ${student.name}? Metas, anotações e acesso serão removidos.`}
-          />
+          <div className="flex items-center gap-2">
+            <Link href={`/admin/students/${student.id}/edit`}>
+              <Button variant="secondary">Editar</Button>
+            </Link>
+            <DeleteButton
+              action={deleteStudent}
+              hidden={{ studentId: student.id }}
+              label="Excluir"
+              confirmText={`Excluir ${student.name}? Metas, anotações e acesso serão removidos.`}
+            />
+          </div>
         }
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Coluna esquerda: perfil + matrícula */}
         <div className="space-y-6 lg:col-span-1">
           <Card>
             <div className="mb-4 flex items-center justify-between">
@@ -73,15 +102,34 @@ export default async function StudentDetailPage({
               <Row label="Responsável" value={student.parent_contact} />
               <Row label="Categoria" value={student.instrument_category} />
               <Row label="Instrumento" value={instrumentLabel(student.instrument)} />
-              <Row label="Mensalidade" value={student.monthly_fee ? formatBRL(Number(student.monthly_fee)) : '—'} />
-              <Row label="Vencimento" value={student.due_day ? `Dia ${student.due_day}` : '—'} />
+              <Row label="Mensalidade" value={student.monthly_fee ? formatBRL(Number(student.monthly_fee)) : null} />
+              <Row label="Vencimento" value={student.due_day ? `Dia ${student.due_day}` : null} />
             </dl>
           </Card>
+
+          {plan.features.financial ? (
+            <StudentEnrollment
+              studentId={student.id}
+              enrollment={enrollment as Parameters<typeof StudentEnrollment>[0]['enrollment']}
+              plans={plans as Parameters<typeof StudentEnrollment>[0]['plans']}
+            />
+          ) : (
+            <Card className="border-dashed">
+              <p className="text-sm font-medium text-ink">Matrícula</p>
+              <p className="mt-1 text-sm text-ink-muted">
+                Disponível a partir do plano Básico.{' '}
+                <Link href="/upgrade" className="font-medium text-brand-600">
+                  Fazer upgrade
+                </Link>
+              </p>
+            </Card>
+          )}
         </div>
 
+        {/* Coluna direita: metas + notas */}
         <div className="space-y-6 lg:col-span-2">
-          <StudentGoals studentId={student.id} goals={goals ?? []} />
-          <StudentNotes studentId={student.id} notes={notes ?? []} />
+          <StudentGoals studentId={student.id} goals={(goals ?? []) as Parameters<typeof StudentGoals>[0]['goals']} />
+          <StudentNotes studentId={student.id} notes={(notes ?? []) as Parameters<typeof StudentNotes>[0]['notes']} />
         </div>
       </div>
     </>
