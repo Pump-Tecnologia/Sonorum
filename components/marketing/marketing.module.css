@@ -64,7 +64,14 @@
   z-index: 20;
   background: rgb(242 244 247 / 0.85);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid color-mix(in oklab, var(--ds-hairline) 70%, transparent);
+  border-bottom: 1px solid transparent;
+  transition: background-color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+/* Aparência após scroll: divisor + sombra suave para descolar do conteúdo */
+.nav[data-scrolled] {
+  background: rgb(242 244 247 / 0.95);
+  border-bottom-color: color-mix(in oklab, var(--ds-hairline) 70%, transparent);
+  box-shadow: 0 4px 18px -8px rgb(31 58 95 / 0.12);
 }
 .navInner {
   display: flex;
@@ -72,7 +79,10 @@
   justify-content: space-between;
   height: 4.25rem;
   gap: 1rem;
+  transition: height 250ms ease;
 }
+.nav[data-scrolled] .navInner { height: 3.75rem; }
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -85,13 +95,35 @@
   height: 2rem;
   object-fit: contain;
   display: block;
+  transition: width 250ms ease, height 250ms ease;
 }
+.nav[data-scrolled] .brandMark { width: 2.25rem; height: 2.25rem; }
+
 .brandWord {
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--ds-ink);
+  /* Some no scroll com transição suave (largura + opacidade) */
+  display: inline-block;
+  max-width: 9rem;
+  opacity: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  transform: translateX(0);
+  transition:
+    max-width 300ms ease,
+    opacity 200ms ease,
+    transform 300ms ease,
+    margin-left 250ms ease;
+}
+.nav[data-scrolled] .brandWord {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-0.5rem);
+  margin-left: -0.625rem; /* compensa o gap do .brand */
+  pointer-events: none;
 }
 .navLinks {
   display: none;

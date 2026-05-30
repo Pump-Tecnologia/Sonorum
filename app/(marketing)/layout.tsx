@@ -1,47 +1,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { IconArrow } from '@/components/marketing/icons'
+import { SiteHeader } from '@/components/marketing/SiteHeader'
 import styles from '@/components/marketing/marketing.module.css'
 
-// Logos do design system (PNGs em public/brand/).
-// - logo-fundo-branco: marca completa (verde + azul) — usada sobre canvas claro
-// - logo-branco: marca em monocromático claro — usada sobre o azul escuro do footer
-const LOGO_LIGHT_BG = '/brand/logo-fundo-branco.png'
-const LOGO_DARK_BG = '/brand/logo-branco.png'
+// Logo vazado — versão única usada no cabeçalho (sobre canvas claro)
+// e no rodapé (sobre o ink do design system).
+const LOGO_VAZADO = '/brand/logo-vazado.png'
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={styles.page}>
-      <header className={styles.nav}>
-        <div className={`${styles.container} ${styles.navInner}`}>
-          <Link href="/" className={styles.brand} aria-label="Sonorum">
-            <Image
-              src={LOGO_LIGHT_BG}
-              alt=""
-              width={36}
-              height={36}
-              priority
-              className={styles.brandMark}
-            />
-            <span className={styles.brandWord}>Sonorum</span>
-          </Link>
-
-          <nav className={styles.navLinks} aria-label="Navegação principal">
-            <a href="#features" className={styles.navLink}>Recursos</a>
-            <a href="#pricing" className={styles.navLink}>Planos</a>
-            <a href="#contact" className={styles.navLink}>Contato</a>
-          </nav>
-
-          <div className={styles.navCta}>
-            <Link href="/login" className={styles.navSignIn}>Entrar</Link>
-            <Link href="/register" className={`${styles.btn} ${styles.btnPrimary}`}>
-              Criar conta
-              <IconArrow />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main>{children}</main>
 
@@ -49,7 +19,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <div className={`${styles.container} ${styles.footerInner}`}>
           <Link href="/" className={styles.footerBrand} aria-label="Sonorum">
             <Image
-              src={LOGO_DARK_BG}
+              src={LOGO_VAZADO}
               alt=""
               width={32}
               height={32}
