@@ -41,6 +41,15 @@
 
 html {
   -webkit-font-smoothing: antialiased;
+  /* Rolagem suave em links de âncora; scroll-padding-top compensa o header
+     sticky da LP para o destino não ficar escondido por trás dele. */
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+/* Acessibilidade: respeita preferência por menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }
 
 body {
