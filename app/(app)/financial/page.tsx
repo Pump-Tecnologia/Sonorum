@@ -1,5 +1,6 @@
 import { PageHeader } from '@/components/app/PageHeader'
 import { ChargeStatusForm } from '@/components/financial/ChargeStatusForm'
+import { MonthPicker } from '@/components/financial/MonthPicker'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { requireFeature } from '@/lib/auth/plan'
@@ -51,14 +52,7 @@ export default async function FinancialPage({
         subtitle={new Date(`${month}-01`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
         action={
           <div className="flex items-center gap-3">
-            <input
-              type="month"
-              defaultValue={month}
-              onChange={(e) => {
-                window.location.href = `/financial?month=${e.target.value}`
-              }}
-              className="rounded-xl border border-hairline bg-surface px-3 py-2 text-sm"
-            />
+            <MonthPicker month={month} />
           </div>
         }
       />
