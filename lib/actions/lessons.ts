@@ -157,14 +157,12 @@ export async function updateLesson(formData: FormData) {
     notes?: string | null
     goals?: string | null
     private_notes?: string | null
-    room_id?: string | null
   }
   const updates: LessonUpdate = {}
   if (formData.has('status')) updates.status = String(formData.get('status'))
   if (formData.has('notes')) updates.notes = String(formData.get('notes')) || null
   if (formData.has('goals')) updates.goals = String(formData.get('goals')) || null
   if (formData.has('private_notes')) updates.private_notes = String(formData.get('private_notes')) || null
-  if (formData.has('room_id')) updates.room_id = String(formData.get('room_id')) || null
 
   if (Object.keys(updates).length > 0) {
     await supabase.from('lessons').update(updates).eq('id', lessonId)
@@ -190,6 +188,37 @@ export async function updateLesson(formData: FormData) {
 
   revalidatePath('/schedule')
   revalidatePath(`/lessons/${lessonId}/planner`)
+}
+
+// Troca a sala de uma aula existente (planner) com checagem de conflito.
+export async function updateLessonRoom(
+  _prev: LessonActionState,
+  formData: FormData,
+): Promise<LessonActionState> {
+  const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return { ok: false, error: 'Acesso negado.' }
+
+  const lessonId = String(formData.get('lessonId') ?? '')
+  const roomId = String(formData.get('roomId') ?? '') || null
+  if (!lessonId) return { ok: false, error: 'Aula inválida.' }
+
+  const supabase = await createClient()
+
+  if (roomId) {
+    const { data: lesson } = await supabase
+      .from('lessons')
+      .select('start_datetime, end_datetime')
+      .eq('id', lessonId)
+      .maybeSingle()
+    if (lesson && (await roomHasConflict(supabase, roomId, lesson.start_datetime, lesson.end_datetime, lessonId))) {
+      return { ok: false, error: 'Essa sala já está ocupada nesse horário.' }
+    }
+  }
+
+  await supabase.from('lessons').update({ room_id: roomId }).eq('id', lessonId)
+  revalidatePath(`/lessons/${lessonId}/planner`)
+  revalidatePath('/schedule')
+  return { ok: true }
 }
 
 export async function cancelLesson(formData: FormData) {

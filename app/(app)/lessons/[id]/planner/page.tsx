@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
+import { LessonRoomForm } from '@/components/schedule/LessonRoomForm'
 import { ResourcePicker } from '@/components/schedule/ResourcePicker'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
@@ -140,15 +141,6 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                 </Select>
               </Field>
 
-              {roomList.length > 0 && (
-                <Field label="Sala" htmlFor="room_id">
-                  <Select id="room_id" name="room_id" defaultValue={lesson.room_id ?? ''}>
-                    <option value="">Sem sala</option>
-                    {roomList.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                  </Select>
-                </Field>
-              )}
-
               <Field label="Objetivos da aula" htmlFor="goals">
                 <Textarea id="goals" name="goals" defaultValue={lesson.goals ?? ''} rows={2} />
               </Field>
@@ -165,6 +157,12 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                 Salvar
               </button>
             </form>
+
+            {roomList.length > 0 && (
+              <div className="mt-4 border-t border-hairline pt-4">
+                <LessonRoomForm lessonId={lesson.id} currentRoomId={lesson.room_id} rooms={roomList} />
+              </div>
+            )}
           </Card>
 
           <Card>
