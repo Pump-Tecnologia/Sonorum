@@ -8,7 +8,7 @@ export interface NavItem {
 // Navegação da sidebar por papel. Espelha as áreas do app Laravel.
 export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   superadmin: [
-    { label: 'Escolas', href: '/superadmin' },
+    { label: 'Visão geral', href: '/superadmin' },
     { label: 'Nova escola', href: '/superadmin/schools/new' },
   ],
   // NOTA: a nav cresce conforme as fases são migradas. Mantida só com rotas
