@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 import type { Database } from '@/lib/types/database'
@@ -34,22 +35,17 @@ export async function createClient() {
 
 // Cliente com SERVICE ROLE — ignora RLS. Use SOMENTE no servidor, nunca exponha
 // a chave ao cliente. Necessário para impersonação, criação de usuários, etc.
+//
+// IMPORTANTE: usa o createClient puro do supabase-js, SEM cookies. Se passássemos
+// o cookie store (via @supabase/ssr), a sessão do admin logado sobrescreveria o
+// Authorization com o JWT do usuário (role authenticated) e a Admin API do GoTrue
+// (auth.admin.createUser/deleteUser) recusaria — service role precisa ser o token.
 export async function createAdminClient() {
-  const cookieStore = await cookies()
-
-  return createServerClient<Database>(
+  return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
       auth: { autoRefreshToken: false, persistSession: false },
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll() {
-          // service-role não persiste sessão
-        },
-      },
     },
   )
 }
