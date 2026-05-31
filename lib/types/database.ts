@@ -478,6 +478,92 @@ export type Database = {
           },
         ]
       }
+      transcription_jobs: {
+        Row: {
+          audio_path: string
+          body: string | null
+          created_at: string
+          created_by: string | null
+          error: string | null
+          external_id: string | null
+          id: string
+          instrument: string | null
+          provider: string | null
+          result: Json | null
+          resource_id: string | null
+          reviewed_by: string | null
+          school_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audio_path: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          instrument?: string | null
+          provider?: string | null
+          result?: Json | null
+          resource_id?: string | null
+          reviewed_by?: string | null
+          school_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audio_path?: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          instrument?: string | null
+          provider?: string | null
+          result?: Json | null
+          resource_id?: string | null
+          reviewed_by?: string | null
+          school_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcription_jobs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcription_jobs_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "pedagogical_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcription_jobs_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcription_jobs_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           amount: number
