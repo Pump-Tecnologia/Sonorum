@@ -5,6 +5,7 @@ import { StatCard } from '@/components/ui/StatCard'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
+import { effectiveChargeStatus } from '@/lib/finance'
 import { formatBRL, monthRange } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -47,13 +48,14 @@ export default async function ReportsPage() {
   if (features.financial) {
     const { data: charges } = await supabase
       .from('charges')
-      .select('status, amount')
+      .select('status, amount, due_date')
       .gte('due_date', month.start)
       .lte('due_date', month.end)
     for (const c of charges ?? []) {
-      if (c.status === 'paid') paid += Number(c.amount)
-      else if (c.status === 'pending') pending += Number(c.amount)
-      else if (c.status === 'overdue') overdue += Number(c.amount)
+      const eff = effectiveChargeStatus(c.status, c.due_date, now)
+      if (eff === 'paid') paid += Number(c.amount)
+      else if (eff === 'overdue') overdue += Number(c.amount)
+      else if (eff === 'pending') pending += Number(c.amount)
     }
   }
 

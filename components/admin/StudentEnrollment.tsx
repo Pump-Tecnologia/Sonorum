@@ -2,11 +2,12 @@
 
 import { useActionState } from 'react'
 
+import { DeleteButton } from '@/components/admin/DeleteButton'
 import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select } from '@/components/ui/Field'
 import { Badge } from '@/components/ui/Badge'
-import { enrollStudent, type EnrollActionState } from '@/lib/actions/enrollments'
+import { cancelEnrollment, enrollStudent, type EnrollActionState } from '@/lib/actions/enrollments'
 import { formatBRL } from '@/lib/format'
 
 interface Plan {
@@ -54,6 +55,15 @@ export function StudentEnrollment({
               </p>
             </div>
             <Badge tone="success">Ativo</Badge>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <DeleteButton
+              action={cancelEnrollment}
+              hidden={{ studentId }}
+              label="Cancelar matrícula"
+              confirmText="Encerrar a matrícula ativa deste aluno? As cobranças já geradas permanecem no histórico."
+              className="text-xs px-2 py-1"
+            />
           </div>
         </div>
       )}

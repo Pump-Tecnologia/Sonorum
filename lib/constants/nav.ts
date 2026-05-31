@@ -34,6 +34,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Minha agenda', href: '/student/schedule' },
     { label: 'Meu progresso', href: '/student/progress' },
     { label: 'Materiais', href: '/student/materials' },
+    { label: 'Mensalidades', href: '/student/mensalidades' },
   ],
 }
 

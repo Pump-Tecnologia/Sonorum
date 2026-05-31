@@ -68,3 +68,22 @@ export async function enrollStudent(
   revalidatePath(`/admin/students/${d.studentId}`)
   return { ok: true }
 }
+
+// Encerra a matrícula ativa do aluno (não apaga histórico de cobranças).
+export async function cancelEnrollment(formData: FormData) {
+  const me = await getCurrentUser()
+  if (me?.role !== 'admin' || !me.schoolId) return
+
+  const studentId = String(formData.get('studentId') ?? '')
+  if (!studentId) return
+
+  const supabase = await createClient()
+  await supabase
+    .from('enrollments')
+    .update({ status: 'cancelled' })
+    .eq('student_id', studentId)
+    .eq('school_id', me.schoolId)
+    .eq('status', 'active')
+
+  revalidatePath(`/admin/students/${studentId}`)
+}

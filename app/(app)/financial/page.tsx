@@ -6,6 +6,7 @@ import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { requireFeature } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
 import { formatBRL, monthRange } from '@/lib/format'
+import { effectiveChargeStatus } from '@/lib/finance'
 import { createClient } from '@/lib/supabase/server'
 import { generateMonthlyCharges } from '@/lib/actions/charges'
 import { redirect } from 'next/navigation'
@@ -41,9 +42,15 @@ export default async function FinancialPage({
     .order('due_date')
 
   const charges = (data ?? []) as unknown as ChargeRow[]
-  const paid = charges.filter((c) => c.status === 'paid').reduce((s, c) => s + Number(c.amount), 0)
-  const pending = charges.filter((c) => c.status === 'pending').reduce((s, c) => s + Number(c.amount), 0)
-  const overdue = charges.filter((c) => c.status === 'overdue').reduce((s, c) => s + Number(c.amount), 0)
+  // Status efetivo: pendente vencida conta como atrasada (sem write).
+  let paid = 0, pending = 0, overdue = 0
+  for (const c of charges) {
+    const amt = Number(c.amount)
+    const eff = effectiveChargeStatus(c.status, c.due_date, today)
+    if (eff === 'paid') paid += amt
+    else if (eff === 'overdue') overdue += amt
+    else if (eff === 'pending') pending += amt
+  }
 
   return (
     <>
@@ -95,7 +102,14 @@ export default async function FinancialPage({
                 {new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR')}
               </Td>
               <Td className="font-semibold">{formatBRL(Number(c.amount))}</Td>
-              <Td><ChargeStatusForm chargeId={c.id} currentStatus={c.status} /></Td>
+              <Td>
+                <div className="flex items-center gap-2">
+                  <ChargeStatusForm chargeId={c.id} currentStatus={c.status} />
+                  {effectiveChargeStatus(c.status, c.due_date, today) === 'overdue' && c.status === 'pending' && (
+                    <span className="text-xs font-semibold text-red-600">⚠ vencida</span>
+                  )}
+                </div>
+              </Td>
             </Tr>
           ))}
         </tbody>
