@@ -32,6 +32,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   student: [
     { label: 'Dashboard', href: '/student' },
     { label: 'Minha agenda', href: '/student/schedule' },
+    { label: 'Meu progresso', href: '/student/progress' },
     { label: 'Materiais', href: '/student/materials' },
   ],
 }

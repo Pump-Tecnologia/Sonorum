@@ -6,11 +6,13 @@ import { DeleteButton } from '@/components/admin/DeleteButton'
 import { StudentEnrollment } from '@/components/admin/StudentEnrollment'
 import { StudentGoals } from '@/components/admin/StudentGoals'
 import { StudentNotes } from '@/components/admin/StudentNotes'
+import { ProgressPanel } from '@/components/students/ProgressPanel'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { deleteStudent } from '@/lib/actions/students'
 import { getPlanContext } from '@/lib/auth/plan'
+import { getStudentProgress } from '@/lib/data/progress'
 import { formatBRL } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 
@@ -44,9 +46,10 @@ export default async function StudentDetailPage({
 
   if (!student) notFound()
 
-  const [{ data: goals }, { data: notes }] = await Promise.all([
+  const [{ data: goals }, { data: notes }, progress] = await Promise.all([
     supabase.from('student_goals').select('id, text, completed').eq('student_id', id).order('created_at'),
     supabase.from('student_notes').select('id, content, date').eq('user_id', id).order('date', { ascending: false }),
+    getStudentProgress(id),
   ])
 
   // Matrícula e planos — só carrega se o plano da escola suportar financeiro
@@ -126,8 +129,9 @@ export default async function StudentDetailPage({
           )}
         </div>
 
-        {/* Coluna direita: metas + notas */}
+        {/* Coluna direita: progresso + metas + notas */}
         <div className="space-y-6 lg:col-span-2">
+          <ProgressPanel progress={progress} />
           <StudentGoals studentId={student.id} goals={(goals ?? []) as Parameters<typeof StudentGoals>[0]['goals']} />
           <StudentNotes studentId={student.id} notes={(notes ?? []) as Parameters<typeof StudentNotes>[0]['notes']} />
         </div>
