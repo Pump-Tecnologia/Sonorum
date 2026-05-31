@@ -11,7 +11,6 @@ import { createRoom, deleteRoom, type RoomActionState } from '@/lib/actions/room
 interface Room {
   id: string
   name: string
-  capacity: number | null
 }
 
 const initial: RoomActionState = { ok: false }
@@ -31,10 +30,7 @@ export function RoomsManager({ rooms }: { rooms: Room[] }) {
         <ul className="mb-4 space-y-2">
           {rooms.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
-              <span className="font-medium text-ink">
-                {r.name}
-                {r.capacity ? <span className="ml-2 text-xs text-ink-muted">· {r.capacity} lugares</span> : null}
-              </span>
+              <span className="font-medium text-ink">{r.name}</span>
               <DeleteButton
                 action={deleteRoom}
                 hidden={{ roomId: r.id }}
@@ -53,9 +49,6 @@ export function RoomsManager({ rooms }: { rooms: Room[] }) {
         <div className="flex flex-wrap items-end gap-3">
           <Field label="Nova sala" htmlFor="name" error={fe.name}>
             <Input id="name" name="name" placeholder="Sala 1, Estúdio…" required />
-          </Field>
-          <Field label="Capacidade (opcional)" htmlFor="capacity" error={fe.capacity}>
-            <Input id="capacity" name="capacity" type="number" min="1" max="999" placeholder="—" />
           </Field>
           <SubmitButton pendingLabel="Criando…">Adicionar</SubmitButton>
         </div>

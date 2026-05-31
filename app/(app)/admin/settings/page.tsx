@@ -19,7 +19,7 @@ export default async function SettingsPage() {
       .select('name, custom_name, brand_primary, brand_secondary, plan_type, student_limit')
       .eq('id', user.schoolId)
       .single(),
-    supabase.from('rooms').select('id, name, capacity').eq('school_id', user.schoolId).order('name'),
+    supabase.from('rooms').select('id, name').eq('school_id', user.schoolId).order('name'),
   ])
 
   if (!school) redirect('/admin')
@@ -38,7 +38,7 @@ export default async function SettingsPage() {
             studentLimit: school.student_limit,
           }}
         />
-        <RoomsManager rooms={(rooms ?? []) as { id: string; name: string; capacity: number | null }[]} />
+        <RoomsManager rooms={(rooms ?? []) as { id: string; name: string }[]} />
       </div>
     </>
   )

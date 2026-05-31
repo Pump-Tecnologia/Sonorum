@@ -10,7 +10,6 @@ export type RoomActionState = { ok: boolean; error?: string; fieldErrors?: Recor
 
 const roomSchema = z.object({
   name: z.string().min(1, 'Informe o nome').max(120),
-  capacity: z.coerce.number().int().min(1).max(999).optional(),
 })
 
 async function requireAdmin(): Promise<{ id: string; schoolId: string } | null> {
@@ -25,7 +24,6 @@ export async function createRoom(_prev: RoomActionState, formData: FormData): Pr
 
   const parsed = roomSchema.safeParse({
     name: formData.get('name'),
-    capacity: formData.get('capacity') || undefined,
   })
   if (!parsed.success) {
     const flat = parsed.error.flatten().fieldErrors
@@ -36,7 +34,6 @@ export async function createRoom(_prev: RoomActionState, formData: FormData): Pr
   const { error } = await supabase.from('rooms').insert({
     school_id: me.schoolId,
     name: parsed.data.name,
-    capacity: parsed.data.capacity ?? null,
   })
   if (error) return { ok: false, error: 'Não foi possível criar a sala.' }
 
