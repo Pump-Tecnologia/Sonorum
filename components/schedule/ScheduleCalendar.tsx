@@ -9,8 +9,11 @@ import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import { useActionState, useState } from 'react'
 import type { EventClickArg, DateSelectArg } from '@fullcalendar/core'
 
-import { Button } from '@/components/ui/Button'
-import { Field, Input, Select, Textarea } from '@/components/ui/Field'
+import { AppButton } from '@/components/app/AppButton'
+import { AppField, AppInput, AppSelect, AppTextarea } from '@/components/app/AppField'
+import { AppSubmit } from '@/components/app/AppSubmit'
+import appStyles from '@/components/app/app.module.css'
+import styles from '@/components/schedule/schedule.module.css'
 import { cancelLesson, createLesson, type LessonActionState } from '@/lib/actions/lessons'
 
 interface Person { id: string; name: string }
@@ -25,6 +28,12 @@ interface SelectedEvent {
   status: string
   notes: string
   student_name: string
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  scheduled: 'Agendada',
+  completed: 'Realizada',
+  canceled: 'Cancelada',
 }
 
 export function ScheduleCalendar({
@@ -75,16 +84,17 @@ export function ScheduleCalendar({
     setCalendarKey((k) => k + 1)
   }
 
+  const canManage = ['admin', 'teacher'].includes(role)
+
   return (
-    <div>
-      {/* Botão para abrir modal sem arrastar */}
-      {['admin', 'teacher'].includes(role) && (
-        <div className="mb-4 flex justify-end">
-          <Button onClick={() => setModalOpen(true)}>+ Nova aula</Button>
+    <div className={styles.wrap}>
+      {canManage && (
+        <div className={styles.toolbar}>
+          <AppButton onClick={() => setModalOpen(true)}>+ Nova aula</AppButton>
         </div>
       )}
 
-      <div className="rounded-2xl border border-hairline bg-surface p-4">
+      <div className={styles.calendar}>
         <FullCalendar
           key={calendarKey}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
@@ -95,118 +105,139 @@ export function ScheduleCalendar({
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,listWeek',
           }}
+          buttonText={{
+            today: 'Hoje',
+            month: 'Mês',
+            week: 'Semana',
+            list: 'Lista',
+          }}
           height="auto"
-          selectable={['admin', 'teacher'].includes(role)}
+          selectable={canManage}
           select={handleDateSelect}
           eventClick={handleEventClick}
           events="/api/lessons"
           eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
-          slotMinTime="06:00:00"
+          slotMinTime="07:00:00"
           slotMaxTime="22:00:00"
+          slotDuration="01:00:00"
+          slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
           allDaySlot={false}
+          dayMaxEvents={3}
+          nowIndicator
         />
       </div>
 
       {/* Modal criar aula */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-ink">Nova aula</h2>
-              <button onClick={closeModals} className="text-ink-muted hover:text-ink">✕</button>
+        <div className={styles.backdrop} onClick={closeModals}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Nova aula</h2>
+              <button onClick={closeModals} className={styles.modalClose} aria-label="Fechar">
+                ✕
+              </button>
             </div>
 
-            {state.error && (
-              <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</p>
-            )}
+            {state.error && <p className={appStyles.alert}>{state.error}</p>}
 
-            <form action={action} className="space-y-4">
-              <Field label="Aluno" htmlFor="studentId" error={state.fieldErrors?.studentId}>
-                <Select id="studentId" name="studentId" required>
-                  <option value="">Selecione…</option>
+            <form action={action} className={appStyles.form}>
+              <AppField label="Aluno" htmlFor="studentId" error={state.fieldErrors?.studentId}>
+                <AppSelect id="studentId" name="studentId" required defaultValue="">
+                  <option value="" disabled>Selecione…</option>
                   {students.map((s) => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
-                </Select>
-              </Field>
+                </AppSelect>
+              </AppField>
 
               {role === 'admin' && teachers.length > 0 && (
-                <Field label="Professor (opcional)" htmlFor="teacherId">
-                  <Select id="teacherId" name="teacherId">
+                <AppField label="Professor (opcional)" htmlFor="teacherId">
+                  <AppSelect id="teacherId" name="teacherId" defaultValue="">
                     <option value="">Nenhum</option>
                     {teachers.map((t) => (
                       <option key={t.id} value={t.id}>{t.name}</option>
                     ))}
-                  </Select>
-                </Field>
+                  </AppSelect>
+                </AppField>
               )}
-              {role === 'teacher' && (
-                <input type="hidden" name="teacherId" value={userId} />
-              )}
+              {role === 'teacher' && <input type="hidden" name="teacherId" value={userId} />}
 
-              <Field label="Título" htmlFor="title" error={state.fieldErrors?.title}>
-                <Input id="title" name="title" required defaultValue="Aula" />
-              </Field>
+              <AppField label="Título" htmlFor="title" error={state.fieldErrors?.title}>
+                <AppInput id="title" name="title" required defaultValue="Aula" />
+              </AppField>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Início" htmlFor="startDatetime" error={state.fieldErrors?.startDatetime}>
-                  <Input
+              <div className={`${appStyles.formRow} ${appStyles.formRow2}`}>
+                <AppField label="Início" htmlFor="startDatetime" error={state.fieldErrors?.startDatetime}>
+                  <AppInput
                     id="startDatetime"
                     name="startDatetime"
                     type="datetime-local"
                     defaultValue={selectedRange?.start?.slice(0, 16) ?? ''}
                     required
                   />
-                </Field>
-                <Field label="Fim" htmlFor="endDatetime" error={state.fieldErrors?.endDatetime}>
-                  <Input
+                </AppField>
+                <AppField label="Fim" htmlFor="endDatetime" error={state.fieldErrors?.endDatetime}>
+                  <AppInput
                     id="endDatetime"
                     name="endDatetime"
                     type="datetime-local"
                     defaultValue={selectedRange?.end?.slice(0, 16) ?? ''}
                     required
                   />
-                </Field>
+                </AppField>
               </div>
 
-              <Field label="Observações" htmlFor="notes">
-                <Textarea id="notes" name="notes" rows={2} />
-              </Field>
+              <AppField label="Observações" htmlFor="notes">
+                <AppTextarea id="notes" name="notes" rows={2} />
+              </AppField>
 
-              <div className="flex items-center gap-2">
+              <label className={styles.checkRow} htmlFor="repeatWeekly">
                 <input
                   type="checkbox"
                   id="repeatWeekly"
                   name="repeatWeekly"
                   value="true"
                   onChange={(e) => setRepeatWeekly(e.target.checked)}
-                  className="h-4 w-4 rounded border-hairline"
                 />
-                <label htmlFor="repeatWeekly" className="text-sm text-ink">Repetir semanalmente</label>
-              </div>
+                Repetir semanalmente
+              </label>
 
               {repeatWeekly && (
-                <div className="space-y-3 rounded-xl border border-hairline p-4">
-                  <Field label="Modo de recorrência" htmlFor="recurrenceMode">
-                    <Select id="recurrenceMode" name="recurrenceMode" defaultValue="count">
+                <div className={styles.recurrenceBox}>
+                  <AppField label="Modo de recorrência" htmlFor="recurrenceMode">
+                    <AppSelect id="recurrenceMode" name="recurrenceMode" defaultValue="count">
                       <option value="count">Número de semanas</option>
                       <option value="until">Até uma data</option>
-                    </Select>
-                  </Field>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field label="Nº de semanas" htmlFor="recurrenceCount">
-                      <Input id="recurrenceCount" name="recurrenceCount" type="number" min="1" max="52" defaultValue="4" />
-                    </Field>
-                    <Field label="Até" htmlFor="recurrenceUntil">
-                      <Input id="recurrenceUntil" name="recurrenceUntil" type="date" />
-                    </Field>
+                    </AppSelect>
+                  </AppField>
+                  <div className={`${appStyles.formRow} ${appStyles.formRow2}`}>
+                    <AppField label="Nº de semanas" htmlFor="recurrenceCount">
+                      <AppInput
+                        id="recurrenceCount"
+                        name="recurrenceCount"
+                        type="number"
+                        min="1"
+                        max="52"
+                        defaultValue="4"
+                      />
+                    </AppField>
+                    <AppField label="Até" htmlFor="recurrenceUntil">
+                      <AppInput id="recurrenceUntil" name="recurrenceUntil" type="date" />
+                    </AppField>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="secondary" onClick={closeModals}>Cancelar</Button>
-                <Button type="submit">Criar aula</Button>
+              <div className={styles.modalFooter}>
+                <button
+                  type="button"
+                  className={styles.linkInline}
+                  onClick={closeModals}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <AppSubmit pendingLabel="Criando…">Criar aula</AppSubmit>
               </div>
             </form>
           </div>
@@ -215,47 +246,53 @@ export function ScheduleCalendar({
 
       {/* Modal detalhe de evento */}
       {eventModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-2xl">
-            <div className="mb-4 flex items-start justify-between gap-3">
+        <div className={styles.backdrop} onClick={closeModals}>
+          <div
+            className={`${styles.modal} ${styles.modalSmall}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
               <div>
-                <h2 className="text-base font-bold text-ink">{eventModal.student_name}</h2>
-                <p className="text-sm text-ink-muted">
+                <h2 className={styles.modalTitle}>{eventModal.student_name}</h2>
+                <p className={styles.modalSubtitle}>
                   {new Date(eventModal.start).toLocaleString('pt-BR', {
-                    weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                    weekday: 'short',
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
                   })}
                 </p>
               </div>
-              <button onClick={closeModals} className="text-ink-muted hover:text-ink">✕</button>
+              <button onClick={closeModals} className={styles.modalClose} aria-label="Fechar">
+                ✕
+              </button>
             </div>
 
-            <div className="space-y-3 text-sm">
-              <p>
-                <span className="font-medium text-ink-muted">Status: </span>
-                <span className="font-semibold capitalize">{eventModal.status}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <p className={styles.detailRow}>
+                <span className={styles.detailLabel}>Status:</span>
+                <strong>{STATUS_LABEL[eventModal.status] ?? eventModal.status}</strong>
               </p>
               {eventModal.notes && (
-                <p>
-                  <span className="font-medium text-ink-muted">Notas: </span>
-                  {eventModal.notes}
+                <p className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Notas:</span>
+                  <span>{eventModal.notes}</span>
                 </p>
               )}
             </div>
 
-            <div className="mt-5 flex justify-between">
-              <a
-                href={`/lessons/${eventModal.id}/planner`}
-                className="text-sm font-semibold text-brand-600 hover:underline"
-              >
+            <div className={styles.modalFooter}>
+              <a href={`/lessons/${eventModal.id}/planner`} className={styles.linkInline}>
                 Abrir planejador →
               </a>
-              {['admin', 'teacher'].includes(role) && eventModal.status !== 'canceled' && (
+              {canManage && eventModal.status !== 'canceled' && (
                 <form action={cancelLesson}>
                   <input type="hidden" name="lessonId" value={eventModal.id} />
                   <button
                     type="submit"
                     onClick={() => closeModals()}
-                    className="text-sm font-medium text-red-600 hover:text-red-700"
+                    className={styles.linkDanger}
                   >
                     Cancelar aula
                   </button>

@@ -1,0 +1,259 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   Sonorum — Agenda
+   Limpa a interface densa do FullCalendar para a estética do DS.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.wrap {
+  --ds-ink: #1F3A5F;
+  --ds-ink-deep: #142844;
+  --ds-green: #63C08F;
+  --ds-green-deep: #4FAB78;
+  --ds-canvas: #F2F4F7;
+  --ds-surface: #FFFFFF;
+  --ds-text: #2B2E34;
+  --ds-text-muted: #6B7480;
+  --ds-hairline: #E4E8EF;
+
+  --font-display: var(--font-sans), system-ui, sans-serif;
+  --font-body: var(--font-poppins), system-ui, sans-serif;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.875rem;
+}
+
+.calendar {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hairline);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 8px 24px -10px rgb(31 58 95 / 0.08);
+}
+
+/* ── FullCalendar overrides (escopo via :global dentro do module) ────────── */
+.calendar :global(.fc) {
+  font-family: var(--font-body);
+  --fc-border-color: color-mix(in oklab, var(--ds-hairline) 75%, transparent);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--ds-canvas);
+  --fc-today-bg-color: color-mix(in oklab, var(--ds-green) 6%, transparent);
+  --fc-now-indicator-color: var(--ds-green-deep);
+  --fc-event-text-color: var(--ds-ink);
+}
+
+/* Toolbar superior — título e botões discretos */
+.calendar :global(.fc-toolbar.fc-header-toolbar) {
+  margin-bottom: 0.875rem;
+  align-items: center;
+}
+.calendar :global(.fc-toolbar-title) {
+  font-family: var(--font-display);
+  font-size: 1.125rem !important;
+  font-weight: 600;
+  color: var(--ds-ink);
+  letter-spacing: -0.01em;
+}
+
+/* Botões do header */
+.calendar :global(.fc .fc-button) {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hairline);
+  color: var(--ds-text);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: none;
+  text-transform: none;
+}
+.calendar :global(.fc .fc-button:hover) {
+  background: var(--ds-canvas);
+  color: var(--ds-ink);
+  border-color: var(--ds-ink);
+}
+.calendar :global(.fc .fc-button-primary:focus),
+.calendar :global(.fc .fc-button-primary:not(:disabled):active:focus) {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ds-ink) 18%, transparent);
+}
+.calendar :global(.fc .fc-button-primary:not(:disabled).fc-button-active),
+.calendar :global(.fc .fc-button-primary:not(:disabled):active) {
+  background: var(--ds-ink);
+  border-color: var(--ds-ink);
+  color: #fff;
+}
+.calendar :global(.fc .fc-today-button) {
+  background: var(--ds-ink);
+  color: #fff;
+  border-color: var(--ds-ink);
+}
+.calendar :global(.fc .fc-today-button:disabled) {
+  opacity: 0.5;
+  background: var(--ds-canvas);
+  color: var(--ds-text-muted);
+  border-color: var(--ds-hairline);
+}
+
+/* Cabeçalho dos dias da semana — só o necessário */
+.calendar :global(.fc-col-header-cell-cushion) {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ds-text-muted);
+  padding: 0.625rem 0.5rem;
+}
+
+/* Slots de hora — texto menor, tabs muted */
+.calendar :global(.fc .fc-timegrid-slot-label-cushion),
+.calendar :global(.fc .fc-list-day-cushion) {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: var(--ds-text-muted);
+}
+.calendar :global(.fc-timegrid-slot) { height: 2.25rem; }
+
+/* Eventos — fontes mais sutis */
+.calendar :global(.fc-event) {
+  border-radius: 0.5rem;
+  border: none;
+  padding: 0.125rem 0.375rem;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+.calendar :global(.fc-event-title) { font-weight: 600; }
+.calendar :global(.fc-event-time) {
+  font-size: 0.625rem;
+  opacity: 0.85;
+}
+
+/* Day grid (visão mês) */
+.calendar :global(.fc-daygrid-day-number) {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ds-text);
+  padding: 0.375rem;
+}
+
+/* Lista (visão lista) */
+.calendar :global(.fc-list-day-cushion) {
+  background: var(--ds-canvas) !important;
+  padding: 0.5rem 0.875rem;
+}
+.calendar :global(.fc-list-event) { font-size: 0.8125rem; }
+.calendar :global(.fc-list-event:hover td) {
+  background: color-mix(in oklab, var(--ds-canvas) 80%, transparent);
+}
+
+/* Tira o "All-day" e bordas duplas */
+.calendar :global(.fc .fc-scrollgrid) {
+  border-color: color-mix(in oklab, var(--ds-hairline) 75%, transparent);
+}
+
+/* ── Modal ──────────────────────────────────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(20 40 68 / 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal {
+  width: 100%;
+  max-width: 32rem;
+  background: var(--ds-surface);
+  border-radius: 1.125rem;
+  padding: 1.5rem;
+  box-shadow: 0 30px 60px -20px rgb(20 40 68 / 0.35);
+}
+.modalSmall { max-width: 24rem; }
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.modalTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--ds-ink);
+}
+.modalSubtitle {
+  margin: 0.125rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ds-text-muted);
+}
+.modalClose {
+  background: transparent;
+  border: none;
+  color: var(--ds-text-muted);
+  font-size: 1.125rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+.modalClose:hover { color: var(--ds-ink); }
+
+.modalFooter {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.recurrenceBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px dashed var(--ds-hairline);
+  border-radius: 0.875rem;
+}
+
+.checkRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--ds-text);
+}
+.checkRow input { accent-color: var(--ds-ink); }
+
+.detailRow {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+.detailRow strong { font-weight: 600; color: var(--ds-ink); }
+.detailLabel { color: var(--ds-text-muted); }
+
+.linkInline {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-ink);
+  text-decoration: none;
+}
+.linkInline:hover { color: var(--ds-green-deep); }
+.linkDanger {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #DC2626;
+}
+.linkDanger:hover { text-decoration: underline; }
