@@ -21,8 +21,18 @@ export function Sidebar({ role, name, schoolName }: SidebarProps) {
   const pathname = usePathname()
   const items = NAV_BY_ROLE[role]
 
-  const isActive = (href: string) =>
+  // Item ativo = o match MAIS específico, não qualquer prefixo. Sem isso, um
+  // href "pai" (ex: Dashboard /admin) acende em toda subrota (/admin/teachers,
+  // /admin/students…), marcando dois itens ao mesmo tempo.
+  const matches = (href: string) =>
     pathname === href || (href !== '/' && pathname.startsWith(`${href}/`))
+
+  const activeHref = items
+    .map((item) => item.href)
+    .filter(matches)
+    .sort((a, b) => b.length - a.length)[0]
+
+  const isActive = (href: string) => href === activeHref
 
   return (
     <aside className={styles.sidebar}>
