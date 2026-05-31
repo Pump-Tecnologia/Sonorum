@@ -101,9 +101,28 @@ export async function createLesson(
   const roomId = d.roomId || null
   const supabase = await createClient()
 
-  // Conflito de sala: a sala não pode ter outra aula sobreposta no horário.
-  if (roomId && (await roomHasConflict(supabase, roomId, d.startDatetime, d.endDatetime))) {
-    return { ok: false, error: 'Essa sala já tem uma aula nesse horário.' }
+  // Todas as ocorrências (aula principal + recorrência semanal).
+  const occurrences: Array<[string, string]> = [[d.startDatetime, d.endDatetime]]
+  if (d.repeatWeekly && d.recurrenceMode) {
+    const extras = weeklyOccurrences(
+      new Date(d.startDatetime),
+      new Date(d.endDatetime),
+      d.recurrenceMode,
+      d.recurrenceUntil,
+      d.recurrenceCount,
+    )
+    for (const [s, e] of extras) occurrences.push([s.toISOString(), e.toISOString()])
+  }
+
+  // Conflito de sala: nenhuma ocorrência pode cair numa sala já ocupada no
+  // horário — inclui as datas da recorrência (não só a primeira aula).
+  if (roomId) {
+    for (const [s, e] of occurrences) {
+      if (await roomHasConflict(supabase, roomId, s, e)) {
+        const when = new Date(s).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+        return { ok: false, error: `Essa sala já tem uma aula nesse horário (conflito em ${when}).` }
+      }
+    }
   }
 
   const toInsert = (start: string, end: string) => ({
@@ -118,25 +137,8 @@ export async function createLesson(
     notes: d.notes ?? null,
   })
 
-  // Insert primeira aula
-  const { error } = await supabase.from('lessons').insert(toInsert(d.startDatetime, d.endDatetime))
+  const { error } = await supabase.from('lessons').insert(occurrences.map(([s, e]) => toInsert(s, e)))
   if (error) return { ok: false, error: 'Não foi possível criar a aula.' }
-
-  // Recorrência semanal
-  if (d.repeatWeekly && d.recurrenceMode) {
-    const extras = weeklyOccurrences(
-      new Date(d.startDatetime),
-      new Date(d.endDatetime),
-      d.recurrenceMode,
-      d.recurrenceUntil,
-      d.recurrenceCount,
-    )
-    if (extras.length > 0) {
-      await supabase.from('lessons').insert(
-        extras.map(([s, e]) => toInsert(s.toISOString(), e.toISOString())),
-      )
-    }
-  }
 
   revalidatePath('/schedule')
   return { ok: true }
