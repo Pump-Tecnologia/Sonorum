@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
-import { Field, Input } from '@/components/ui/Field'
+import { AuthField, AuthInput } from '@/components/auth/AuthField'
+import { AuthSubmit } from '@/components/auth/AuthSubmit'
+import styles from '@/components/auth/auth.module.css'
 import { signIn } from '@/lib/auth/actions'
 import type { ActionState } from '@/lib/auth/schemas'
 
@@ -12,38 +13,48 @@ const initial: ActionState = { ok: false }
 
 export function LoginForm({ next }: { next?: string }) {
   const [state, action] = useActionState(signIn, initial)
+  const fe = state.fieldErrors ?? {}
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} className={styles.form}>
       {next && <input type="hidden" name="next" value={next} />}
 
-      {state.error && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          {state.error}
-        </p>
-      )}
+      {state.error && <p className={styles.alert}>{state.error}</p>}
 
-      <Field label="E-mail" htmlFor="email" error={state.fieldErrors?.email}>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
-      </Field>
+      <AuthField label="E-mail" htmlFor="email" error={fe.email}>
+        <AuthInput
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          placeholder="voce@exemplo.com"
+          invalid={Boolean(fe.email)}
+          required
+        />
+      </AuthField>
 
-      <Field label="Senha" htmlFor="password" error={state.fieldErrors?.password}>
-        <Input id="password" name="password" type="password" autoComplete="current-password" required />
-      </Field>
+      <AuthField label="Senha" htmlFor="password" error={fe.password}>
+        <AuthInput
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          invalid={Boolean(fe.password)}
+          required
+        />
+      </AuthField>
 
-      <div className="flex justify-end">
-        <Link href="/forgot-password" className="text-sm font-medium text-brand-600 hover:text-brand-700">
+      <div className={styles.forgotRow}>
+        <Link href="/forgot-password" className={styles.linkInline}>
           Esqueci minha senha
         </Link>
       </div>
 
-      <SubmitButton pendingLabel="Entrando…">Entrar</SubmitButton>
+      <AuthSubmit pendingLabel="Entrando…">Entrar</AuthSubmit>
 
-      <p className="text-center text-sm text-ink-muted">
-        Ainda não tem conta?{' '}
-        <Link href="/register" className="font-semibold text-brand-600 hover:text-brand-700">
-          Criar conta
-        </Link>
+      <p className={styles.footerLine}>
+        Ainda não tem conta? <Link href="/register">Criar conta</Link>
       </p>
     </form>
   )

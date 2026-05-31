@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { LoginForm } from '@/components/auth/LoginForm'
+import styles from '@/components/auth/auth.module.css'
 
 export const metadata: Metadata = { title: 'Entrar' }
 
@@ -12,10 +13,10 @@ export default async function LoginPage({
   const { next } = await searchParams
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-ink">Entrar</h1>
-      <p className="mt-1 mb-8 text-sm text-ink-muted">Acesse o painel da sua escola.</p>
+    <>
+      <h1 className={styles.title}>Entrar</h1>
+      <p className={styles.subtitle}>Acesse o painel da sua escola.</p>
       <LoginForm next={next} />
-    </div>
+    </>
   )
 }

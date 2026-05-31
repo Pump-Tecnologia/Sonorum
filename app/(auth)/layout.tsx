@@ -1,41 +1,54 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
-// Layout de autenticação: painel de marca à esquerda, formulário à direita.
+import styles from '@/components/auth/auth.module.css'
+
+const LOGO_VAZADO = '/brand/logo-vazado.png'
+
+// Layout de autenticação: painel de marca à esquerda (fundo ink),
+// formulário à direita (canvas claro). Em mobile, só o formulário aparece
+// com uma brand reduzida no topo.
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
-      {/* Painel de marca */}
-      <aside className="relative hidden overflow-hidden bg-brand-700 lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div
-          aria-hidden
-          className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-500/40 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-accent-400/25 blur-3xl"
-        />
-        <Link href="/" className="relative text-2xl font-bold tracking-tight text-white">
-          Sonorum
+    <div className={styles.page}>
+      {/* Painel de marca — escondido em mobile/tablet */}
+      <aside className={styles.brandPanel}>
+        <Link href="/" className={styles.brandHeader} aria-label="Sonorum">
+          <Image
+            src={LOGO_VAZADO}
+            alt=""
+            width={36}
+            height={36}
+            priority
+            className={styles.brandMark}
+          />
+          <span className={styles.brandWord}>Sonorum</span>
         </Link>
-        <div className="relative max-w-md">
-          <p className="text-3xl font-semibold leading-tight text-white">
-            A regência da sua escola de música, num só lugar.
+
+        <div className={styles.brandPitch}>
+          <p className={styles.brandPitchTitle}>
+            A regência da sua escola de música, <em>num só lugar.</em>
           </p>
-          <p className="mt-4 text-brand-100">
+          <p className={styles.brandPitchSub}>
             Agenda, alunos, professores, materiais e financeiro — afinados.
           </p>
         </div>
-        <p className="relative text-sm text-brand-200">© Sonorum</p>
+
+        <p className={styles.brandFoot}>© Sonorum</p>
       </aside>
 
-      {/* Formulário */}
-      <main className="flex items-center justify-center bg-canvas px-6 py-12">
-        <div className="w-full max-w-sm">
-          <Link
-            href="/"
-            className="mb-8 inline-block text-xl font-bold tracking-tight text-brand-700 lg:hidden"
-          >
-            Sonorum
+      {/* Painel do formulário */}
+      <main className={styles.formPanel}>
+        <div className={styles.formInner}>
+          <Link href="/" className={styles.brandMobile} aria-label="Sonorum">
+            <Image
+              src={LOGO_VAZADO}
+              alt=""
+              width={32}
+              height={32}
+              className={styles.brandMobileMark}
+            />
+            <span className={styles.brandMobileWord}>Sonorum</span>
           </Link>
           {children}
         </div>

@@ -2,8 +2,9 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
-import { Field, Input } from '@/components/ui/Field'
+import { AuthField, AuthInput } from '@/components/auth/AuthField'
+import { AuthSubmit } from '@/components/auth/AuthSubmit'
+import styles from '@/components/auth/auth.module.css'
 import { updatePassword } from '@/lib/auth/actions'
 import type { ActionState } from '@/lib/auth/schemas'
 
@@ -14,32 +15,34 @@ export function ResetPasswordForm() {
   const fe = state.fieldErrors ?? {}
 
   return (
-    <form action={action} className="space-y-5">
-      {state.error && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          {state.error}
-        </p>
-      )}
+    <form action={action} className={styles.form}>
+      {state.error && <p className={styles.alert}>{state.error}</p>}
 
-      <Field label="Nova senha" htmlFor="password" error={fe.password} hint="Mínimo de 8 caracteres">
-        <Input id="password" name="password" type="password" autoComplete="new-password" required />
-      </Field>
+      <AuthField label="Nova senha" htmlFor="password" error={fe.password} hint="Mínimo de 8 caracteres">
+        <AuthInput
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="••••••••"
+          invalid={Boolean(fe.password)}
+          required
+        />
+      </AuthField>
 
-      <Field
-        label="Confirmar nova senha"
-        htmlFor="passwordConfirmation"
-        error={fe.passwordConfirmation}
-      >
-        <Input
+      <AuthField label="Confirmar nova senha" htmlFor="passwordConfirmation" error={fe.passwordConfirmation}>
+        <AuthInput
           id="passwordConfirmation"
           name="passwordConfirmation"
           type="password"
           autoComplete="new-password"
+          placeholder="••••••••"
+          invalid={Boolean(fe.passwordConfirmation)}
           required
         />
-      </Field>
+      </AuthField>
 
-      <SubmitButton pendingLabel="Salvando…">Redefinir senha</SubmitButton>
+      <AuthSubmit pendingLabel="Salvando…">Redefinir senha</AuthSubmit>
     </form>
   )
 }

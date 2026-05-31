@@ -1,0 +1,306 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   Sonorum — Auth (login, registro, forgot, reset)
+   Mesmo design system da LP: tokens locais para isolar do Tailwind do app.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.page {
+  --ds-ink: #1F3A5F;
+  --ds-ink-deep: #142844;
+  --ds-green: #63C08F;
+  --ds-green-soft: #A8DCC1;
+  --ds-green-deep: #4FAB78;
+  --ds-canvas: #F2F4F7;
+  --ds-surface: #FFFFFF;
+  --ds-text: #2B2E34;
+  --ds-text-muted: #6B7480;
+  --ds-hairline: #E4E8EF;
+
+  --font-display: var(--font-sans), system-ui, sans-serif;
+  --font-body: var(--font-poppins), system-ui, sans-serif;
+
+  --r-md: 0.875rem;
+  --r-lg: 1.125rem;
+  --r-xl: 1.5rem;
+
+  font-family: var(--font-body);
+  color: var(--ds-text);
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .page { grid-template-columns: 1.1fr 1fr; }
+}
+
+/* ── Painel de marca (esquerda, fundo ink) ───────────────────────────────── */
+.brandPanel {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  background: var(--ds-ink);
+  color: #fff;
+  padding: 3rem;
+  flex-direction: column;
+  justify-content: space-between;
+}
+@media (min-width: 1024px) {
+  .brandPanel { display: flex; }
+}
+.brandPanel::before {
+  /* Brilho verde difuso no canto superior direito */
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 28rem;
+  height: 28rem;
+  background: radial-gradient(circle, color-mix(in oklab, var(--ds-green) 30%, transparent) 0%, transparent 60%);
+  pointer-events: none;
+}
+.brandPanel::after {
+  /* Brilho complementar embaixo à esquerda */
+  content: '';
+  position: absolute;
+  bottom: -15%;
+  left: -10%;
+  width: 24rem;
+  height: 24rem;
+  background: radial-gradient(circle, color-mix(in oklab, var(--ds-green-soft) 15%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.brandHeader {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  text-decoration: none;
+  color: #fff;
+}
+.brandMark {
+  width: 2.25rem;
+  height: 2.25rem;
+  object-fit: contain;
+}
+.brandWord {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.brandPitch {
+  position: relative;
+  max-width: 28rem;
+}
+.brandPitchTitle {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: #fff;
+}
+.brandPitchTitle em {
+  font-style: normal;
+  color: var(--ds-green-soft);
+}
+.brandPitchSub {
+  margin-top: 1rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: color-mix(in oklab, #fff 80%, transparent);
+}
+
+.brandFoot {
+  position: relative;
+  font-size: 0.75rem;
+  color: color-mix(in oklab, #fff 60%, transparent);
+}
+
+/* ── Painel do formulário (direita) ──────────────────────────────────────── */
+.formPanel {
+  background: var(--ds-canvas);
+  padding: 2rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+@media (min-width: 640px) {
+  .formPanel { padding: 3rem 2rem; }
+}
+
+.formInner {
+  width: 100%;
+  max-width: 24rem;
+}
+
+/* Brand pequena no topo, visível só em mobile/tablet (lg- esconde) */
+.brandMobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  text-decoration: none;
+}
+.brandMobileMark { width: 2rem; height: 2rem; object-fit: contain; }
+.brandMobileWord {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--ds-ink);
+}
+@media (min-width: 1024px) {
+  .brandMobile { display: none; }
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--ds-ink);
+  margin: 0;
+}
+.subtitle {
+  margin: 0.5rem 0 1.75rem 0;
+  font-size: 0.9375rem;
+  color: var(--ds-text-muted);
+  line-height: 1.55;
+}
+
+/* Badge informativo (usado no /register) */
+.notice {
+  margin: 0 0 1.75rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-md);
+  background: color-mix(in oklab, var(--ds-green-soft) 50%, transparent);
+  color: #1F5C3A;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
+}
+.label {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-ink);
+}
+.input {
+  width: 100%;
+  padding: 0.75rem 0.9375rem;
+  border: 1px solid var(--ds-hairline);
+  background: var(--ds-surface);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--ds-text);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.input::placeholder { color: color-mix(in oklab, var(--ds-text-muted) 80%, transparent); }
+.input:focus {
+  outline: none;
+  border-color: var(--ds-ink);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--ds-ink) 12%, transparent);
+}
+.input[aria-invalid='true'] {
+  border-color: #DC2626;
+  box-shadow: 0 0 0 4px rgb(220 38 38 / 0.1);
+}
+.hint { font-size: 0.75rem; color: var(--ds-text-muted); }
+.error { font-size: 0.75rem; font-weight: 500; color: #DC2626; }
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-md);
+  background: #FEE2E2;
+  color: #991B1B;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.success {
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-md);
+  background: color-mix(in oklab, var(--ds-green-soft) 55%, transparent);
+  color: #1F5C3A;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.forgotRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.25rem;
+}
+.linkInline {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ds-ink);
+  text-decoration: none;
+}
+.linkInline:hover { color: var(--ds-green-deep); }
+
+/* ── Botão submit ────────────────────────────────────────────────────────── */
+.submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8125rem 1.25rem;
+  background: var(--ds-ink);
+  color: #fff;
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -10px rgb(31 58 95 / 0.55);
+  transition: background-color 200ms ease, transform 200ms ease;
+}
+.submit:hover:not(:disabled) {
+  background: var(--ds-ink-deep);
+  transform: translateY(-1px);
+}
+.submit:active:not(:disabled) { transform: translateY(0); }
+.submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Linha do rodapé do form (ex: "Já tem conta? Entrar") */
+.footerLine {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--ds-text-muted);
+}
+.footerLine a {
+  font-weight: 600;
+  color: var(--ds-ink);
+  text-decoration: none;
+}
+.footerLine a:hover { color: var(--ds-green-deep); }
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ds-ink);
+  text-decoration: none;
+}
+.backLink:hover { color: var(--ds-green-deep); }

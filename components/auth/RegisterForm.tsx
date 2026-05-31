@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
-import { Field, Input } from '@/components/ui/Field'
+import { AuthField, AuthInput } from '@/components/auth/AuthField'
+import { AuthSubmit } from '@/components/auth/AuthSubmit'
+import styles from '@/components/auth/auth.module.css'
 import { signUp } from '@/lib/auth/actions'
 import type { ActionState } from '@/lib/auth/schemas'
 
@@ -15,50 +16,71 @@ export function RegisterForm() {
   const fe = state.fieldErrors ?? {}
 
   return (
-    <form action={action} className="space-y-5">
-      {state.error && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          {state.error}
-        </p>
-      )}
+    <form action={action} className={styles.form}>
+      {state.error && <p className={styles.alert}>{state.error}</p>}
 
-      <Field label="Nome da escola" htmlFor="schoolName" error={fe.schoolName}>
-        <Input id="schoolName" name="schoolName" autoComplete="organization" required />
-      </Field>
+      <AuthField label="Nome da escola" htmlFor="schoolName" error={fe.schoolName}>
+        <AuthInput
+          id="schoolName"
+          name="schoolName"
+          autoComplete="organization"
+          placeholder="Ex.: Escola Tom Maior"
+          invalid={Boolean(fe.schoolName)}
+          required
+        />
+      </AuthField>
 
-      <Field label="Seu nome" htmlFor="name" error={fe.name}>
-        <Input id="name" name="name" autoComplete="name" required />
-      </Field>
+      <AuthField label="Seu nome" htmlFor="name" error={fe.name}>
+        <AuthInput
+          id="name"
+          name="name"
+          autoComplete="name"
+          placeholder="Como devemos te chamar?"
+          invalid={Boolean(fe.name)}
+          required
+        />
+      </AuthField>
 
-      <Field label="E-mail" htmlFor="email" error={fe.email}>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
-      </Field>
+      <AuthField label="E-mail" htmlFor="email" error={fe.email}>
+        <AuthInput
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          placeholder="voce@exemplo.com"
+          invalid={Boolean(fe.email)}
+          required
+        />
+      </AuthField>
 
-      <Field label="Senha" htmlFor="password" error={fe.password} hint="Mínimo de 8 caracteres">
-        <Input id="password" name="password" type="password" autoComplete="new-password" required />
-      </Field>
+      <AuthField label="Senha" htmlFor="password" error={fe.password} hint="Mínimo de 8 caracteres">
+        <AuthInput
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          placeholder="••••••••"
+          invalid={Boolean(fe.password)}
+          required
+        />
+      </AuthField>
 
-      <Field
-        label="Confirmar senha"
-        htmlFor="passwordConfirmation"
-        error={fe.passwordConfirmation}
-      >
-        <Input
+      <AuthField label="Confirmar senha" htmlFor="passwordConfirmation" error={fe.passwordConfirmation}>
+        <AuthInput
           id="passwordConfirmation"
           name="passwordConfirmation"
           type="password"
           autoComplete="new-password"
+          placeholder="••••••••"
+          invalid={Boolean(fe.passwordConfirmation)}
           required
         />
-      </Field>
+      </AuthField>
 
-      <SubmitButton pendingLabel="Criando…">Criar conta grátis</SubmitButton>
+      <AuthSubmit pendingLabel="Criando…">Criar conta grátis</AuthSubmit>
 
-      <p className="text-center text-sm text-ink-muted">
-        Já tem conta?{' '}
-        <Link href="/login" className="font-semibold text-brand-600 hover:text-brand-700">
-          Entrar
-        </Link>
+      <p className={styles.footerLine}>
+        Já tem conta? <Link href="/login">Entrar</Link>
       </p>
     </form>
   )
