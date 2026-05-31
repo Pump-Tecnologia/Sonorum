@@ -58,21 +58,9 @@
   height: 100dvh;
   position: sticky;
   top: 0;
-  overflow: hidden;
-}
-.sidebar::before {
-  content: '';
-  position: absolute;
-  top: -20%;
-  right: -30%;
-  width: 22rem;
-  height: 22rem;
-  background: radial-gradient(circle, color-mix(in oklab, var(--ds-green) 25%, transparent) 0%, transparent 60%);
-  pointer-events: none;
 }
 
 .sidebarHeader {
-  position: relative;
   padding: 1.5rem 1.25rem 1.25rem;
 }
 .sidebarBrand {
@@ -100,7 +88,6 @@
 }
 
 .sidebarNav {
-  position: relative;
   flex: 1;
   overflow-y: auto;
   padding: 0.5rem 0.75rem;
@@ -134,7 +121,6 @@
 }
 
 .sidebarFooter {
-  position: relative;
   border-top: 1px solid color-mix(in oklab, #fff 12%, transparent);
   padding: 1rem 1.25rem;
 }

@@ -25,7 +25,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   const impersonatorId = await getImpersonatorId()
-  const isImpersonating = Boolean(impersonatorId)
+  // Banner só faz sentido quando o impersonador é OUTRA conta (não a própria do
+  // user). Cobre o caso de cookie stale: o user voltou para a própria conta sem
+  // passar pelo stopImpersonating, ou fez login normal com o cookie pendente.
+  const isImpersonating = Boolean(impersonatorId) && impersonatorId !== user.id
 
   return (
     <div className={styles.shell}>

@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
@@ -123,6 +124,10 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
 export async function signOut() {
   const supabase = await createClient()
   await supabase.auth.signOut()
+  // Limpa o cookie de impersonação se estiver pendente — evita banner stale
+  // no próximo login.
+  const jar = await cookies()
+  jar.delete('sonorum_impersonator')
   revalidatePath('/', 'layout')
   redirect('/login')
 }
