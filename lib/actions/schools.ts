@@ -105,3 +105,55 @@ export async function createSchool(
   revalidatePath('/superadmin')
   return { ok: true, tempPassword, createdEmail: adminEmail }
 }
+
+const updateSchoolSchema = z.object({
+  schoolId: z.string().uuid(),
+  planType: z.enum(['free', 'professional', 'premium']),
+  monthlyPrice: z.coerce.number().min(0, 'Valor inválido'),
+  expirationDate: z.string().optional().or(z.literal('')),
+})
+
+// Edita plano/valor/vencimento de uma escola. Superadmin apenas.
+export async function updateSchool(
+  _prev: SchoolActionState,
+  formData: FormData,
+): Promise<SchoolActionState> {
+  const me = await getCurrentUser()
+  if (me?.role !== 'superadmin') return { ok: false, error: 'Acesso negado.' }
+
+  const parsed = updateSchoolSchema.safeParse({
+    schoolId: formData.get('schoolId'),
+    planType: formData.get('planType'),
+    monthlyPrice: formData.get('monthlyPrice'),
+    expirationDate: formData.get('expirationDate') || '',
+  })
+  if (!parsed.success) {
+    const flat = parsed.error.flatten().fieldErrors
+    return {
+      ok: false,
+      fieldErrors: Object.fromEntries(
+        Object.entries(flat).map(([k, v]) => [k, v?.[0] ?? 'Inválido']),
+      ),
+    }
+  }
+
+  const { schoolId, planType, monthlyPrice, expirationDate } = parsed.data
+  const admin = await createAdminClient()
+  const studentLimit = planType === 'free' ? 5 : 999999
+
+  const { error } = await admin
+    .from('schools')
+    .update({
+      plan_type: planType,
+      active_plan: planType,
+      monthly_price: monthlyPrice,
+      expiration_date: expirationDate || null,
+      student_limit: studentLimit,
+    })
+    .eq('id', schoolId)
+
+  if (error) return { ok: false, error: 'Não foi possível atualizar a escola.' }
+
+  revalidatePath('/superadmin')
+  return { ok: true }
+}

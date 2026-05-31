@@ -177,7 +177,12 @@ export default async function SuperAdminDashboard() {
                   <td className={cellMuted}>{formatBRL(s.faturamento)}</td>
                   <td><AppBadge tone={s.ativa ? 'success' : 'danger'}>{s.ativa ? 'Ativa' : 'Expirada'}</AppBadge></td>
                   <td className={tableRight}>
-                    {adminUser && <ImpersonateButton targetUserId={adminUser.id} label="Entrar como admin" />}
+                    <div className="flex items-center justify-end gap-3">
+                      <Link href={`/superadmin/schools/${s.id}/edit`} className="text-xs font-semibold text-brand-600 hover:underline">
+                        Editar
+                      </Link>
+                      {adminUser && <ImpersonateButton targetUserId={adminUser.id} label="Entrar como admin" />}
+                    </div>
                   </td>
                 </tr>
               )
