@@ -6,7 +6,8 @@ import { ResourcePicker } from '@/components/schedule/ResourcePicker'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
-import { detachResource, updateLesson, upsertLessonPlan } from '@/lib/actions/lessons'
+import { detachResource, markAttendance, updateLesson, upsertLessonPlan } from '@/lib/actions/lessons'
+import { lessonStatus } from '@/lib/constants/lessons'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Planejador de aula' }
@@ -14,8 +15,17 @@ export const metadata = { title: 'Planejador de aula' }
 const STATUS_OPTS = [
   { value: 'scheduled', label: 'Agendada' },
   { value: 'completed', label: 'Realizada' },
+  { value: 'late', label: 'Atrasado' },
+  { value: 'missed', label: 'Faltou' },
   { value: 'canceled', label: 'Cancelada' },
 ]
+
+// Botões de presença rápida (modo dar-aula).
+const ATTENDANCE_BTNS = [
+  { value: 'completed', label: 'Presente', cls: 'bg-accent-600 text-white hover:bg-accent-700' },
+  { value: 'late', label: 'Atrasado', cls: 'bg-amber-500 text-white hover:bg-amber-600' },
+  { value: 'missed', label: 'Faltou', cls: 'bg-red-600 text-white hover:bg-red-700' },
+] as const
 
 const SECTION_LABEL: Record<string, string> = {
   warmup: 'Aquecimento',
@@ -30,7 +40,7 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, status, notes, goals, private_notes, users!lessons_student_id_fkey(name, instrument)')
+    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, users!lessons_student_id_fkey(name, instrument)')
     .eq('id', id)
     .maybeSingle()
 
@@ -60,6 +70,15 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
 
   const student = lesson.users as { name: string; instrument: unknown } | null
 
+  // Janela da aula vs. agora — define o "modo dar-aula".
+  const now = new Date()
+  const start = new Date(lesson.start_datetime)
+  const end = lesson.end_datetime ? new Date(lesson.end_datetime) : null
+  const isLive = start <= now && (end ? now <= end : true)
+  const hasStarted = now >= start
+  // Aula já começou/passou e ainda está "Agendada" → presença pendente.
+  const awaitingAttendance = lesson.status === 'scheduled' && hasStarted
+
   return (
     <>
       <PageHeader
@@ -68,6 +87,42 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
           weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
         })}
       />
+
+      {/* Presença — modo dar-aula */}
+      <Card className={`mb-6 ${isLive ? 'border-accent-500 bg-accent-50/40' : awaitingAttendance ? 'border-amber-300' : ''}`}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            {isLive && (
+              <span className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-accent-600" />
+                Aula em andamento
+              </span>
+            )}
+            <h2 className="text-base font-semibold text-ink">Presença</h2>
+            <p className="text-sm text-ink-muted">
+              {awaitingAttendance
+                ? 'A aula já começou — registre a presença do aluno.'
+                : <>Status atual: <strong className="text-ink">{lessonStatus(lesson.status).label}</strong></>}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {ATTENDANCE_BTNS.map((b) => (
+              <form key={b.value} action={markAttendance}>
+                <input type="hidden" name="lessonId" value={lesson.id} />
+                <input type="hidden" name="status" value={b.value} />
+                <button
+                  type="submit"
+                  className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${b.cls} ${
+                    lesson.status === b.value ? 'ring-2 ring-ink/30 ring-offset-2' : 'opacity-90 hover:opacity-100'
+                  }`}
+                >
+                  {b.label}
+                </button>
+              </form>
+            ))}
+          </div>
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Coluna 1 — Status, observações e planejamento */}

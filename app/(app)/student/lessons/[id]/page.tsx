@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
+import { lessonStatus } from '@/lib/constants/lessons'
 import { Card } from '@/components/ui/Card'
 import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
@@ -52,9 +53,7 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
         <Card>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-ink">Detalhes</h2>
-            <Badge tone={lesson.status === 'completed' ? 'success' : 'neutral'}>
-              {lesson.status === 'completed' ? 'Realizada' : 'Agendada'}
-            </Badge>
+            <Badge tone={lessonStatus(lesson.status).tone}>{lessonStatus(lesson.status).label}</Badge>
           </div>
           <dl className="space-y-3 text-sm">
             {teacher?.name && (

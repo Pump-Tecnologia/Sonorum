@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/app/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { lessonStatus } from '@/lib/constants/lessons'
 import { toggleGoal } from '@/lib/actions/student-detail'
 import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
@@ -80,9 +81,7 @@ export default async function StudentDashboard() {
             <div>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-medium text-ink">{lastLesson.title}</p>
-                <Badge tone={lastLesson.status === 'completed' ? 'success' : 'neutral'}>
-                  {lastLesson.status === 'completed' ? 'Realizada' : 'Registrada'}
-                </Badge>
+                <Badge tone={lessonStatus(lastLesson.status).tone}>{lessonStatus(lastLesson.status).label}</Badge>
               </div>
               <p className="mt-1 text-sm text-ink-muted">
                 {new Date(lastLesson.start_datetime).toLocaleDateString('pt-BR', {

@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
+import { lessonStatus } from '@/lib/constants/lessons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { StatCard } from '@/components/ui/StatCard'
@@ -149,9 +150,7 @@ export default async function AdminDashboard() {
                       {new Date(l.start_datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <Badge tone={l.status === 'completed' ? 'success' : l.status === 'canceled' ? 'danger' : 'neutral'}>
-                    {l.status === 'completed' ? 'Realizada' : l.status === 'canceled' ? 'Cancelada' : 'Agendada'}
-                  </Badge>
+                  <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
                 </li>
               ))}
             </ul>

@@ -33,6 +33,8 @@ interface SelectedEvent {
 const STATUS_LABEL: Record<string, string> = {
   scheduled: 'Agendada',
   completed: 'Realizada',
+  late: 'Atrasado',
+  missed: 'Faltou',
   canceled: 'Cancelada',
 }
 

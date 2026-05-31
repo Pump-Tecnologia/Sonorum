@@ -20,12 +20,13 @@ export default async function ReportsPage() {
   const now = new Date()
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  // Frequência (últimos 30 dias)
+  // Frequência (últimos 30 dias) — presença = realizada ou atrasada; falta = missed.
+  // Canceladas ficam de fora da taxa (não são falta do aluno).
   const { data: lessonsRaw } = await supabase
     .from('lessons')
     .select('status, student_id, users!lessons_student_id_fkey(name)')
     .gte('start_datetime', thirtyDaysAgo)
-    .in('status', ['completed', 'canceled'])
+    .in('status', ['completed', 'late', 'missed'])
 
   type LessonRow = { status: string; student_id: string; users: { name: string } | null }
   const lessons = (lessonsRaw ?? []) as unknown as LessonRow[]
@@ -33,7 +34,7 @@ export default async function ReportsPage() {
   const attendanceMap = new Map<string, { name: string; attended: number; missed: number }>()
   for (const l of lessons) {
     const existing = attendanceMap.get(l.student_id) ?? { name: l.users?.name ?? '—', attended: 0, missed: 0 }
-    if (l.status === 'completed') existing.attended++
+    if (l.status === 'completed' || l.status === 'late') existing.attended++
     else existing.missed++
     attendanceMap.set(l.student_id, existing)
   }
@@ -101,8 +102,8 @@ export default async function ReportsPage() {
           <Thead>
             <Tr>
               <Th>Aluno</Th>
-              <Th>Realizadas</Th>
-              <Th>Canceladas</Th>
+              <Th>Presenças</Th>
+              <Th>Faltas</Th>
               <Th>Taxa</Th>
             </Tr>
           </Thead>

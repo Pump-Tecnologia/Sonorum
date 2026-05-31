@@ -7,6 +7,8 @@ import { getCurrentUser } from '@/lib/auth/session'
 function eventColor(instrument: unknown, status: string): string {
   if (status === 'canceled') return '#E5E7EB'
   if (status === 'completed') return '#D1FAE5'
+  if (status === 'missed') return '#FECACA'
+  if (status === 'late') return '#FDE68A'
   const instr = String(Array.isArray(instrument) ? instrument[0] : instrument ?? '').toLowerCase()
   if (/piano|teclado/.test(instr)) return '#BFDBFE'
   if (/violão|guitarra/.test(instr)) return '#FDE68A'

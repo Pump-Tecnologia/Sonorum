@@ -166,6 +166,27 @@ export async function cancelLesson(formData: FormData) {
   revalidatePath('/schedule')
 }
 
+// Registro de presença na hora da aula — botões rápidos do planner.
+// 'completed' = presente, 'late' = atrasado (conta como presença), 'missed' = faltou.
+const ATTENDANCE_STATUSES = ['completed', 'late', 'missed'] as const
+
+export async function markAttendance(formData: FormData) {
+  const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
+
+  const lessonId = String(formData.get('lessonId') ?? '')
+  const status = String(formData.get('status') ?? '')
+  const isValid = (ATTENDANCE_STATUSES as readonly string[]).includes(status)
+  if (!lessonId || !isValid) return
+
+  const supabase = await createClient()
+  await supabase.from('lessons').update({ status }).eq('id', lessonId)
+
+  revalidatePath('/schedule')
+  revalidatePath('/teacher')
+  revalidatePath(`/lessons/${lessonId}/planner`)
+}
+
 // ── Lesson Plan (warmup/repertoire/homework/target_bpm) ─────────────────────
 export async function upsertLessonPlan(formData: FormData) {
   const me = await getCurrentUser()

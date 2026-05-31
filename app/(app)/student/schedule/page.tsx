@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
+import { lessonStatus } from '@/lib/constants/lessons'
 import { Card } from '@/components/ui/Card'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -95,9 +96,7 @@ export default async function StudentSchedulePage() {
                   </Td>
                   <Td className="text-ink-muted">{(l.users as TeacherRow | null)?.name ?? '—'}</Td>
                   <Td>
-                    <Badge tone={l.status === 'completed' ? 'success' : 'neutral'}>
-                      {l.status === 'completed' ? 'Realizada' : l.status === 'canceled' ? 'Cancelada' : 'Registrada'}
-                    </Badge>
+                    <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
                   </Td>
                   <Td className="text-right">
                     <Link href={`/student/lessons/${l.id}`} className="text-xs font-semibold text-brand-600 hover:underline">
