@@ -5,7 +5,9 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
 import { getCurrentUser } from '@/lib/auth/session'
+import { transcriptionAccess } from '@/lib/auth/plan'
 import { CATEGORIES, DIFFICULTIES } from '@/lib/constants/resources'
+import { TRANSCRIPTION_MONTHLY_CAP } from '@/lib/constants/transcription'
 import { createClient } from '@/lib/supabase/server'
 import { deleteAudioFile, signedAudioUrl, uploadAudioFile } from '@/lib/storage/audio'
 import { getTranscriptionProvider } from '@/lib/transcription'
@@ -45,6 +47,11 @@ export async function createTranscription(
   const me = await requireStaff()
   if (!me) return { ok: false, error: 'Acesso negado.' }
 
+  // Gate de plano (Premium ativo). Defesa no servidor — a UI já mostra upsell.
+  const access = await transcriptionAccess()
+  if (access === 'not_premium') return { ok: false, error: 'Transcrição por IA é exclusiva do plano Premium.' }
+  if (access === 'expired') return { ok: false, error: 'Seu plano Premium está vencido. Renove para continuar.' }
+
   const parsed = uploadSchema.safeParse({
     title: formData.get('title'),
     instrument: formData.get('instrument') || undefined,
@@ -57,6 +64,22 @@ export async function createTranscription(
   }
 
   const schoolId = me.role === 'superadmin' ? null : me.schoolId
+
+  // Teto mensal por escola — rede de segurança de custo. Conta jobs do mês.
+  if (schoolId) {
+    const supabaseCount = await createClient()
+    const now = new Date()
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+    const { count } = await supabaseCount
+      .from('transcription_jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('school_id', schoolId)
+      .gte('created_at', monthStart)
+    if ((count ?? 0) >= TRANSCRIPTION_MONTHLY_CAP) {
+      return { ok: false, error: `Limite de ${TRANSCRIPTION_MONTHLY_CAP} transcrições/mês atingido. Tente novamente no próximo mês.` }
+    }
+  }
+
   const up = await uploadAudioFile(file, schoolId)
   if (!up.ok) return { ok: false, fieldErrors: { file: up.error } }
 
@@ -187,6 +210,7 @@ export async function rejectTranscription(formData: FormData) {
 export async function retryTranscription(formData: FormData) {
   const me = await requireStaff()
   if (!me) return
+  if ((await transcriptionAccess()) !== 'ok') return // plano sem acesso/vencido
   const jobId = String(formData.get('jobId') ?? '')
   const supabase = await createClient()
   const { data: job } = await supabase

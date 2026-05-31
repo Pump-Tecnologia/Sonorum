@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { TranscriptionReview } from '@/components/transcription/TranscriptionReview'
+import { TranscriptionUpsell } from '@/components/transcription/TranscriptionUpsell'
 import { Card } from '@/components/ui/Card'
+import { transcriptionAccess } from '@/lib/auth/plan'
 import { STATUS_LABEL, type TranscriptionStatus } from '@/lib/constants/transcription'
 import { createClient } from '@/lib/supabase/server'
 import { signedAudioUrl } from '@/lib/storage/audio'
@@ -11,6 +13,9 @@ import { signedAudioUrl } from '@/lib/storage/audio'
 export const metadata = { title: 'Revisar transcrição' }
 
 export default async function ReviewTranscriptionPage({ params }: { params: Promise<{ id: string }> }) {
+  const access = await transcriptionAccess()
+  if (access !== 'ok') return <TranscriptionUpsell reason={access} />
+
   const { id } = await params
   const supabase = await createClient()
   const { data: job } = await supabase

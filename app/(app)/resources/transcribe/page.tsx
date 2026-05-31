@@ -5,7 +5,9 @@ import { DeleteButton } from '@/components/admin/DeleteButton'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { TranscriptionUpsell } from '@/components/transcription/TranscriptionUpsell'
 import { deleteTranscription, retryTranscription } from '@/lib/actions/transcription'
+import { transcriptionAccess } from '@/lib/auth/plan'
 import { STATUS_LABEL, STATUS_TONE, type TranscriptionStatus } from '@/lib/constants/transcription'
 import { createClient } from '@/lib/supabase/server'
 
@@ -16,6 +18,9 @@ function fmtDate(iso: string): string {
 }
 
 export default async function TranscriptionQueuePage() {
+  const access = await transcriptionAccess()
+  if (access !== 'ok') return <TranscriptionUpsell reason={access} />
+
   const supabase = await createClient()
   const { data: jobs } = await supabase
     .from('transcription_jobs')

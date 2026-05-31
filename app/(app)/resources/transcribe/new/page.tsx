@@ -1,9 +1,14 @@
 import { PageHeader } from '@/components/app/PageHeader'
 import { TranscriptionUploadForm } from '@/components/transcription/TranscriptionUploadForm'
+import { TranscriptionUpsell } from '@/components/transcription/TranscriptionUpsell'
+import { transcriptionAccess } from '@/lib/auth/plan'
 
 export const metadata = { title: 'Transcrever áudio' }
 
-export default function NewTranscriptionPage() {
+export default async function NewTranscriptionPage() {
+  const access = await transcriptionAccess()
+  if (access !== 'ok') return <TranscriptionUpsell reason={access} />
+
   return (
     <>
       <PageHeader
