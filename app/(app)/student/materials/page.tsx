@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { signedResourceUrls } from '@/lib/storage/resources'
 
 export const metadata = { title: 'Meus materiais' }
 
@@ -14,7 +15,7 @@ export default async function StudentMaterialsPage() {
   const { data } = await supabase
     .from('pedagogical_resources')
     .select(`
-      id, title, description, category, difficulty, content_type, content_link, body,
+      id, title, description, category, difficulty, content_type, content_link, body, file_path,
       lesson_pedagogical_resource!inner(
         lessons!inner(student_id, start_datetime, status)
       )
@@ -25,6 +26,7 @@ export default async function StudentMaterialsPage() {
     .order('created_at', { ascending: false })
 
   const resources = data ?? []
+  const fileUrls = await signedResourceUrls(resources.map((r) => r.file_path))
 
   const DIFF_TONE: Record<string, 'success' | 'warning' | 'neutral'> = {
     Iniciante: 'success',
@@ -52,6 +54,16 @@ export default async function StudentMaterialsPage() {
                 <span className="text-xs text-ink-muted">·</span>
                 <span className="text-xs text-ink-muted">{r.content_type}</span>
               </div>
+              {r.file_path && fileUrls[r.file_path] && (
+                <a
+                  href={fileUrls[r.file_path]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold text-brand-600 hover:underline"
+                >
+                  Baixar arquivo →
+                </a>
+              )}
               {r.content_link && (
                 <a
                   href={r.content_link}

@@ -23,7 +23,13 @@ interface ResourceData {
 
 const initial: ResourceActionState = { ok: false }
 
-export function ResourceForm({ resource }: { resource?: ResourceData }) {
+export function ResourceForm({
+  resource,
+  currentFileUrl,
+}: {
+  resource?: ResourceData
+  currentFileUrl?: string | null
+}) {
   const isEdit = Boolean(resource?.id)
   const [state, action] = useActionState(isEdit ? updateResource : createResource, initial)
   const fe = state.fieldErrors ?? {}
@@ -74,6 +80,26 @@ export function ResourceForm({ resource }: { resource?: ResourceData }) {
 
         <Field label="Link do conteúdo (vídeo, PDF externo, etc.)" htmlFor="contentLink" error={fe.contentLink}>
           <Input id="contentLink" name="contentLink" type="url" defaultValue={resource?.content_link ?? ''} placeholder="https://…" />
+        </Field>
+
+        <Field label="Arquivo (PDF ou imagem de partitura · até 10MB)" htmlFor="file" error={fe.file}>
+          <input
+            id="file"
+            name="file"
+            type="file"
+            accept="application/pdf,image/png,image/jpeg,image/webp"
+            className="block w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+          />
+          {currentFileUrl && (
+            <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
+              <a href={currentFileUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-600 hover:underline">
+                Ver arquivo atual →
+              </a>
+              <label className="flex items-center gap-1.5 text-xs text-ink-muted">
+                <input type="checkbox" name="removeFile" /> Remover
+              </label>
+            </div>
+          )}
         </Field>
 
         <Field label="Descrição curta" htmlFor="description" error={fe.description}>

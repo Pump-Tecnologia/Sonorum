@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { deleteResource } from '@/lib/actions/resources'
 import { createClient } from '@/lib/supabase/server'
+import { signedResourceUrls } from '@/lib/storage/resources'
 
 export const metadata = { title: 'Recursos pedagógicos' }
 
@@ -20,10 +21,11 @@ export default async function ResourcesPage() {
   const supabase = await createClient()
   const { data: resources } = await supabase
     .from('pedagogical_resources')
-    .select('id, title, description, category, difficulty, content_type, instrument, instrument_category, content_link')
+    .select('id, title, description, category, difficulty, content_type, instrument, instrument_category, content_link, file_path')
     .order('created_at', { ascending: false })
 
   const list = resources ?? []
+  const fileUrls = await signedResourceUrls(list.map((r) => r.file_path))
 
   return (
     <>
@@ -55,6 +57,11 @@ export default async function ResourcesPage() {
                 {r.instrument && <><span>·</span><span>{r.instrument}</span></>}
                 {r.instrument_category && !r.instrument && <><span>·</span><span>{r.instrument_category}</span></>}
               </div>
+              {r.file_path && fileUrls[r.file_path] && (
+                <a href={fileUrls[r.file_path]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-brand-600 hover:underline">
+                  Baixar arquivo →
+                </a>
+              )}
               <div className="mt-auto flex items-center justify-between border-t border-hairline pt-3">
                 <Link href={`/resources/${r.id}/edit`} className="text-xs font-semibold text-brand-600 hover:underline">
                   Editar
