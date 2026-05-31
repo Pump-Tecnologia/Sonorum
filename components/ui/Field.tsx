@@ -22,7 +22,7 @@ export function Field({ label, htmlFor, error, hint, children }: FieldProps) {
 }
 
 const controlBase =
-  'w-full rounded-xl border bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-muted/60 transition-colors focus:outline-2 focus:outline-offset-2 focus:outline-brand-500'
+  'w-full rounded-xl border bg-surface px-3.5 py-2.5 font-sans text-sm text-ink placeholder:text-ink-muted/60 transition-colors focus:outline-2 focus:outline-offset-2 focus:outline-brand-500'
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }
 

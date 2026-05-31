@@ -169,6 +169,8 @@
 .modal {
   width: 100%;
   max-width: 32rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
   background: var(--ds-surface);
   border-radius: 1.125rem;
   padding: 1.5rem;
