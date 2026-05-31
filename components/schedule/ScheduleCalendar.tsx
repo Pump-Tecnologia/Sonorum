@@ -28,6 +28,7 @@ interface SelectedEvent {
   status: string
   notes: string
   student_name: string
+  room: string
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -41,11 +42,13 @@ const STATUS_LABEL: Record<string, string> = {
 export function ScheduleCalendar({
   students,
   teachers,
+  rooms,
   role,
   userId,
 }: {
   students: Person[]
   teachers: Person[]
+  rooms: Person[]
   role: string
   userId: string
 }) {
@@ -71,6 +74,7 @@ export function ScheduleCalendar({
       status: ep.status,
       notes: ep.notes ?? '',
       student_name: ep.student_name,
+      room: ep.room ?? '',
     })
   }
 
@@ -163,6 +167,17 @@ export function ScheduleCalendar({
                 </AppField>
               )}
               {role === 'teacher' && <input type="hidden" name="teacherId" value={userId} />}
+
+              {rooms.length > 0 && (
+                <AppField label="Sala (opcional)" htmlFor="roomId">
+                  <AppSelect id="roomId" name="roomId" defaultValue="">
+                    <option value="">Sem sala</option>
+                    {rooms.map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </AppSelect>
+                </AppField>
+              )}
 
               <AppField label="Título" htmlFor="title" error={state.fieldErrors?.title}>
                 <AppInput id="title" name="title" required defaultValue="Aula" />
@@ -276,6 +291,12 @@ export function ScheduleCalendar({
                 <span className={styles.detailLabel}>Status:</span>
                 <strong>{STATUS_LABEL[eventModal.status] ?? eventModal.status}</strong>
               </p>
+              {eventModal.room && (
+                <p className={styles.detailRow}>
+                  <span className={styles.detailLabel}>Sala:</span>
+                  <strong>{eventModal.room}</strong>
+                </p>
+              )}
               {eventModal.notes && (
                 <p className={styles.detailRow}>
                   <span className={styles.detailLabel}>Notas:</span>

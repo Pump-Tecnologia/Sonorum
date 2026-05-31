@@ -37,14 +37,14 @@ export default async function TeacherDashboard() {
   const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-  type TodayRow = { id: string; title: string; start_datetime: string; end_datetime: string; status: string; goals: string | null; notes: string | null; users: { name: string; instrument: unknown } | null }
+  type TodayRow = { id: string; title: string; start_datetime: string; end_datetime: string; status: string; goals: string | null; notes: string | null; users: { name: string; instrument: unknown } | null; room: { name: string } | null }
   type WeekRow = { status: string; lesson_reports: { id: string }[] | { id: string } | null }
   type MonthRow = { status: string; student_id: string }
 
   const [todayRes, weekRes, monthRes] = await Promise.all([
     supabase
       .from('lessons')
-      .select('id, title, start_datetime, end_datetime, status, goals, notes, users!lessons_student_id_fkey(name, instrument)')
+      .select('id, title, start_datetime, end_datetime, status, goals, notes, users!lessons_student_id_fkey(name, instrument), room:rooms(name)')
       .eq('teacher_id', user!.id)
       .gte('start_datetime', today.start)
       .lte('start_datetime', today.end)
@@ -102,6 +102,7 @@ export default async function TeacherDashboard() {
               <p className="text-sm text-ink-muted">
                 {nextStudent?.name ?? '—'}
                 {nextStart && <> · {nextStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</>}
+                {nextLesson.room?.name && <> · {nextLesson.room.name}</>}
               </p>
               {(nextLesson.goals || nextLesson.notes) && (
                 <p className="mt-2 max-w-xl rounded-lg bg-surface-muted/60 px-3 py-2 text-sm text-ink-muted">
@@ -166,6 +167,7 @@ export default async function TeacherDashboard() {
                         {new Date(l.start_datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         {' – '}
                         {new Date(l.end_datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        {l.room?.name && <> · {l.room.name}</>}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

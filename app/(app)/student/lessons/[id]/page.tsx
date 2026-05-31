@@ -23,7 +23,7 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, status, notes, goals, users!lessons_teacher_id_fkey(name)')
+    .select('id, title, start_datetime, status, notes, goals, users!lessons_teacher_id_fkey(name), room:rooms(name)')
     .eq('id', id)
     .eq('student_id', user!.id)
     .maybeSingle()
@@ -38,6 +38,7 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
 
   type TeacherRow = { name: string }
   const teacher = lesson.users as TeacherRow | null
+  const room = lesson.room as { name: string } | null
 
   return (
     <>
@@ -60,6 +61,12 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
               <div className="flex justify-between">
                 <dt className="text-ink-muted">Professor</dt>
                 <dd className="font-medium">{teacher.name}</dd>
+              </div>
+            )}
+            {room?.name && (
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Sala</dt>
+                <dd className="font-medium">{room.name}</dd>
               </div>
             )}
             {lesson.goals && (

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, student_id, teacher_id, users!lessons_student_id_fkey(name, instrument)')
+    .select('id, title, start_datetime, end_datetime, status, notes, student_id, teacher_id, users!lessons_student_id_fkey(name, instrument), room:rooms(name)')
 
   if (me.role === 'student') {
     query = query.eq('student_id', me.id)
@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
         notes: l.notes,
         student_name: student?.name ?? '',
         instrument: student?.instrument,
+        room: (l.room as { name: string } | null)?.name ?? '',
       },
     }
   })

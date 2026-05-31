@@ -15,6 +15,7 @@ export type LessonActionState = {
 const createLessonSchema = z.object({
   studentId: z.string().uuid(),
   teacherId: z.string().uuid().optional().or(z.literal('')),
+  roomId: z.string().uuid().optional().or(z.literal('')),
   title: z.string().min(1).max(255),
   startDatetime: z.string().datetime({ local: true }).or(z.string().min(1)),
   endDatetime: z.string().datetime({ local: true }).or(z.string().min(1)),
@@ -47,6 +48,28 @@ function weeklyOccurrences(
   return result
 }
 
+type DbClient = Awaited<ReturnType<typeof createClient>>
+
+// Verifica se a sala já tem uma aula (não cancelada) sobreposta ao intervalo.
+async function roomHasConflict(
+  supabase: DbClient,
+  roomId: string,
+  start: string,
+  end: string,
+  excludeId?: string,
+): Promise<boolean> {
+  let q = supabase
+    .from('lessons')
+    .select('id')
+    .eq('room_id', roomId)
+    .neq('status', 'canceled')
+    .lt('start_datetime', end)
+    .gt('end_datetime', start)
+  if (excludeId) q = q.neq('id', excludeId)
+  const { data } = await q.limit(1)
+  return (data?.length ?? 0) > 0
+}
+
 export async function createLesson(
   _prev: LessonActionState,
   formData: FormData,
@@ -58,6 +81,7 @@ export async function createLesson(
   const parsed = createLessonSchema.safeParse({
     studentId: formData.get('studentId'),
     teacherId: formData.get('teacherId') || '',
+    roomId: formData.get('roomId') || '',
     title: formData.get('title'),
     startDatetime: formData.get('startDatetime'),
     endDatetime: formData.get('endDatetime'),
@@ -74,12 +98,19 @@ export async function createLesson(
 
   const d = parsed.data
   const teacherId = me.role === 'teacher' ? me.id : (d.teacherId || null)
+  const roomId = d.roomId || null
   const supabase = await createClient()
+
+  // Conflito de sala: a sala não pode ter outra aula sobreposta no horário.
+  if (roomId && (await roomHasConflict(supabase, roomId, d.startDatetime, d.endDatetime))) {
+    return { ok: false, error: 'Essa sala já tem uma aula nesse horário.' }
+  }
 
   const toInsert = (start: string, end: string) => ({
     school_id: me.schoolId,
     student_id: d.studentId,
     teacher_id: teacherId,
+    room_id: roomId,
     title: d.title,
     start_datetime: start,
     end_datetime: end,
@@ -124,12 +155,14 @@ export async function updateLesson(formData: FormData) {
     notes?: string | null
     goals?: string | null
     private_notes?: string | null
+    room_id?: string | null
   }
   const updates: LessonUpdate = {}
   if (formData.has('status')) updates.status = String(formData.get('status'))
   if (formData.has('notes')) updates.notes = String(formData.get('notes')) || null
   if (formData.has('goals')) updates.goals = String(formData.get('goals')) || null
   if (formData.has('private_notes')) updates.private_notes = String(formData.get('private_notes')) || null
+  if (formData.has('room_id')) updates.room_id = String(formData.get('room_id')) || null
 
   if (Object.keys(updates).length > 0) {
     await supabase.from('lessons').update(updates).eq('id', lessonId)

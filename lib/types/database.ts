@@ -293,6 +293,7 @@ export type Database = {
           id: string
           notes: string | null
           private_notes: string | null
+          room_id: string | null
           school_id: string | null
           start_datetime: string
           status: string
@@ -308,6 +309,7 @@ export type Database = {
           id?: string
           notes?: string | null
           private_notes?: string | null
+          room_id?: string | null
           school_id?: string | null
           start_datetime: string
           status?: string
@@ -323,6 +325,7 @@ export type Database = {
           id?: string
           notes?: string | null
           private_notes?: string | null
+          room_id?: string | null
           school_id?: string | null
           start_datetime?: string
           status?: string
@@ -332,6 +335,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lessons_school_id_fkey"
             columns: ["school_id"]
@@ -499,6 +509,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "plans_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          active: boolean
+          capacity: number | null
+          created_at: string
+          id: string
+          name: string
+          school_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          capacity?: number | null
+          created_at?: string
+          id?: string
+          name: string
+          school_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          capacity?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          school_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"

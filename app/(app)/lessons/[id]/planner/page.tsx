@@ -40,20 +40,22 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, users!lessons_student_id_fkey(name, instrument)')
+    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, users!lessons_student_id_fkey(name, instrument)')
     .eq('id', id)
     .maybeSingle()
 
   if (!lesson) notFound()
 
-  const [{ data: plan }, { data: report }, { data: attached }] = await Promise.all([
+  const [{ data: plan }, { data: report }, { data: attached }, { data: rooms }] = await Promise.all([
     supabase.from('lesson_plans').select('*').eq('lesson_id', id).maybeSingle(),
     supabase.from('lesson_reports').select('*').eq('lesson_id', id).maybeSingle(),
     supabase
       .from('lesson_pedagogical_resource')
       .select('id, section, pedagogical_resources(id, title, category, difficulty, instrument)')
       .eq('lesson_id', id),
+    supabase.from('rooms').select('id, name').eq('active', true).order('name'),
   ])
+  const roomList = (rooms ?? []) as { id: string; name: string }[]
 
   type ResourceRef = {
     id: string
@@ -137,6 +139,15 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                   {STATUS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </Select>
               </Field>
+
+              {roomList.length > 0 && (
+                <Field label="Sala" htmlFor="room_id">
+                  <Select id="room_id" name="room_id" defaultValue={lesson.room_id ?? ''}>
+                    <option value="">Sem sala</option>
+                    {roomList.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  </Select>
+                </Field>
+              )}
 
               <Field label="Objetivos da aula" htmlFor="goals">
                 <Textarea id="goals" name="goals" defaultValue={lesson.goals ?? ''} rows={2} />

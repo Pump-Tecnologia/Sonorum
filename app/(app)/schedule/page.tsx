@@ -10,12 +10,15 @@ export default async function SchedulePage() {
   const supabase = await createClient()
 
   // Admin/Teacher: carrega listas para o modal de criar aula
-  const [studentsRes, teachersRes] = await Promise.all([
+  const [studentsRes, teachersRes, roomsRes] = await Promise.all([
     user?.role !== 'student'
       ? supabase.from('users').select('id, name').eq('role', 'student').order('name')
       : Promise.resolve({ data: [] }),
     user?.role === 'admin'
       ? supabase.from('users').select('id, name').eq('role', 'teacher').order('name')
+      : Promise.resolve({ data: [] }),
+    user?.role !== 'student'
+      ? supabase.from('rooms').select('id, name').eq('active', true).order('name')
       : Promise.resolve({ data: [] }),
   ])
 
@@ -25,6 +28,7 @@ export default async function SchedulePage() {
       <ScheduleCalendar
         students={(studentsRes.data ?? []) as { id: string; name: string }[]}
         teachers={(teachersRes.data ?? []) as { id: string; name: string }[]}
+        rooms={(roomsRes.data ?? []) as { id: string; name: string }[]}
         role={user?.role ?? 'student'}
         userId={user?.id ?? ''}
       />
