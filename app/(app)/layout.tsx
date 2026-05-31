@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { ImpersonationBanner } from '@/components/app/ImpersonationBanner'
 import { Sidebar } from '@/components/app/Sidebar'
+import styles from '@/components/app/app.module.css'
 import { getImpersonatorId } from '@/lib/actions/impersonate'
 import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
@@ -27,11 +28,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isImpersonating = Boolean(impersonatorId)
 
   return (
-    <div className="flex flex-col">
+    <div className={styles.shell}>
       {isImpersonating && <ImpersonationBanner asUserName={user.name} />}
-      <div className="flex flex-1">
+      <div className={styles.shellMain}>
         <Sidebar role={user.role} name={user.name} schoolName={schoolName} />
-        <main className="min-h-dvh flex-1 overflow-x-hidden px-8 py-8">{children}</main>
+        <main className={styles.main}>{children}</main>
       </div>
     </div>
   )

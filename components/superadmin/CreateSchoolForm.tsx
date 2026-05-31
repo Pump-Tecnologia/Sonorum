@@ -3,9 +3,10 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
-import { Card } from '@/components/ui/Card'
-import { Field, Input, Select } from '@/components/ui/Field'
+import { AppCard } from '@/components/app/AppCard'
+import { AppField, AppInput, AppSelect } from '@/components/app/AppField'
+import { AppSubmit } from '@/components/app/AppSubmit'
+import styles from '@/components/app/app.module.css'
 import { createSchool, type SchoolActionState } from '@/lib/actions/schools'
 
 const initial: SchoolActionState = { ok: false }
@@ -16,60 +17,83 @@ export function CreateSchoolForm() {
 
   if (state.ok) {
     return (
-      <Card className="space-y-3">
-        <p className="text-sm font-semibold text-accent-800">Escola criada! ✓</p>
-        <p className="text-sm text-ink-muted">
-          Admin: <span className="font-medium text-ink">{state.createdEmail}</span>
+      <AppCard>
+        <p className={styles.success}>Escola criada! ✓</p>
+        <p style={{ margin: '0.875rem 0 0.5rem 0', fontSize: '0.9375rem' }}>
+          Admin: <strong>{state.createdEmail}</strong>
           <br />
           Senha temporária:{' '}
-          <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-ink">
+          <code
+            style={{
+              padding: '0.125rem 0.5rem',
+              background: 'var(--ds-canvas)',
+              borderRadius: '0.375rem',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              fontSize: '0.875rem',
+            }}
+          >
             {state.tempPassword}
           </code>
         </p>
-        <p className="text-xs text-ink-muted">
-          Anote agora — esta senha não será exibida de novo. Peça ao admin para trocá-la no primeiro
-          acesso.
+        <p className={styles.hint} style={{ marginBottom: '1rem' }}>
+          Anote agora — esta senha não será exibida de novo. Peça ao admin para trocá-la no primeiro acesso.
         </p>
-        <Link href="/superadmin" className="inline-block text-sm font-semibold text-brand-600">
+        <Link href="/superadmin" className={styles.rowLink}>
           ← Voltar para escolas
         </Link>
-      </Card>
+      </AppCard>
     )
   }
 
   return (
-    <Card>
-      <form action={action} className="max-w-lg space-y-5">
-        {state.error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-            {state.error}
-          </p>
-        )}
+    <AppCard>
+      <form action={action} className={styles.form} style={{ maxWidth: '32rem' }}>
+        {state.error && <p className={styles.alert}>{state.error}</p>}
 
-        <Field label="Nome da escola" htmlFor="name" error={fe.name}>
-          <Input id="name" name="name" required />
-        </Field>
+        <AppField label="Nome da escola" htmlFor="name" error={fe.name}>
+          <AppInput
+            id="name"
+            name="name"
+            placeholder="Ex.: Escola Tom Maior"
+            invalid={Boolean(fe.name)}
+            required
+          />
+        </AppField>
 
-        <Field label="E-mail do administrador" htmlFor="adminEmail" error={fe.adminEmail}>
-          <Input id="adminEmail" name="adminEmail" type="email" required />
-        </Field>
+        <AppField label="E-mail do administrador" htmlFor="adminEmail" error={fe.adminEmail}>
+          <AppInput
+            id="adminEmail"
+            name="adminEmail"
+            type="email"
+            placeholder="admin@escola.com"
+            invalid={Boolean(fe.adminEmail)}
+            required
+          />
+        </AppField>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Plano" htmlFor="planType" error={fe.planType}>
-            <Select id="planType" name="planType" defaultValue="free">
+        <div className={`${styles.formRow} ${styles.formRow2}`}>
+          <AppField label="Plano" htmlFor="planType" error={fe.planType}>
+            <AppSelect id="planType" name="planType" defaultValue="free">
               <option value="free">Essencial (grátis)</option>
               <option value="professional">Profissional</option>
               <option value="premium">Premium</option>
-            </Select>
-          </Field>
+            </AppSelect>
+          </AppField>
 
-          <Field label="Mensalidade (R$)" htmlFor="monthlyPrice" error={fe.monthlyPrice}>
-            <Input id="monthlyPrice" name="monthlyPrice" type="number" min="0" step="0.01" defaultValue="0" />
-          </Field>
+          <AppField label="Mensalidade (R$)" htmlFor="monthlyPrice" error={fe.monthlyPrice}>
+            <AppInput
+              id="monthlyPrice"
+              name="monthlyPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue="0"
+            />
+          </AppField>
         </div>
 
-        <SubmitButton pendingLabel="Criando…">Criar escola</SubmitButton>
+        <AppSubmit pendingLabel="Criando…">Criar escola</AppSubmit>
       </form>
-    </Card>
+    </AppCard>
   )
 }

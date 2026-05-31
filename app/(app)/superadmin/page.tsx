@@ -1,10 +1,15 @@
-import Link from 'next/link'
-
 import { PageHeader } from '@/components/app/PageHeader'
+import { AppBadge } from '@/components/app/AppBadge'
+import { AppLinkButton } from '@/components/app/AppButton'
+import {
+  AppEmpty,
+  AppTable,
+  cellMuted,
+  cellPrimary,
+  cellSub,
+  tableRight,
+} from '@/components/app/AppTable'
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { createAdminClient } from '@/lib/supabase/server'
 
 const PLAN_LABEL: Record<string, string> = {
@@ -40,48 +45,44 @@ export default async function SuperAdminDashboard() {
       <PageHeader
         title="Escolas"
         subtitle={`${list.length} escola(s) na plataforma`}
-        action={
-          <Link href="/superadmin/schools/new">
-            <Button>Nova escola</Button>
-          </Link>
-        }
+        action={<AppLinkButton href="/superadmin/schools/new">Nova escola</AppLinkButton>}
       />
 
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Escola</Th>
-            <Th>Plano</Th>
-            <Th>Criada em</Th>
-            <Th className="text-right"></Th>
-          </Tr>
-        </Thead>
+      <AppTable>
+        <thead>
+          <tr>
+            <th>Escola</th>
+            <th>Plano</th>
+            <th>Criada em</th>
+            <th className={tableRight} />
+          </tr>
+        </thead>
         <tbody>
-          {list.length === 0 && <EmptyRow colSpan={4}>Nenhuma escola ainda.</EmptyRow>}
+          {list.length === 0 && <AppEmpty colSpan={4}>Nenhuma escola ainda.</AppEmpty>}
           {list.map((s) => {
-            const admin = s.users?.[0] // admin da escola
+            const admin = s.users?.[0]
             return (
-              <Tr key={s.id}>
-                <Td>
-                  <span className="font-medium">{s.custom_name || s.name}</span>
-                  {admin && <span className="block text-xs text-ink-muted">Admin: {admin.name}</span>}
-                </Td>
-                <Td>
-                  <Badge tone={s.plan_type === 'free' ? 'neutral' : 'brand'}>
+              <tr key={s.id}>
+                <td>
+                  <span className={cellPrimary}>{s.custom_name || s.name}</span>
+                  {admin && <span className={cellSub}>Admin: {admin.name}</span>}
+                </td>
+                <td>
+                  <AppBadge tone={s.plan_type === 'free' ? 'neutral' : 'brand'}>
                     {PLAN_LABEL[s.plan_type] ?? s.plan_type}
-                  </Badge>
-                </Td>
-                <Td className="text-ink-muted">
+                  </AppBadge>
+                </td>
+                <td className={cellMuted}>
                   {new Date(s.created_at).toLocaleDateString('pt-BR')}
-                </Td>
-                <Td className="text-right">
+                </td>
+                <td className={tableRight}>
                   {admin && <ImpersonateButton targetUserId={admin.id} label="Entrar como admin" />}
-                </Td>
-              </Tr>
+                </td>
+              </tr>
             )
           })}
         </tbody>
-      </Table>
+      </AppTable>
     </>
   )
 }

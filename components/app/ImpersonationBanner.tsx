@@ -1,19 +1,16 @@
+import styles from '@/components/app/app.module.css'
 import { stopImpersonating } from '@/lib/actions/impersonate'
 
 export function ImpersonationBanner({ asUserName }: { asUserName: string }) {
   return (
-    <div className="bg-amber-500 text-amber-950">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-2 text-sm">
+    <div className={styles.impersonationBanner}>
+      <div className={styles.impersonationInner}>
         <p>
-          <span className="font-semibold">Visualizando como </span>
-          <span className="font-bold">{asUserName}</span>
-          <span className="ml-2 text-amber-800">— você está em modo de impersonação</span>
+          Visualizando como <span className={styles.impersonationStrong}>{asUserName}</span> — modo
+          de impersonação ativo.
         </p>
         <form action={stopImpersonating}>
-          <button
-            type="submit"
-            className="rounded-lg bg-amber-950/10 px-3 py-1 text-xs font-semibold hover:bg-amber-950/20"
-          >
+          <button type="submit" className={styles.impersonationStop}>
             Voltar para minha conta
           </button>
         </form>

@@ -1,13 +1,15 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-import { Button } from '@/components/ui/Button'
+import styles from '@/components/app/app.module.css'
+import { signOut } from '@/lib/auth/actions'
 import { NAV_BY_ROLE, ROLE_LABEL } from '@/lib/constants/nav'
 import type { Role } from '@/lib/constants/roles'
-import { signOut } from '@/lib/auth/actions'
-import { cn } from '@/lib/cn'
+
+const LOGO = '/brand/logo-vazado.png'
 
 interface SidebarProps {
   role: Role
@@ -23,46 +25,43 @@ export function Sidebar({ role, name, schoolName }: SidebarProps) {
     pathname === href || (href !== '/' && pathname.startsWith(`${href}/`))
 
   return (
-    <aside className="flex h-dvh w-64 flex-col border-r border-hairline bg-surface">
-      <div className="px-6 py-6">
-        <Link href="/dashboard" className="text-xl font-bold tracking-tight text-brand-700">
-          Sonorum
+    <aside className={styles.sidebar}>
+      <div className={styles.sidebarHeader}>
+        <Link href="/dashboard" className={styles.sidebarBrand} aria-label="Sonorum">
+          <Image
+            src={LOGO}
+            alt=""
+            width={32}
+            height={32}
+            priority
+            className={styles.sidebarBrandMark}
+          />
+          <span className={styles.sidebarBrandWord}>Sonorum</span>
         </Link>
-        {schoolName && <p className="mt-1 truncate text-xs text-ink-muted">{schoolName}</p>}
+        {schoolName && <p className={styles.sidebarSchool}>{schoolName}</p>}
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3">
+      <nav className={styles.sidebarNav} aria-label="Navegação principal">
         {items.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={cn(
-              'block rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              isActive(item.href)
-                ? 'bg-brand-50 text-brand-700'
-                : 'text-ink-muted hover:bg-surface-muted hover:text-ink',
-            )}
+            className={`${styles.sidebarLink} ${isActive(item.href) ? styles.sidebarLinkActive : ''}`.trim()}
           >
             {item.label}
           </Link>
         ))}
       </nav>
 
-      <div className="border-t border-hairline p-4">
-        <Link
-          href="/profile"
-          className={cn(
-            'block truncate rounded-lg px-2 py-1 -mx-2 text-sm font-medium hover:bg-surface-muted',
-            isActive('/profile') ? 'text-brand-700' : 'text-ink',
-          )}
-        >
+      <div className={styles.sidebarFooter}>
+        <Link href="/profile" className={styles.sidebarUserLink}>
           {name}
         </Link>
-        <p className="mb-3 px-2 -mx-2 text-xs text-ink-muted">{ROLE_LABEL[role]}</p>
+        <p className={styles.sidebarRole}>{ROLE_LABEL[role]}</p>
         <form action={signOut}>
-          <Button type="submit" variant="secondary" className="w-full justify-center text-sm">
+          <button type="submit" className={styles.sidebarSignOut}>
             Sair
-          </Button>
+          </button>
         </form>
       </div>
     </aside>

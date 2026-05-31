@@ -1,3 +1,5 @@
+import styles from '@/components/app/app.module.css'
+
 export function PageHeader({
   title,
   subtitle,
@@ -8,12 +10,12 @@ export function PageHeader({
   action?: React.ReactNode
 }) {
   return (
-    <header className="mb-8 flex items-end justify-between gap-4">
+    <header className={styles.pageHeader}>
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>}
+        <h1 className={styles.pageTitle}>{title}</h1>
+        {subtitle && <p className={styles.pageSubtitle}>{subtitle}</p>}
       </div>
-      {action}
+      {action && <div className={styles.pageActions}>{action}</div>}
     </header>
   )
 }

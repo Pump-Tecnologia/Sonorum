@@ -1,0 +1,495 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   Sonorum — Shell autenticado + primitives compartilhados
+   Tokens do Design System, sem Tailwind. Aplicado primeiro no SuperAdmin;
+   admin/teacher/student herdam apenas o shell até serem migrados.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.shell {
+  --ds-ink: #1F3A5F;
+  --ds-ink-deep: #142844;
+  --ds-panel-bg: #25456E;
+  --ds-green: #63C08F;
+  --ds-green-soft: #A8DCC1;
+  --ds-green-deep: #4FAB78;
+  --ds-canvas: #F2F4F7;
+  --ds-surface: #FFFFFF;
+  --ds-text: #2B2E34;
+  --ds-text-muted: #6B7480;
+  --ds-text-subtle: #94A0B0;
+  --ds-hairline: #E4E8EF;
+  --ds-warning: #C77F00;
+  --ds-warning-bg: #FFF4D6;
+  --ds-danger: #DC2626;
+  --ds-danger-bg: #FEE2E2;
+
+  --font-display: var(--font-sans), system-ui, sans-serif;
+  --font-body: var(--font-poppins), system-ui, sans-serif;
+
+  --r-sm: 0.5rem;
+  --r-md: 0.875rem;
+  --r-lg: 1.125rem;
+  --r-xl: 1.5rem;
+
+  --shadow-soft: 0 8px 24px -10px rgb(31 58 95 / 0.10);
+  --shadow-card: 0 18px 40px -16px rgb(31 58 95 / 0.16);
+
+  font-family: var(--font-body);
+  color: var(--ds-text);
+  background: var(--ds-canvas);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shellMain {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 16rem;
+  flex-shrink: 0;
+  background: var(--ds-panel-bg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+}
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -30%;
+  width: 22rem;
+  height: 22rem;
+  background: radial-gradient(circle, color-mix(in oklab, var(--ds-green) 25%, transparent) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.sidebarHeader {
+  position: relative;
+  padding: 1.5rem 1.25rem 1.25rem;
+}
+.sidebarBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  text-decoration: none;
+  color: #fff;
+}
+.sidebarBrandMark { width: 2rem; height: 2rem; object-fit: contain; }
+.sidebarBrandWord {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+.sidebarSchool {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: color-mix(in oklab, #fff 65%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarNav {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+.sidebarLink {
+  display: block;
+  padding: 0.5625rem 0.875rem;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: color-mix(in oklab, #fff 78%, transparent);
+  text-decoration: none;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.sidebarLink:hover {
+  background: color-mix(in oklab, #fff 8%, transparent);
+  color: #fff;
+}
+.sidebarLinkActive {
+  background: var(--ds-green);
+  color: #fff;
+  font-weight: 600;
+}
+.sidebarLinkActive:hover {
+  background: var(--ds-green-deep);
+  color: #fff;
+}
+
+.sidebarFooter {
+  position: relative;
+  border-top: 1px solid color-mix(in oklab, #fff 12%, transparent);
+  padding: 1rem 1.25rem;
+}
+.sidebarUserLink {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebarUserLink:hover { color: var(--ds-green-soft); }
+.sidebarRole {
+  margin: 0.125rem 0 0.875rem 0;
+  font-size: 0.6875rem;
+  color: color-mix(in oklab, #fff 55%, transparent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.sidebarSignOut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.5rem 0.875rem;
+  background: transparent;
+  border: 1px solid color-mix(in oklab, #fff 25%, transparent);
+  border-radius: var(--r-sm);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.sidebarSignOut:hover {
+  background: color-mix(in oklab, #fff 10%, transparent);
+  border-color: color-mix(in oklab, #fff 40%, transparent);
+}
+
+/* ── Conteúdo principal ──────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 2rem 2.5rem 3rem;
+  overflow-x: hidden;
+}
+@media (max-width: 768px) {
+  .main { padding: 1.5rem 1.25rem 2rem; }
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+.pageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.pageTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ds-ink);
+}
+.pageSubtitle {
+  margin: 0.375rem 0 0 0;
+  font-size: 0.9375rem;
+  color: var(--ds-text-muted);
+}
+.pageActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Impersonation banner ────────────────────────────────────────────────── */
+.impersonationBanner {
+  background: var(--ds-warning-bg);
+  color: #5a3a00;
+  border-bottom: 1px solid color-mix(in oklab, var(--ds-warning) 30%, transparent);
+}
+.impersonationInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.impersonationStrong { font-weight: 700; }
+.impersonationStop {
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid color-mix(in oklab, #5a3a00 30%, transparent);
+  background: transparent;
+  border-radius: var(--r-sm);
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.impersonationStop:hover { background: color-mix(in oklab, #5a3a00 8%, transparent); }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PRIMITIVES — Button, Card, Badge, Table, Field, Submit
+   Usados pelo SuperAdmin agora; admin/teacher/student migram depois.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Button ──────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5625rem 1.125rem;
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 200ms ease, color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.btnPrimary {
+  background: var(--ds-ink);
+  color: #fff;
+  box-shadow: 0 8px 20px -10px rgb(31 58 95 / 0.5);
+}
+.btnPrimary:hover:not(:disabled) { background: var(--ds-ink-deep); }
+.btnSecondary {
+  background: var(--ds-green);
+  color: #fff;
+  box-shadow: 0 8px 20px -10px rgb(99 192 143 / 0.45);
+}
+.btnSecondary:hover:not(:disabled) { background: var(--ds-green-deep); }
+.btnOutline {
+  background: var(--ds-surface);
+  color: var(--ds-ink);
+  border-color: var(--ds-hairline);
+}
+.btnOutline:hover:not(:disabled) { background: var(--ds-canvas); border-color: var(--ds-ink); }
+.btnGhost {
+  background: transparent;
+  color: var(--ds-text-muted);
+}
+.btnGhost:hover:not(:disabled) { color: var(--ds-ink); }
+.btnDanger {
+  background: transparent;
+  color: var(--ds-danger);
+}
+.btnDanger:hover:not(:disabled) {
+  background: var(--ds-danger-bg);
+  color: var(--ds-danger);
+}
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hairline);
+  border-radius: var(--r-xl);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-soft);
+}
+.cardTitle {
+  margin: 0 0 0.875rem 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ds-ink);
+}
+
+/* ── Badge ───────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 9999px;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+.badgeNeutral { background: var(--ds-canvas); color: var(--ds-text-muted); }
+.badgeBrand { background: color-mix(in oklab, var(--ds-ink) 12%, transparent); color: var(--ds-ink); }
+.badgeSuccess { background: color-mix(in oklab, var(--ds-green-soft) 60%, transparent); color: #1F5C3A; }
+.badgeWarning { background: var(--ds-warning-bg); color: #5a3a00; }
+.badgeDanger { background: var(--ds-danger-bg); color: #991B1B; }
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.tableWrap {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-hairline);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.table thead {
+  background: var(--ds-canvas);
+}
+.table th {
+  padding: 0.875rem 1.125rem;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ds-text-muted);
+  border-bottom: 1px solid var(--ds-hairline);
+}
+.table td {
+  padding: 1rem 1.125rem;
+  color: var(--ds-text);
+  border-bottom: 1px solid color-mix(in oklab, var(--ds-hairline) 60%, transparent);
+}
+.table tbody tr:last-child td { border-bottom: none; }
+.tableRight { text-align: right; }
+.tableEmpty {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--ds-text-muted);
+}
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+.formRow {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .formRow2 { grid-template-columns: 1fr 1fr; }
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+.label {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-ink);
+}
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--ds-hairline);
+  background: var(--ds-surface);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--ds-text);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.input::placeholder,
+.textarea::placeholder {
+  font-size: 0.8125rem;
+  color: color-mix(in oklab, var(--ds-text-muted) 80%, transparent);
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--ds-ink);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--ds-ink) 12%, transparent);
+}
+.input[aria-invalid='true'],
+.select[aria-invalid='true'],
+.textarea[aria-invalid='true'] {
+  border-color: var(--ds-danger);
+  box-shadow: 0 0 0 4px rgb(220 38 38 / 0.1);
+}
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7480' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  padding-right: 2.25rem;
+}
+.textarea { min-height: 5.5rem; resize: vertical; }
+.hint { font-size: 0.75rem; color: var(--ds-text-muted); }
+.error { font-size: 0.75rem; font-weight: 500; color: var(--ds-danger); }
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-md);
+  background: var(--ds-danger-bg);
+  color: #991B1B;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.success {
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-md);
+  background: color-mix(in oklab, var(--ds-green-soft) 60%, transparent);
+  color: #1F5C3A;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* ── Cell helpers para listas com nome principal + texto auxiliar ───────── */
+.cellPrimary {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ds-ink);
+}
+.cellPrimary a { color: inherit; text-decoration: none; }
+.cellPrimary a:hover { color: var(--ds-green-deep); }
+.cellSub {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--ds-text-muted);
+  margin-top: 0.125rem;
+}
+.cellMuted { color: var(--ds-text-muted); }
+
+/* Linha de ações inline na última coluna da tabela */
+.rowActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.rowLink {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-ink);
+  text-decoration: none;
+}
+.rowLink:hover { color: var(--ds-green-deep); }
