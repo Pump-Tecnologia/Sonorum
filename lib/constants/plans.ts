@@ -8,6 +8,7 @@ export interface PlanFeatures {
   teacherLimit: number
   financial: boolean // planos, matrículas, cobranças
   reports: boolean // módulo de relatórios
+  transcription: boolean // transcrição de cifra por IA (exclusivo Premium)
 }
 
 export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
@@ -17,6 +18,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     teacherLimit: 1, // o admin já pode lecionar; ajuste aqui se quiser outro teto
     financial: false,
     reports: false,
+    transcription: false,
   },
   basic: {
     label: 'Básico',
@@ -24,6 +26,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     teacherLimit: Infinity,
     financial: true,
     reports: false,
+    transcription: false,
   },
   professional: {
     label: 'Profissional',
@@ -31,6 +34,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     teacherLimit: Infinity,
     financial: true,
     reports: true,
+    transcription: false,
   },
   premium: {
     label: 'Premium',
@@ -38,6 +42,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     teacherLimit: Infinity,
     financial: true,
     reports: true,
+    transcription: true,
   },
 }
 
@@ -45,4 +50,4 @@ export function planFeatures(planType: string | null | undefined): PlanFeatures 
   return PLAN_FEATURES[(planType as SchoolPlanType) ?? 'free'] ?? PLAN_FEATURES.free
 }
 
-export type PlanFeatureKey = 'financial' | 'reports'
+export type PlanFeatureKey = 'financial' | 'reports' | 'transcription'

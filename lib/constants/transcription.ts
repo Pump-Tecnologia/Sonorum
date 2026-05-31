@@ -40,3 +40,7 @@ export const AUDIO_EXT_BY_MIME: Record<string, string> = {
   'audio/ogg': 'ogg',
 }
 export const AUDIO_ACCEPT = Object.keys(AUDIO_EXT_BY_MIME).join(',')
+
+// Teto de segurança por escola/mês na beta — não é cobrança, é rede pra não
+// estourar custo de API se algo disparar. Ajustável.
+export const TRANSCRIPTION_MONTHLY_CAP = 100
