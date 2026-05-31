@@ -65,18 +65,6 @@ export function RegisterForm() {
         />
       </AuthField>
 
-      <AuthField label="Confirmar senha" htmlFor="passwordConfirmation" error={fe.passwordConfirmation}>
-        <AuthInput
-          id="passwordConfirmation"
-          name="passwordConfirmation"
-          type="password"
-          autoComplete="new-password"
-          placeholder="••••••••"
-          invalid={Boolean(fe.passwordConfirmation)}
-          required
-        />
-      </AuthField>
-
       <AuthSubmit pendingLabel="Criando…">Criar conta grátis</AuthSubmit>
 
       <p className={styles.footerLine}>

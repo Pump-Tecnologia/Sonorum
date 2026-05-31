@@ -52,7 +52,6 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     name: formData.get('name'),
     email: formData.get('email'),
     password: formData.get('password'),
-    passwordConfirmation: formData.get('passwordConfirmation'),
   })
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) }
 

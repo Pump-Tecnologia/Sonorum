@@ -5,18 +5,12 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Informe a senha'),
 })
 
-export const registerSchema = z
-  .object({
-    schoolName: z.string().min(2, 'Informe o nome da escola').max(255),
-    name: z.string().min(2, 'Informe seu nome').max(255),
-    email: z.string().email('E-mail inválido').max(255),
-    password: z.string().min(8, 'Mínimo de 8 caracteres'),
-    passwordConfirmation: z.string(),
-  })
-  .refine((d) => d.password === d.passwordConfirmation, {
-    message: 'As senhas não conferem',
-    path: ['passwordConfirmation'],
-  })
+export const registerSchema = z.object({
+  schoolName: z.string().min(2, 'Informe o nome da escola').max(255),
+  name: z.string().min(2, 'Informe seu nome').max(255),
+  email: z.string().email('E-mail inválido').max(255),
+  password: z.string().min(8, 'Mínimo de 8 caracteres'),
+})
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email('E-mail inválido'),
