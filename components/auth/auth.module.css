@@ -6,6 +6,9 @@
 .page {
   --ds-ink: #1F3A5F;
   --ds-ink-deep: #142844;
+  /* Fundo do painel esquerdo: levemente mais claro/vivido que o ink da marca
+     para a logo vazada ter contraste. Não substitui o ink — só o background. */
+  --ds-panel-bg: #25456E;
   --ds-green: #63C08F;
   --ds-green-soft: #A8DCC1;
   --ds-green-deep: #4FAB78;
@@ -42,7 +45,7 @@
   display: none;
   position: relative;
   overflow: hidden;
-  background: var(--ds-ink);
+  background: var(--ds-panel-bg);
   color: #fff;
   padding: 3rem;
   flex-direction: column;
