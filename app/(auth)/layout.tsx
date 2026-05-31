@@ -3,6 +3,9 @@ import Link from 'next/link'
 
 import styles from '@/components/auth/auth.module.css'
 
+// logo-branco: versão monocromática clara — usada sobre o ink do painel esquerdo.
+// logo-vazado: usada no brand mobile, que aparece em fundo canvas claro.
+const LOGO_LIGHT = '/brand/logo-branco.png'
 const LOGO_VAZADO = '/brand/logo-vazado.png'
 
 // Layout de autenticação: painel de marca à esquerda (fundo ink),
@@ -15,7 +18,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <aside className={styles.brandPanel}>
         <Link href="/" className={styles.brandHeader} aria-label="Sonorum">
           <Image
-            src={LOGO_VAZADO}
+            src={LOGO_LIGHT}
             alt=""
             width={36}
             height={36}
