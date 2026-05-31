@@ -27,10 +27,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         <div className={styles.brandPitch}>
           <p className={styles.brandPitchTitle}>
-            A regência da sua escola de música, <em>num só lugar.</em>
+            Toda a gestão da sua escola, <em>num só lugar.</em>
           </p>
           <p className={styles.brandPitchSub}>
-            Agenda, alunos, professores, materiais e financeiro — afinados.
+            Agenda, alunos, professores, materiais e financeiro num sistema só.
           </p>
         </div>
 

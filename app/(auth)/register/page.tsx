@@ -12,9 +12,6 @@ export default function RegisterPage() {
       <p className={styles.subtitle}>
         Crie sua conta no plano Essencial e comece hoje, sem cartão.
       </p>
-      <p className={styles.notice}>
-        Plano Essencial · grátis · até 5 alunos · 1 professor. Faça upgrade quando quiser.
-      </p>
       <RegisterForm />
     </>
   )

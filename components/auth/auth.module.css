@@ -211,7 +211,11 @@
   color: var(--ds-text);
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
-.input::placeholder { color: color-mix(in oklab, var(--ds-text-muted) 80%, transparent); }
+.input::placeholder {
+  /* Placeholder menor que o texto digitado, alinhado com a label */
+  font-size: 0.8125rem;
+  color: color-mix(in oklab, var(--ds-text-muted) 80%, transparent);
+}
 .input:focus {
   outline: none;
   border-color: var(--ds-ink);
