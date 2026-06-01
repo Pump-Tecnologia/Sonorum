@@ -417,6 +417,7 @@ export type Database = {
           content_type: string
           created_at: string
           created_by: string | null
+          customized: boolean
           description: string | null
           difficulty: string
           file_path: string | null
@@ -424,6 +425,8 @@ export type Database = {
           instrument: string | null
           instrument_category: string | null
           school_id: string | null
+          template_id: string | null
+          template_version: number | null
           title: string
           updated_at: string
         }
@@ -434,6 +437,7 @@ export type Database = {
           content_type?: string
           created_at?: string
           created_by?: string | null
+          customized?: boolean
           description?: string | null
           difficulty?: string
           file_path?: string | null
@@ -441,6 +445,8 @@ export type Database = {
           instrument?: string | null
           instrument_category?: string | null
           school_id?: string | null
+          template_id?: string | null
+          template_version?: number | null
           title: string
           updated_at?: string
         }
@@ -451,6 +457,7 @@ export type Database = {
           content_type?: string
           created_at?: string
           created_by?: string | null
+          customized?: boolean
           description?: string | null
           difficulty?: string
           file_path?: string | null
@@ -458,6 +465,8 @@ export type Database = {
           instrument?: string | null
           instrument_category?: string | null
           school_id?: string | null
+          template_id?: string | null
+          template_version?: number | null
           title?: string
           updated_at?: string
         }
@@ -474,6 +483,13 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedagogical_resources_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "resource_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -601,6 +617,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      resource_templates: {
+        Row: {
+          active: boolean
+          body: string | null
+          category: string | null
+          content_link: string | null
+          content_type: string
+          created_at: string
+          description: string | null
+          difficulty: string | null
+          file_path: string | null
+          id: string
+          instrument: string | null
+          instrument_category: string | null
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          body?: string | null
+          category?: string | null
+          content_link?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          file_path?: string | null
+          id?: string
+          instrument?: string | null
+          instrument_category?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          active?: boolean
+          body?: string | null
+          category?: string | null
+          content_link?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          file_path?: string | null
+          id?: string
+          instrument?: string | null
+          instrument_category?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
       }
       rooms: {
         Row: {
