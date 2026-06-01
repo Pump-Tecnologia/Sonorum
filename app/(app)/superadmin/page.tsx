@@ -1,10 +1,9 @@
-import Link from 'next/link'
-
 import { AppBadge } from '@/components/app/AppBadge'
 import { AppLinkButton } from '@/components/app/AppButton'
 import { AppEmpty, AppTable, cellMuted, cellPrimary, cellSub, tableRight } from '@/components/app/AppTable'
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
 import { PageHeader } from '@/components/app/PageHeader'
+import { LinkButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Sparkline } from '@/components/ui/Sparkline'
 import { StatCard } from '@/components/ui/StatCard'
@@ -149,7 +148,7 @@ export default async function SuperAdminDashboard() {
       <section className="mt-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-ink">Ranking de unidades</h2>
-          <Link href="/superadmin/schools/new" className="text-xs font-semibold text-brand-600 hover:underline">Nova escola →</Link>
+          <LinkButton href="/superadmin/schools/new" variant="secondary" size="sm">Nova escola →</LinkButton>
         </div>
         <AppTable>
           <thead>
@@ -177,10 +176,8 @@ export default async function SuperAdminDashboard() {
                   <td className={cellMuted}>{formatBRL(s.faturamento)}</td>
                   <td><AppBadge tone={s.ativa ? 'success' : 'danger'}>{s.ativa ? 'Ativa' : 'Expirada'}</AppBadge></td>
                   <td className={tableRight}>
-                    <div className="flex items-center justify-end gap-3">
-                      <Link href={`/superadmin/schools/${s.id}/edit`} className="text-xs font-semibold text-brand-600 hover:underline">
-                        Editar
-                      </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <LinkButton href={`/superadmin/schools/${s.id}/edit`} variant="secondary" size="sm">Editar</LinkButton>
                       {adminUser && <ImpersonateButton targetUserId={adminUser.id} label="Entrar como admin" />}
                     </div>
                   </td>

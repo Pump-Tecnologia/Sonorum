@@ -222,7 +222,6 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                             hidden={{ pivotId: r.id, lessonId: lesson.id }}
                             label="Remover"
                             confirmText="Remover este recurso da aula?"
-                            className="text-xs px-2 py-0.5"
                           />
                         </li>
                       ))}

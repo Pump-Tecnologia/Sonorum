@@ -46,7 +46,7 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
           <input type="hidden" name="jobId" value={job.id} />
           <button
             type="submit"
-            className="text-sm font-medium text-red-600 hover:underline"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
           >
             Rejeitar transcrição
           </button>
@@ -97,7 +97,7 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
             <button
               type="submit"
               formAction={saveTranscriptionDraft}
-              className="text-sm font-medium text-brand-600 hover:underline"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink"
             >
               Salvar rascunho sem aprovar
             </button>

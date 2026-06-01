@@ -1,8 +1,7 @@
-import Link from 'next/link'
-
 import { PageHeader } from '@/components/app/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { LinkButton } from '@/components/ui/Button'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { toggleGoal } from '@/lib/actions/student-detail'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -91,9 +90,9 @@ export default async function StudentDashboard() {
               {lastLesson.notes && (
                 <p className="mt-2 text-sm text-ink">{lastLesson.notes}</p>
               )}
-              <Link href={`/student/lessons/${lastLesson.id}`} className="mt-2 inline-block text-xs font-semibold text-brand-600 hover:underline">
+              <LinkButton href={`/student/lessons/${lastLesson.id}`} variant="ghost" size="sm" className="mt-2">
                 Ver detalhes →
-              </Link>
+              </LinkButton>
             </div>
           ) : (
             <p className="text-sm text-ink-muted">Nenhuma aula ainda.</p>

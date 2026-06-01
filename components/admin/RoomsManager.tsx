@@ -36,7 +36,6 @@ export function RoomsManager({ rooms }: { rooms: Room[] }) {
                 hidden={{ roomId: r.id }}
                 label="Excluir"
                 confirmText={`Excluir a sala "${r.name}"? As aulas vinculadas ficam sem sala.`}
-                className="text-xs px-2 py-0.5"
               />
             </li>
           ))}

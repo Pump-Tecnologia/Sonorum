@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
+import { LinkButton } from '@/components/ui/Button'
 import { StatCard } from '@/components/ui/StatCard'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -150,7 +151,7 @@ export default async function TeacherDashboard() {
         <Card className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-ink">Agenda do dia</h2>
-            <Link href="/schedule" className="text-xs font-semibold text-brand-600 hover:underline">Ver agenda completa →</Link>
+            <LinkButton href="/schedule" variant="ghost" size="sm">Ver agenda completa →</LinkButton>
           </div>
           {lessons.length === 0 ? (
             <p className="text-sm text-ink-muted">Nenhuma aula hoje.</p>
@@ -172,9 +173,9 @@ export default async function TeacherDashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
-                      <Link href={`/lessons/${l.id}/planner`} className="text-xs font-semibold text-brand-600 hover:underline">
+                      <LinkButton href={`/lessons/${l.id}/planner`} variant="secondary" size="sm">
                         {live ? 'Iniciar' : 'Abrir'}
-                      </Link>
+                      </LinkButton>
                     </div>
                   </li>
                 )

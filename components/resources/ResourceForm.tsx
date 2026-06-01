@@ -92,7 +92,7 @@ export function ResourceForm({
           />
           {currentFileUrl && (
             <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
-              <a href={currentFileUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand-600 hover:underline">
+              <a href={currentFileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-semibold text-brand-600 transition-colors hover:bg-brand-50">
                 Ver arquivo atual →
               </a>
               <label className="flex items-center gap-1.5 text-xs text-ink-muted">

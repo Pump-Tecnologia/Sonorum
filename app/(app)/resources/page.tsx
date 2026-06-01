@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { RestoreButton } from '@/components/admin/RestoreButton'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Button, LinkButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { deleteResource, restoreLibrary, restoreResource } from '@/lib/actions/resources'
 import { createClient } from '@/lib/supabase/server'
@@ -67,22 +67,24 @@ export default async function ResourcesPage() {
                 {r.template_id && <><span>·</span><span className="font-medium text-brand-600">do catálogo{r.customized ? ' (editado)' : ''}</span></>}
               </div>
               {r.file_path && fileUrls[r.file_path] && (
-                <a href={fileUrls[r.file_path]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-brand-600 hover:underline">
+                <a
+                  href={fileUrls[r.file_path]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted"
+                >
                   Baixar arquivo →
                 </a>
               )}
               <div className="mt-auto flex items-center justify-between border-t border-hairline pt-3">
-                <div className="flex items-center gap-1">
-                  <Link href={`/resources/${r.id}/edit`} className="text-xs font-semibold text-brand-600 hover:underline">
-                    Editar
-                  </Link>
+                <div className="flex items-center gap-2">
+                  <LinkButton href={`/resources/${r.id}/edit`} variant="secondary" size="sm">Editar</LinkButton>
                   {r.template_id && (
                     <RestoreButton
                       action={restoreResource}
                       hidden={{ resourceId: r.id }}
                       label="Restaurar"
                       confirmText="Restaurar este recurso para a versão do catálogo? Suas edições serão perdidas."
-                      className="text-xs px-2 py-0.5"
                     />
                   )}
                 </div>

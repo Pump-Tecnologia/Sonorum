@@ -30,7 +30,7 @@ export function RestoreButton({
       ))}
       <button
         type="submit"
-        className={cn('rounded-lg px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50', className)}
+        className={cn('inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted', className)}
       >
         {label}
       </button>

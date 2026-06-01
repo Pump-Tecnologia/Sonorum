@@ -75,7 +75,7 @@ export default async function FinancialPage({
           <p className="text-sm text-ink-muted">Nenhuma cobrança neste mês.</p>
           <form action={generateMonthlyCharges} className="mt-3 inline-block">
             <input type="hidden" name="month" value={month} />
-            <button type="submit" className="text-sm font-semibold text-brand-600 hover:underline">
+            <button type="submit" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted">
               Gerar cobranças das matrículas ativas →
             </button>
           </form>

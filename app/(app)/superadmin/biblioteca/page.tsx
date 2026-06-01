@@ -1,9 +1,8 @@
-import Link from 'next/link'
-
 import { PageHeader } from '@/components/app/PageHeader'
 import { AppLinkButton } from '@/components/app/AppButton'
 import { AppEmpty, AppTable, cellMuted, cellPrimary, cellSub, tableRight } from '@/components/app/AppTable'
 import { DeleteButton } from '@/components/admin/DeleteButton'
+import { LinkButton } from '@/components/ui/Button'
 import { deleteTemplate, provisionAllSchools } from '@/lib/actions/resource-templates'
 import { createClient } from '@/lib/supabase/server'
 
@@ -63,14 +62,13 @@ export default async function LibraryPage() {
               <td className={cellMuted}>{t.difficulty ?? '—'}</td>
               <td className={cellMuted}>v{t.version}</td>
               <td className={tableRight}>
-                <div className="flex items-center justify-end gap-3">
-                  <Link href={`/superadmin/biblioteca/${t.id}/edit`} className="text-xs font-semibold text-brand-600 hover:underline">Editar</Link>
+                <div className="flex items-center justify-end gap-2">
+                  <LinkButton href={`/superadmin/biblioteca/${t.id}/edit`} variant="secondary" size="sm">Editar</LinkButton>
                   <DeleteButton
                     action={deleteTemplate}
                     hidden={{ templateId: t.id }}
                     label="Excluir"
                     confirmText={`Excluir "${t.title}" do catálogo? As cópias já nas escolas permanecem (viram recursos próprios).`}
-                    className="text-xs px-2 py-0.5"
                   />
                 </div>
               </td>

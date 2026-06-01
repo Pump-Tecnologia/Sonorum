@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Button, LinkButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { TranscriptionUpsell } from '@/components/transcription/TranscriptionUpsell'
 import { deleteTranscription, retryTranscription } from '@/lib/actions/transcription'
@@ -66,17 +66,12 @@ export default async function TranscriptionQueuePage() {
 
                 <div className="flex items-center gap-3">
                   {status === 'pending_review' && (
-                    <Link
-                      href={`/resources/transcribe/${j.id}`}
-                      className="text-sm font-semibold text-brand-600 hover:underline"
-                    >
-                      Revisar →
-                    </Link>
+                    <LinkButton href={`/resources/transcribe/${j.id}`} variant="secondary" size="sm">Revisar →</LinkButton>
                   )}
                   {status === 'failed' && (
                     <form action={retryTranscription}>
                       <input type="hidden" name="jobId" value={j.id} />
-                      <button type="submit" className="text-sm font-semibold text-brand-600 hover:underline">
+                      <button type="submit" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted">
                         Tentar de novo
                       </button>
                     </form>

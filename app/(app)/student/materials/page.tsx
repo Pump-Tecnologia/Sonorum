@@ -59,7 +59,7 @@ export default async function StudentMaterialsPage() {
                   href={fileUrls[r.file_path]}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-semibold text-brand-600 hover:underline"
+                  className="inline-flex w-fit items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted"
                 >
                   Baixar arquivo →
                 </a>
@@ -69,7 +69,7 @@ export default async function StudentMaterialsPage() {
                   href={r.content_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-semibold text-brand-600 hover:underline"
+                  className="inline-flex w-fit items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted"
                 >
                   Acessar material →
                 </a>

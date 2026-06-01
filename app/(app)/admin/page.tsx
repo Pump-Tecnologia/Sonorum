@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { Button, LinkButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { StatCard } from '@/components/ui/StatCard'
 import { lessonStatus } from '@/lib/constants/lessons'
@@ -191,7 +191,7 @@ export default async function AdminDashboard() {
         <Card className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-ink">Aulas de hoje</h2>
-            <Link href="/schedule" className="text-xs font-semibold text-brand-600 hover:underline">Ver agenda →</Link>
+            <LinkButton href="/schedule" variant="ghost" size="sm">Ver agenda →</LinkButton>
           </div>
           {todayList.length === 0 ? (
             <p className="text-sm text-ink-muted">Nenhuma aula hoje.</p>
@@ -236,7 +236,7 @@ export default async function AdminDashboard() {
         <Card className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-ink">Professores em destaque (mês)</h2>
-            <Link href="/admin/teachers" className="text-xs font-semibold text-brand-600 hover:underline">Ver todos →</Link>
+            <LinkButton href="/admin/teachers" variant="ghost" size="sm">Ver todos →</LinkButton>
           </div>
           {teachers.length === 0 ? (
             <p className="text-sm text-ink-muted">Nenhum professor cadastrado.</p>

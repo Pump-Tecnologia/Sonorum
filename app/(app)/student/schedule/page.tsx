@@ -1,7 +1,6 @@
-import Link from 'next/link'
-
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
+import { LinkButton } from '@/components/ui/Button'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { Card } from '@/components/ui/Card'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
@@ -99,9 +98,7 @@ export default async function StudentSchedulePage() {
                     <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
                   </Td>
                   <Td className="text-right">
-                    <Link href={`/student/lessons/${l.id}`} className="text-xs font-semibold text-brand-600 hover:underline">
-                      Ver
-                    </Link>
+                    <LinkButton href={`/student/lessons/${l.id}`} variant="secondary" size="sm">Ver</LinkButton>
                   </Td>
                 </Tr>
               ))}

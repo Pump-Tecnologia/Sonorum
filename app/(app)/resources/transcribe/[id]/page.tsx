@@ -1,10 +1,10 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { TranscriptionReview } from '@/components/transcription/TranscriptionReview'
 import { TranscriptionUpsell } from '@/components/transcription/TranscriptionUpsell'
 import { Card } from '@/components/ui/Card'
+import { LinkButton } from '@/components/ui/Button'
 import { transcriptionAccess } from '@/lib/auth/plan'
 import { STATUS_LABEL, type TranscriptionStatus } from '@/lib/constants/transcription'
 import { createClient } from '@/lib/supabase/server'
@@ -43,9 +43,7 @@ export default async function ReviewTranscriptionPage({ params }: { params: Prom
               A IA ainda está processando o áudio. Atualize a página em instantes.
             </p>
           )}
-          <Link href="/resources/transcribe" className="text-sm font-semibold text-brand-600 hover:underline">
-            ← Voltar para a fila
-          </Link>
+          <LinkButton href="/resources/transcribe" variant="ghost" size="sm">← Voltar para a fila</LinkButton>
         </Card>
       </>
     )
