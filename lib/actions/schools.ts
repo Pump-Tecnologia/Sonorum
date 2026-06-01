@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 import { createUserWithProfile, generatePassword } from '@/lib/users/admin'
+import { provisionSchoolLibrary } from '@/lib/actions/resource-templates'
 
 const createSchoolSchema = z.object({
   name: z.string().min(2, 'Informe o nome da escola').max(255),
@@ -101,6 +102,9 @@ export async function createSchool(
       error: result.isDuplicate ? undefined : result.error,
     }
   }
+
+  // Escola nasce com a biblioteca de recursos do catálogo (cópias editáveis).
+  await provisionSchoolLibrary(school.id)
 
   revalidatePath('/superadmin')
   return { ok: true, tempPassword, createdEmail: adminEmail }

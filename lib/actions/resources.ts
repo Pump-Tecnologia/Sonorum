@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 import { CATEGORIES, INST_CATEGORIES, DIFFICULTIES, CONTENT_TYPES } from '@/lib/constants/resources'
 import { deleteResourceFile, uploadResourceFile } from '@/lib/storage/resources'
+import { provisionSchoolLibrary } from '@/lib/actions/resource-templates'
 
 export type ResourceActionState = { ok: boolean; error?: string; fieldErrors?: Record<string, string> }
 
@@ -135,6 +136,7 @@ export async function updateResource(_prev: ResourceActionState, formData: FormD
     instrument: d.instrument || null, difficulty: d.difficulty, content_type: d.contentType,
     body: d.body || null, content_link: d.contentLink || null, description: d.description || null,
     file_path: filePath,
+    customized: true, // editar uma cópia marca que ela divergiu do catálogo
   }).eq('id', resourceId)
 
   revalidatePath('/resources')
@@ -155,4 +157,58 @@ export async function deleteResource(formData: FormData) {
   if (existing?.file_path) await deleteResourceFile(existing.file_path)
   revalidatePath('/resources')
 }
+
+// ── Restauração de recursos do catálogo ──────────────────────────────────────
+
+// Restaura UMA cópia: sobrescreve o conteúdo com o template de origem atual.
+export async function restoreResource(formData: FormData) {
+  const me = await requireStaff()
+  if (!me) return
+  const resourceId = String(formData.get('resourceId') ?? '')
+  if (!resourceId) return
+
+  const supabase = await createClient()
+  const { data: resource } = await supabase
+    .from('pedagogical_resources')
+    .select('template_id')
+    .eq('id', resourceId)
+    .maybeSingle()
+  if (!resource?.template_id) return
+
+  const { data: t } = await supabase
+    .from('resource_templates')
+    .select('*')
+    .eq('id', resource.template_id)
+    .maybeSingle()
+  if (!t) return
+
+  await supabase
+    .from('pedagogical_resources')
+    .update({
+      title: t.title,
+      description: t.description,
+      category: t.category ?? 'Aquecimento',
+      instrument_category: t.instrument_category,
+      instrument: t.instrument,
+      difficulty: t.difficulty ?? 'Iniciante',
+      content_type: t.content_type,
+      body: t.body,
+      content_link: t.content_link,
+      file_path: t.file_path,
+      template_version: t.version,
+      customized: false,
+    })
+    .eq('id', resourceId)
+
+  revalidatePath('/resources')
+}
+
+// Restaura a BIBLIOTECA: recria as cópias dos templates que a escola excluiu.
+export async function restoreLibrary() {
+  const me = await requireStaff()
+  if (!me?.schoolId) return
+  await provisionSchoolLibrary(me.schoolId)
+  revalidatePath('/resources')
+}
+
 
