@@ -2,10 +2,11 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
+import { RestoreButton } from '@/components/admin/RestoreButton'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { deleteResource } from '@/lib/actions/resources'
+import { deleteResource, restoreLibrary, restoreResource } from '@/lib/actions/resources'
 import { createClient } from '@/lib/supabase/server'
 import { signedResourceUrls } from '@/lib/storage/resources'
 
@@ -21,7 +22,7 @@ export default async function ResourcesPage() {
   const supabase = await createClient()
   const { data: resources } = await supabase
     .from('pedagogical_resources')
-    .select('id, title, description, category, difficulty, content_type, instrument, instrument_category, content_link, file_path')
+    .select('id, title, description, category, difficulty, content_type, instrument, instrument_category, content_link, file_path, template_id, customized')
     .order('created_at', { ascending: false })
 
   const list = resources ?? []
@@ -33,9 +34,16 @@ export default async function ResourcesPage() {
         title="Recursos pedagógicos"
         subtitle={`${list.length} recurso(s) na biblioteca`}
         action={
-          <Link href="/resources/new">
-            <Button>Novo recurso</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <form action={restoreLibrary}>
+              <button type="submit" className="rounded-xl border border-hairline bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-brand-300">
+                Restaurar biblioteca
+              </button>
+            </form>
+            <Link href="/resources/new">
+              <Button>Novo recurso</Button>
+            </Link>
+          </div>
         }
       />
 
@@ -56,6 +64,7 @@ export default async function ResourcesPage() {
                 <span>{r.content_type}</span>
                 {r.instrument && <><span>·</span><span>{r.instrument}</span></>}
                 {r.instrument_category && !r.instrument && <><span>·</span><span>{r.instrument_category}</span></>}
+                {r.template_id && <><span>·</span><span className="font-medium text-brand-600">do catálogo{r.customized ? ' (editado)' : ''}</span></>}
               </div>
               {r.file_path && fileUrls[r.file_path] && (
                 <a href={fileUrls[r.file_path]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-brand-600 hover:underline">
@@ -63,9 +72,20 @@ export default async function ResourcesPage() {
                 </a>
               )}
               <div className="mt-auto flex items-center justify-between border-t border-hairline pt-3">
-                <Link href={`/resources/${r.id}/edit`} className="text-xs font-semibold text-brand-600 hover:underline">
-                  Editar
-                </Link>
+                <div className="flex items-center gap-1">
+                  <Link href={`/resources/${r.id}/edit`} className="text-xs font-semibold text-brand-600 hover:underline">
+                    Editar
+                  </Link>
+                  {r.template_id && (
+                    <RestoreButton
+                      action={restoreResource}
+                      hidden={{ resourceId: r.id }}
+                      label="Restaurar"
+                      confirmText="Restaurar este recurso para a versão do catálogo? Suas edições serão perdidas."
+                      className="text-xs px-2 py-0.5"
+                    />
+                  )}
+                </div>
                 <DeleteButton
                   action={deleteResource}
                   hidden={{ resourceId: r.id }}

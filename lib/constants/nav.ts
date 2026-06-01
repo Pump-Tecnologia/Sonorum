@@ -9,6 +9,7 @@ export interface NavItem {
 export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   superadmin: [
     { label: 'Visão geral', href: '/superadmin' },
+    { label: 'Biblioteca', href: '/superadmin/biblioteca' },
     { label: 'Nova escola', href: '/superadmin/schools/new' },
   ],
   // NOTA: a nav cresce conforme as fases são migradas. Mantida só com rotas
