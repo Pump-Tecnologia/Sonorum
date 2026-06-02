@@ -30,6 +30,7 @@ export function LessonScheduleForm({
   rooms,
   teachers,
   canEditTeacher,
+  isInSeries,
 }: {
   lessonId: string
   startDatetime: string
@@ -39,6 +40,7 @@ export function LessonScheduleForm({
   rooms: Person[]
   teachers: Person[]
   canEditTeacher: boolean
+  isInSeries: boolean
 }) {
   const [state, action, pending] = useActionState(updateLessonSchedule, initial)
 
@@ -88,6 +90,22 @@ export function LessonScheduleForm({
             {teachers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </Select>
         </Field>
+      )}
+
+      {isInSeries && (
+        // Aula faz parte de uma série semanal — usuário escolhe se a edição
+        // vale só pra esta ocorrência ou propaga pras futuras.
+        <fieldset className="rounded-lg border border-hairline bg-surface-muted/40 p-3">
+          <legend className="px-1 text-xs font-semibold text-ink-muted">Aplicar a</legend>
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input type="radio" name="apply" value="this" defaultChecked />
+            Esta aula
+          </label>
+          <label className="mt-1 flex cursor-pointer items-center gap-2 text-sm">
+            <input type="radio" name="apply" value="future" />
+            Esta aula e as próximas da série
+          </label>
+        </fieldset>
       )}
 
       <div className="flex items-center justify-between">

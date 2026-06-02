@@ -16,6 +16,7 @@ import appStyles from '@/components/app/app.module.css'
 import styles from '@/components/schedule/schedule.module.css'
 import { Badge } from '@/components/ui/Badge'
 import { lessonStatus } from '@/lib/constants/lessons'
+import { RECURRENCE_PRESETS } from '@/lib/constants/recurrence'
 import { cancelLesson, createLesson, type LessonActionState } from '@/lib/actions/lessons'
 
 interface Person { id: string; name: string }
@@ -50,7 +51,6 @@ export function ScheduleCalendar({
   const [eventModal, setEventModal] = useState<SelectedEvent | null>(null)
   const [selectedRange, setSelectedRange] = useState<{ start: string; end: string } | null>(null)
   const [state, action] = useActionState(createLesson, initial)
-  const [repeatWeekly, setRepeatWeekly] = useState(false)
   // Ref pro FullCalendar — `refetchEvents()` preserva view (mês/semana/lista)
   // e data corrente. Antes era `key++`, que remontava tudo e mandava o usuário
   // de volta pra semana atual.
@@ -221,42 +221,13 @@ export function ScheduleCalendar({
                 <AppTextarea id="notes" name="notes" rows={2} />
               </AppField>
 
-              <label className={styles.checkRow} htmlFor="repeatWeekly">
-                <input
-                  type="checkbox"
-                  id="repeatWeekly"
-                  name="repeatWeekly"
-                  value="true"
-                  onChange={(e) => setRepeatWeekly(e.target.checked)}
-                />
-                Repetir semanalmente
-              </label>
-
-              {repeatWeekly && (
-                <div className={styles.recurrenceBox}>
-                  <AppField label="Modo de recorrência" htmlFor="recurrenceMode">
-                    <AppSelect id="recurrenceMode" name="recurrenceMode" defaultValue="count">
-                      <option value="count">Número de semanas</option>
-                      <option value="until">Até uma data</option>
-                    </AppSelect>
-                  </AppField>
-                  <div className={`${appStyles.formRow} ${appStyles.formRow2}`}>
-                    <AppField label="Nº de semanas" htmlFor="recurrenceCount">
-                      <AppInput
-                        id="recurrenceCount"
-                        name="recurrenceCount"
-                        type="number"
-                        min="1"
-                        max="52"
-                        defaultValue="4"
-                      />
-                    </AppField>
-                    <AppField label="Até" htmlFor="recurrenceUntil">
-                      <AppInput id="recurrenceUntil" name="recurrenceUntil" type="date" />
-                    </AppField>
-                  </div>
-                </div>
-              )}
+              <AppField label="Recorrência" htmlFor="recurrence">
+                <AppSelect id="recurrence" name="recurrence" defaultValue="none">
+                  {(Object.entries(RECURRENCE_PRESETS) as Array<[string, { label: string }]>).map(([key, p]) => (
+                    <option key={key} value={key}>{p.label}</option>
+                  ))}
+                </AppSelect>
+              </AppField>
 
               <div className={styles.modalFooter}>
                 <button

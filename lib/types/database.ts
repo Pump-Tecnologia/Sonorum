@@ -295,6 +295,7 @@ export type Database = {
           private_notes: string | null
           room_id: string | null
           school_id: string | null
+          series_id: string | null
           start_datetime: string
           status: string
           student_id: string
@@ -311,6 +312,7 @@ export type Database = {
           private_notes?: string | null
           room_id?: string | null
           school_id?: string | null
+          series_id?: string | null
           start_datetime: string
           status?: string
           student_id: string
@@ -327,6 +329,7 @@ export type Database = {
           private_notes?: string | null
           room_id?: string | null
           school_id?: string | null
+          series_id?: string | null
           start_datetime?: string
           status?: string
           student_id?: string

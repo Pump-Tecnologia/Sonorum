@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 import { notify } from '@/lib/notifications/notify'
+import { RECURRENCE_PRESETS, presetWeeks } from '@/lib/constants/recurrence'
 import { localBrToServerISO } from '@/lib/timezone'
 
 export type LessonActionState = {
@@ -13,6 +14,8 @@ export type LessonActionState = {
   error?: string
   fieldErrors?: Record<string, string>
 }
+
+const RECURRENCE_PRESET_KEYS = Object.keys(RECURRENCE_PRESETS) as [keyof typeof RECURRENCE_PRESETS, ...Array<keyof typeof RECURRENCE_PRESETS>]
 
 const createLessonSchema = z.object({
   studentId: z.string().uuid(),
@@ -22,41 +25,10 @@ const createLessonSchema = z.object({
   startDatetime: z.string().datetime({ local: true }).or(z.string().min(1)),
   endDatetime: z.string().datetime({ local: true }).or(z.string().min(1)),
   notes: z.string().optional(),
-  // Checkbox HTML manda 'true' ou ausente; coerce.boolean() aceitaria
-  // 'false' como true (qualquer string não-vazia). Usar literal explícito.
-  repeatWeekly: z.preprocess((v) => v === 'true' || v === true, z.boolean()),
-  recurrenceMode: z.enum(['until', 'count']).optional(),
-  // Aceita 'YYYY-MM-DD' do input type='date'; refine garante data válida.
-  recurrenceUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida').optional().or(z.literal('')),
-  recurrenceCount: z.coerce.number().int().min(1).max(52).optional(),
-}).refine(
-  // Se repetir, o modo correspondente precisa ter campo preenchido.
-  (d) => !d.repeatWeekly || !d.recurrenceMode ||
-    (d.recurrenceMode === 'count' ? typeof d.recurrenceCount === 'number' : Boolean(d.recurrenceUntil)),
-  { message: 'Preencha o campo de recorrência.', path: ['recurrenceCount'] },
-)
-
-// Gera datas recorrentes semanais a partir de um par início/fim
-function weeklyOccurrences(
-  start: Date,
-  end: Date,
-  mode: 'until' | 'count',
-  until?: string,
-  count?: number,
-): Array<[Date, Date]> {
-  const result: Array<[Date, Date]> = []
-  let cur = new Date(start)
-  let curEnd = new Date(end)
-
-  for (let i = 1; i <= 52; i++) {
-    cur = new Date(cur.getTime() + 7 * 24 * 60 * 60 * 1000)
-    curEnd = new Date(curEnd.getTime() + 7 * 24 * 60 * 60 * 1000)
-    if (mode === 'count' && count && i >= count) break
-    if (mode === 'until' && until && cur > new Date(until)) break
-    result.push([new Date(cur), new Date(curEnd)])
-  }
-  return result
-}
+  // Preset único: substitui o trio repeatWeekly/recurrenceMode/recurrenceCount.
+  // 'none' = aula única; demais = N semanas (definido em RECURRENCE_PRESETS).
+  recurrence: z.enum(RECURRENCE_PRESET_KEYS).default('none'),
+})
 
 type DbClient = Awaited<ReturnType<typeof createClient>>
 
@@ -96,10 +68,7 @@ export async function createLesson(
     startDatetime: formData.get('startDatetime'),
     endDatetime: formData.get('endDatetime'),
     notes: formData.get('notes') || undefined,
-    repeatWeekly: formData.get('repeatWeekly'),
-    recurrenceMode: formData.get('recurrenceMode') || undefined,
-    recurrenceUntil: formData.get('recurrenceUntil') || undefined,
-    recurrenceCount: formData.get('recurrenceCount') || undefined,
+    recurrence: formData.get('recurrence') || 'none',
   })
   if (!parsed.success) {
     const flat = parsed.error.flatten().fieldErrors
@@ -137,18 +106,21 @@ export async function createLesson(
   if (teacherCheck.data === null) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
   if (roomCheck.data === null) return { ok: false, fieldErrors: { roomId: 'Sala não encontrada na escola.' } }
 
-  // Todas as ocorrências (aula principal + recorrência semanal).
+  // Todas as ocorrências (aula principal + recorrência semanal por preset).
+  const weeksExtra = presetWeeks(d.recurrence)
   const occurrences: Array<[string, string]> = [[startISO, endISO]]
-  if (d.repeatWeekly && d.recurrenceMode) {
-    const extras = weeklyOccurrences(
-      new Date(startISO),
-      new Date(endISO),
-      d.recurrenceMode,
-      d.recurrenceUntil,
-      d.recurrenceCount,
-    )
-    for (const [s, e] of extras) occurrences.push([s.toISOString(), e.toISOString()])
+  const startMs = new Date(startISO).getTime()
+  const endMs = new Date(endISO).getTime()
+  const weekMs = 7 * 24 * 60 * 60 * 1000
+  for (let i = 1; i <= weeksExtra; i++) {
+    occurrences.push([
+      new Date(startMs + i * weekMs).toISOString(),
+      new Date(endMs + i * weekMs).toISOString(),
+    ])
   }
+  // Série tem UUID estável quando há recorrência (permite editar/cancelar
+  // a série inteira ou só as próximas a partir de uma ocorrência).
+  const seriesId = weeksExtra > 0 ? crypto.randomUUID() : null
 
   // Conflito de sala: nenhuma ocorrência pode cair numa sala já ocupada no
   // horário — inclui as datas da recorrência (não só a primeira aula).
@@ -171,6 +143,7 @@ export async function createLesson(
     end_datetime: end,
     status: 'scheduled',
     notes: d.notes ?? null,
+    series_id: seriesId,
   })
 
   const { error } = await supabase.from('lessons').insert(occurrences.map(([s, e]) => toInsert(s, e)))
@@ -235,12 +208,16 @@ export async function updateLesson(formData: FormData) {
 
 // Edita horário/sala/professor de uma aula existente (planner).
 // Aceita campos opcionais: só atualiza o que foi enviado no form.
+// apply='future' propaga a mudança p/ todas as ocorrências FUTURAS da
+// mesma série (mantém o desvio relativo no horário) — útil quando o
+// aluno muda o dia/horário da aula semanal a partir de uma data.
 const updateScheduleSchema = z.object({
   lessonId: z.string().uuid(),
   startDatetime: z.string().min(1).optional(),
   endDatetime: z.string().min(1).optional(),
   roomId: z.string().uuid().optional().or(z.literal('')).or(z.literal('clear')),
   teacherId: z.string().uuid().optional().or(z.literal('')).or(z.literal('clear')),
+  apply: z.enum(['this', 'future']).default('this'),
 })
 
 export async function updateLessonSchedule(
@@ -256,6 +233,7 @@ export async function updateLessonSchedule(
     endDatetime: formData.get('endDatetime') || undefined,
     roomId: formData.get('roomId') ?? undefined,
     teacherId: formData.get('teacherId') ?? undefined,
+    apply: formData.get('apply') || 'this',
   })
   if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
   const d = parsed.data
@@ -265,7 +243,7 @@ export async function updateLessonSchedule(
   // validar conflito de sala mesmo quando só o horário muda, e vice-versa).
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('start_datetime, end_datetime, room_id, teacher_id, school_id')
+    .select('start_datetime, end_datetime, room_id, teacher_id, school_id, series_id')
     .eq('id', d.lessonId)
     .eq('school_id', me.schoolId)
     .maybeSingle()
@@ -315,12 +293,78 @@ export async function updateLessonSchedule(
 
   if (Object.keys(update).length === 0) return { ok: true }
 
-  const { error } = await supabase.from('lessons').update(update).eq('id', d.lessonId).eq('school_id', me.schoolId)
-  if (error) return { ok: false, error: 'Não foi possível atualizar a aula.' }
+  // Propagação p/ futuras ocorrências da série: aplica o MESMO delta de
+  // tempo em todas as aulas com mesmo series_id cujo start_datetime >= esta.
+  // Sala/professor são aplicados como valores absolutos (todas viram o
+  // mesmo). Conflito de sala é checado por ocorrência.
+  if (d.apply === 'future' && lesson.series_id) {
+    const startDeltaMs = update.start_datetime ? new Date(update.start_datetime).getTime() - new Date(lesson.start_datetime).getTime() : 0
+    const endDeltaMs = update.end_datetime ? new Date(update.end_datetime).getTime() - new Date(lesson.end_datetime).getTime() : 0
+
+    const { data: siblings } = await supabase
+      .from('lessons')
+      .select('id, start_datetime, end_datetime, room_id')
+      .eq('series_id', lesson.series_id)
+      .eq('school_id', me.schoolId)
+      .gte('start_datetime', lesson.start_datetime)
+      .neq('status', 'canceled')
+
+    // Pré-checa conflito de sala em todas as futuras (com horário novo).
+    if (nextRoom) {
+      for (const s of siblings ?? []) {
+        const newStart = new Date(new Date(s.start_datetime).getTime() + startDeltaMs).toISOString()
+        const newEnd = new Date(new Date(s.end_datetime).getTime() + endDeltaMs).toISOString()
+        if (await roomHasConflict(supabase, nextRoom, newStart, newEnd, s.id)) {
+          const when = new Date(newStart).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          return { ok: false, fieldErrors: { roomId: `Conflito de sala em ${when}.` } }
+        }
+      }
+    }
+
+    // Aplica em cada sibling (não dá pra fazer um único UPDATE pq cada um
+    // tem horário próprio + delta). Lote de UPDATEs.
+    for (const s of siblings ?? []) {
+      const sibUpdate: LessonUpdate = { ...update }
+      if (update.start_datetime) sibUpdate.start_datetime = new Date(new Date(s.start_datetime).getTime() + startDeltaMs).toISOString()
+      if (update.end_datetime) sibUpdate.end_datetime = new Date(new Date(s.end_datetime).getTime() + endDeltaMs).toISOString()
+      await supabase.from('lessons').update(sibUpdate).eq('id', s.id).eq('school_id', me.schoolId)
+    }
+  } else {
+    const { error } = await supabase.from('lessons').update(update).eq('id', d.lessonId).eq('school_id', me.schoolId)
+    if (error) return { ok: false, error: 'Não foi possível atualizar a aula.' }
+  }
 
   revalidatePath(`/lessons/${d.lessonId}/planner`)
   revalidatePath('/schedule')
   return { ok: true }
+}
+
+// Cancela todas as aulas FUTURAS de uma série a partir desta (incluída).
+export async function cancelLessonSeries(formData: FormData) {
+  const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
+  const lessonId = String(formData.get('lessonId') ?? '')
+  if (!lessonId) return
+
+  const supabase = await createClient()
+  const { data: lesson } = await supabase
+    .from('lessons')
+    .select('series_id, start_datetime')
+    .eq('id', lessonId)
+    .eq('school_id', me.schoolId)
+    .maybeSingle()
+  if (!lesson?.series_id) return
+
+  await supabase
+    .from('lessons')
+    .update({ status: 'canceled' })
+    .eq('series_id', lesson.series_id)
+    .eq('school_id', me.schoolId)
+    .gte('start_datetime', lesson.start_datetime)
+    .neq('status', 'canceled')
+
+  revalidatePath('/schedule')
+  revalidatePath(`/lessons/${lessonId}/planner`)
 }
 
 export async function cancelLesson(formData: FormData) {

@@ -7,7 +7,7 @@ import { ResourcePicker } from '@/components/schedule/ResourcePicker'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
-import { detachResource, markAttendance, updateLesson, upsertLessonPlan } from '@/lib/actions/lessons'
+import { cancelLessonSeries, detachResource, markAttendance, updateLesson, upsertLessonPlan } from '@/lib/actions/lessons'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
@@ -43,7 +43,7 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, users!lessons_student_id_fkey(name, instrument)')
+    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, series_id, users!lessons_student_id_fkey(name, instrument)')
     .eq('id', id)
     .maybeSingle()
 
@@ -165,7 +165,14 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
             </form>
 
             <div className="mt-4 border-t border-hairline pt-4">
-              <h3 className="mb-3 text-sm font-semibold text-ink">Editar horário e atribuição</h3>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-ink">Editar horário e atribuição</h3>
+                {lesson.series_id && (
+                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+                    parte de uma série semanal
+                  </span>
+                )}
+              </div>
               <LessonScheduleForm
                 lessonId={lesson.id}
                 startDatetime={lesson.start_datetime}
@@ -175,7 +182,19 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                 rooms={roomList}
                 teachers={teacherList}
                 canEditTeacher={me?.role === 'admin'}
+                isInSeries={Boolean(lesson.series_id)}
               />
+              {lesson.series_id && (
+                <form action={cancelLessonSeries} className="mt-3 border-t border-hairline pt-3">
+                  <input type="hidden" name="lessonId" value={lesson.id} />
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
+                  >
+                    Cancelar esta aula e todas as próximas da série
+                  </button>
+                </form>
+              )}
             </div>
           </Card>
 
