@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { LessonScheduleForm } from '@/components/schedule/LessonScheduleForm'
+import { PlannerTabs, type PlannerTab } from '@/components/schedule/PlannerTabs'
 import { ResourcePicker } from '@/components/schedule/ResourcePicker'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
@@ -13,6 +14,8 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Planejador de aula' }
+
+const SECTION_OPTS = ['warmup', 'repertoire', 'homework', 'general'] as const
 
 const STATUS_OPTS = [
   { value: 'scheduled', label: 'Agendada' },
@@ -34,6 +37,18 @@ const SECTION_LABEL: Record<string, string> = {
   repertoire: 'Repertório',
   homework: 'Tarefa de casa',
   general: 'Geral',
+}
+
+const REPORT_LABEL = { technique: 'Técnica', theory: 'Teoria', repertoire: 'Repertório', practice: 'Dedicação' }
+
+const PRIMARY_BTN = 'rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700'
+
+// Decide em qual fase abrir: em andamento ou aguardando presença → Dar aula;
+// já realizada/atrasada/faltou → Avaliar; resto (agendada futura) → Planejar.
+function computeDefaultTab(status: string, hasStarted: boolean, isLive: boolean): string {
+  if (isLive || (status === 'scheduled' && hasStarted)) return 'live'
+  if (['completed', 'late', 'missed'].includes(status)) return 'evaluate'
+  return 'plan'
 }
 
 export default async function PlannerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -88,17 +103,100 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
   // Aula já começou/passou e ainda está "Agendada" → presença pendente.
   const awaitingAttendance = lesson.status === 'scheduled' && hasStarted
 
-  return (
-    <>
-      <PageHeader
-        title={`Aula — ${student?.name ?? ''}`}
-        subtitle={new Date(lesson.start_datetime).toLocaleString('pt-BR', {
-          weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
-        })}
-      />
+  const defaultTab = computeDefaultTab(lesson.status, hasStarted, isLive)
 
-      {/* Presença — modo dar-aula */}
-      <Card className={`mb-6 ${isLive ? 'border-accent-500 bg-accent-50/40' : awaitingAttendance ? 'border-amber-300' : ''}`}>
+  // ── Fase 1: Planejar (antes da aula) ──────────────────────────────────────
+  const planTab = (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <div className="space-y-6">
+        <Card>
+          <h2 className="mb-4 text-base font-semibold text-ink">Objetivos da aula</h2>
+          <form action={updateLesson} className="space-y-4">
+            <input type="hidden" name="lessonId" value={lesson.id} />
+            <Field label="O que você quer alcançar nesta aula?" htmlFor="goals">
+              <Textarea id="goals" name="goals" defaultValue={lesson.goals ?? ''} rows={3} />
+            </Field>
+            <button type="submit" className={PRIMARY_BTN}>Salvar objetivos</button>
+          </form>
+        </Card>
+
+        <Card>
+          <h2 className="mb-4 text-base font-semibold text-ink">Planejamento</h2>
+          <form action={upsertLessonPlan} className="space-y-4">
+            <input type="hidden" name="lessonId" value={lesson.id} />
+
+            <Field label="Aquecimento" htmlFor="warmup">
+              <Textarea id="warmup" name="warmup" defaultValue={plan?.warmup ?? ''} rows={2} />
+            </Field>
+            <Field label="Repertório" htmlFor="repertoire">
+              <Textarea id="repertoire" name="repertoire" defaultValue={plan?.repertoire ?? ''} rows={2} />
+            </Field>
+            <Field label="Tarefa de casa" htmlFor="homework">
+              <Textarea id="homework" name="homework" defaultValue={plan?.homework ?? ''} rows={2} />
+            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="BPM alvo" htmlFor="target_bpm">
+                <Input id="target_bpm" name="target_bpm" defaultValue={plan?.target_bpm ?? ''} />
+              </Field>
+            </div>
+            <Field label="Outras notas" htmlFor="plan_notes">
+              <Textarea id="plan_notes" name="plan_notes" defaultValue={plan?.notes ?? ''} rows={2} />
+            </Field>
+
+            <button type="submit" className={PRIMARY_BTN}>Salvar planejamento</button>
+          </form>
+        </Card>
+      </div>
+
+      <div className="space-y-6">
+        <Card>
+          <h2 className="mb-4 text-base font-semibold text-ink">Recursos pedagógicos</h2>
+
+          {attachedList.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-hairline bg-surface-muted px-4 py-6 text-center">
+              <p className="text-sm font-medium text-ink">Nenhum recurso anexado a esta aula</p>
+              <p className="mx-auto mt-1 max-w-xs text-xs text-ink-muted">
+                Use a busca abaixo para anexar partituras, áudios ou exercícios — eles aparecem aqui organizados por seção.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {SECTION_OPTS.filter((s) => bySection[s]!.length > 0).map((s) => (
+                <div key={s}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    {SECTION_LABEL[s]}
+                  </p>
+                  <ul className="space-y-1.5">
+                    {bySection[s]!.map((r) => (
+                      <li key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
+                        <span className="text-ink">{r.pedagogical_resources?.title ?? '—'}</span>
+                        <DeleteButton
+                          action={detachResource}
+                          hidden={{ pivotId: r.id, lessonId: lesson.id }}
+                          label="Remover"
+                          confirmText="Remover este recurso da aula?"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-5 border-t border-hairline pt-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Anexar recurso</p>
+            <ResourcePicker lessonId={lesson.id} />
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+
+  // ── Fase 2: Dar aula (durante) ────────────────────────────────────────────
+  const liveTab = (
+    <div className="space-y-6">
+      <Card className={isLive ? 'border-accent-500 bg-accent-50/40' : awaitingAttendance ? 'border-amber-300' : ''}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             {isLive && (
@@ -131,205 +229,135 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
             ))}
           </div>
         </div>
+
+        <form action={updateLesson} className="mt-4 flex flex-wrap items-end gap-3 border-t border-hairline pt-4">
+          <input type="hidden" name="lessonId" value={lesson.id} />
+          <Field label="Ajustar status manualmente" htmlFor="status">
+            <Select id="status" name="status" defaultValue={lesson.status}>
+              {STATUS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </Select>
+          </Field>
+          <button type="submit" className="rounded-xl border border-hairline bg-surface px-4 py-2.5 text-sm font-semibold text-ink hover:bg-surface-muted">
+            Salvar status
+          </button>
+        </form>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Coluna 1 — Status, observações e planejamento */}
-        <div className="space-y-6">
-          <Card>
-            <h2 className="mb-4 text-base font-semibold text-ink">Dados da aula</h2>
-            <form action={updateLesson} className="space-y-4">
-              <input type="hidden" name="lessonId" value={lesson.id} />
-
-              <Field label="Status" htmlFor="status">
-                <Select id="status" name="status" defaultValue={lesson.status}>
-                  {STATUS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </Select>
-              </Field>
-
-              <Field label="Objetivos da aula" htmlFor="goals">
-                <Textarea id="goals" name="goals" defaultValue={lesson.goals ?? ''} rows={2} />
-              </Field>
-
-              <Field label="Observações (visíveis ao aluno)" htmlFor="notes">
-                <Textarea id="notes" name="notes" defaultValue={lesson.notes ?? ''} rows={2} />
-              </Field>
-
-              <Field label="Notas privadas (só você vê)" htmlFor="private_notes">
-                <Textarea id="private_notes" name="private_notes" defaultValue={lesson.private_notes ?? ''} rows={2} />
-              </Field>
-
-              <button type="submit" className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                Salvar
-              </button>
-            </form>
-
-            <div className="mt-4 border-t border-hairline pt-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-ink">Editar horário e atribuição</h3>
-                {lesson.series_id && (
-                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-                    parte de uma série semanal
-                  </span>
-                )}
-              </div>
-              <LessonScheduleForm
-                lessonId={lesson.id}
-                startDatetime={lesson.start_datetime}
-                endDatetime={lesson.end_datetime}
-                currentRoomId={lesson.room_id}
-                currentTeacherId={lesson.teacher_id}
-                rooms={roomList}
-                teachers={teacherList}
-                canEditTeacher={me?.role === 'admin'}
-                isInSeries={Boolean(lesson.series_id)}
-              />
-              {lesson.series_id && (
-                <form action={cancelLessonSeries} className="mt-3 border-t border-hairline pt-3">
-                  <input type="hidden" name="lessonId" value={lesson.id} />
-                  <button
-                    type="submit"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
-                  >
-                    Cancelar esta aula e todas as próximas da série
-                  </button>
-                </form>
-              )}
-            </div>
-          </Card>
-
-          <Card>
-            <h2 className="mb-4 text-base font-semibold text-ink">Planejamento</h2>
-            <form action={upsertLessonPlan} className="space-y-4">
-              <input type="hidden" name="lessonId" value={lesson.id} />
-
-              <Field label="Aquecimento" htmlFor="warmup">
-                <Textarea id="warmup" name="warmup" defaultValue={plan?.warmup ?? ''} rows={2} />
-              </Field>
-
-              <Field label="Repertório" htmlFor="repertoire">
-                <Textarea id="repertoire" name="repertoire" defaultValue={plan?.repertoire ?? ''} rows={2} />
-              </Field>
-
-              <Field label="Tarefa de casa" htmlFor="homework">
-                <Textarea id="homework" name="homework" defaultValue={plan?.homework ?? ''} rows={2} />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="BPM alvo" htmlFor="target_bpm">
-                  <Input id="target_bpm" name="target_bpm" defaultValue={plan?.target_bpm ?? ''} />
-                </Field>
-              </div>
-
-              <Field label="Outras notas" htmlFor="plan_notes">
-                <Textarea id="plan_notes" name="plan_notes" defaultValue={plan?.notes ?? ''} rows={2} />
-              </Field>
-
-              <button type="submit" className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                Salvar planejamento
-              </button>
-            </form>
-          </Card>
+      <Card>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-ink">Horário e atribuição</h2>
+          {lesson.series_id && (
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+              parte de uma série semanal
+            </span>
+          )}
         </div>
+        <LessonScheduleForm
+          lessonId={lesson.id}
+          startDatetime={lesson.start_datetime}
+          endDatetime={lesson.end_datetime}
+          currentRoomId={lesson.room_id}
+          currentTeacherId={lesson.teacher_id}
+          rooms={roomList}
+          teachers={teacherList}
+          canEditTeacher={me?.role === 'admin'}
+          isInSeries={Boolean(lesson.series_id)}
+        />
+        {lesson.series_id && (
+          <form action={cancelLessonSeries} className="mt-3 border-t border-hairline pt-3">
+            <input type="hidden" name="lessonId" value={lesson.id} />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
+            >
+              Cancelar esta aula e todas as próximas da série
+            </button>
+          </form>
+        )}
+      </Card>
+    </div>
+  )
 
-        {/* Coluna 2 — Recursos e relatório */}
-        <div className="space-y-6">
-          <Card>
-            <h2 className="mb-4 text-base font-semibold text-ink">Recursos pedagógicos</h2>
+  // ── Fase 3: Avaliar (depois da aula) ──────────────────────────────────────
+  const evaluateTab = (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-ink">Relatório de desempenho</h2>
+          {report && <Badge tone="success">Preenchido</Badge>}
+        </div>
+        <form action={updateLesson} className="space-y-4">
+          <input type="hidden" name="lessonId" value={lesson.id} />
 
-            {attachedList.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-hairline bg-surface-muted px-4 py-6 text-center">
-                <p className="text-sm font-medium text-ink">Nenhum recurso anexado a esta aula</p>
-                <p className="mx-auto mt-1 max-w-xs text-xs text-ink-muted">
-                  Use a busca abaixo para anexar partituras, áudios ou exercícios — eles aparecem aqui organizados por seção.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {SECTION_OPTS.filter((s) => bySection[s]!.length > 0).map((s) => (
-                  <div key={s}>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      {SECTION_LABEL[s]}
-                    </p>
-                    <ul className="space-y-1.5">
-                      {bySection[s]!.map((r) => (
-                        <li key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
-                          <span className="text-ink">{r.pedagogical_resources?.title ?? '—'}</span>
-                          <DeleteButton
-                            action={detachResource}
-                            hidden={{ pivotId: r.id, lessonId: lesson.id }}
-                            label="Remover"
-                            confirmText="Remover este recurso da aula?"
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+          {(['technique', 'theory', 'repertoire', 'practice'] as const).map((key) => (
+            <Field key={key} label={REPORT_LABEL[key]} htmlFor={`${key}_score`}>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <label key={n} className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`${key}_score`}
+                      value={n}
+                      defaultChecked={report?.[`${key}_score` as keyof typeof report] === n}
+                      className="peer sr-only"
+                    />
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-sm font-semibold transition-colors hover:bg-brand-50 peer-checked:border-brand-500 peer-checked:bg-brand-600 peer-checked:text-white">
+                      {n}
+                    </span>
+                  </label>
                 ))}
               </div>
-            )}
+            </Field>
+          ))}
 
-            <div className="mt-5 border-t border-hairline pt-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Anexar recurso</p>
-              <ResourcePicker lessonId={lesson.id} />
-            </div>
-          </Card>
+          <Field label="Música atual" htmlFor="current_song">
+            <Input id="current_song" name="current_song" defaultValue={report?.current_song ?? ''} />
+          </Field>
 
-          <Card>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-ink">Relatório de desempenho</h2>
-              {report && <Badge tone="success">Preenchido</Badge>}
-            </div>
-            <form action={updateLesson} className="space-y-4">
-              <input type="hidden" name="lessonId" value={lesson.id} />
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="BPM inicial" htmlFor="initial_bpm">
+              <Input id="initial_bpm" name="initial_bpm" type="number" defaultValue={report?.initial_bpm ?? ''} />
+            </Field>
+            <Field label="BPM alcançado" htmlFor="reached_bpm">
+              <Input id="reached_bpm" name="reached_bpm" type="number" defaultValue={report?.reached_bpm ?? ''} />
+            </Field>
+          </div>
 
-              {(['technique', 'theory', 'repertoire', 'practice'] as const).map((key) => (
-                <Field
-                  key={key}
-                  label={{ technique: 'Técnica', theory: 'Teoria', repertoire: 'Repertório', practice: 'Dedicação' }[key]}
-                  htmlFor={`${key}_score`}
-                >
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <label key={n} className="cursor-pointer">
-                        <input
-                          type="radio"
-                          name={`${key}_score`}
-                          value={n}
-                          defaultChecked={report?.[`${key}_score` as keyof typeof report] === n}
-                          className="peer sr-only"
-                        />
-                        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-sm font-semibold transition-colors hover:bg-brand-50 peer-checked:border-brand-500 peer-checked:bg-brand-600 peer-checked:text-white">
-                          {n}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </Field>
-              ))}
+          <button type="submit" className={PRIMARY_BTN}>Salvar relatório</button>
+        </form>
+      </Card>
 
-              <Field label="Música atual" htmlFor="current_song">
-                <Input id="current_song" name="current_song" defaultValue={report?.current_song ?? ''} />
-              </Field>
+      <Card>
+        <h2 className="mb-4 text-base font-semibold text-ink">Feedback e anotações</h2>
+        <form action={updateLesson} className="space-y-4">
+          <input type="hidden" name="lessonId" value={lesson.id} />
+          <Field label="Observações (visíveis ao aluno)" htmlFor="notes">
+            <Textarea id="notes" name="notes" defaultValue={lesson.notes ?? ''} rows={4} />
+          </Field>
+          <Field label="Notas privadas (só você vê)" htmlFor="private_notes">
+            <Textarea id="private_notes" name="private_notes" defaultValue={lesson.private_notes ?? ''} rows={4} />
+          </Field>
+          <button type="submit" className={PRIMARY_BTN}>Salvar anotações</button>
+        </form>
+      </Card>
+    </div>
+  )
 
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="BPM inicial" htmlFor="initial_bpm">
-                  <Input id="initial_bpm" name="initial_bpm" type="number" defaultValue={report?.initial_bpm ?? ''} />
-                </Field>
-                <Field label="BPM alcançado" htmlFor="reached_bpm">
-                  <Input id="reached_bpm" name="reached_bpm" type="number" defaultValue={report?.reached_bpm ?? ''} />
-                </Field>
-              </div>
+  const tabs: PlannerTab[] = [
+    { id: 'plan', label: 'Planejar', hint: 'Defina objetivos, planeje o conteúdo e anexe recursos antes da aula.', content: planTab },
+    { id: 'live', label: 'Dar aula', hint: 'Registre a presença e ajuste horário/sala durante ou logo após a aula.', content: liveTab },
+    { id: 'evaluate', label: 'Avaliar', hint: 'Depois da aula: avalie o desempenho e deixe feedback ao aluno.', content: evaluateTab },
+  ]
 
-              <button type="submit" className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                Salvar relatório
-              </button>
-            </form>
-          </Card>
-        </div>
-      </div>
+  return (
+    <>
+      <PageHeader
+        title={`Aula — ${student?.name ?? ''}`}
+        subtitle={new Date(lesson.start_datetime).toLocaleString('pt-BR', {
+          weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
+        })}
+      />
+      <PlannerTabs tabs={tabs} defaultTab={defaultTab} />
     </>
   )
 }
-
-const SECTION_OPTS = ['warmup', 'repertoire', 'homework', 'general'] as const
