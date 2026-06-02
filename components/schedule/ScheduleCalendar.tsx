@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import { useActionState, useEffect, useRef, useState } from 'react'
-import type { EventClickArg, DateSelectArg } from '@fullcalendar/core'
+import type { EventClickArg, DateSelectArg, EventContentArg } from '@fullcalendar/core'
 
 import { AppButton } from '@/components/app/AppButton'
 import { AppField, AppInput, AppSelect, AppTextarea } from '@/components/app/AppField'
@@ -22,6 +22,38 @@ import { cancelLesson, createLesson, type LessonActionState } from '@/lib/action
 interface Person { id: string; name: string }
 
 const initial: LessonActionState = { ok: false }
+
+// Duração padrão de uma aula. Ao escolher o início, o fim é preenchido sozinho.
+const DEFAULT_LESSON_HOURS = 1
+
+function toLocalInput(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Recebe "YYYY-MM-DDTHH:mm" (datetime-local) e devolve +N horas no mesmo formato.
+function addHours(value: string, hours: number): string {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  d.setHours(d.getHours() + hours)
+  return toLocalInput(d)
+}
+
+// Render custom do evento: barra de acento (via border-left no CSS) + hora + título.
+// Na visão lista mantém o título simples (o FC já estrutura as colunas).
+function renderEvent(arg: EventContentArg) {
+  const accent = (arg.event.extendedProps as { accent?: string }).accent ?? 'var(--ds-ink)'
+  if (arg.view.type.startsWith('list')) {
+    return <span className={styles.eventListTitle}>{arg.event.title}</span>
+  }
+  return (
+    <div className={styles.eventInner} style={{ '--accent': accent } as React.CSSProperties}>
+      {arg.timeText && <span className={styles.eventTime}>{arg.timeText}</span>}
+      <span className={styles.eventTitle}>{arg.event.title}</span>
+    </div>
+  )
+}
 
 interface SelectedEvent {
   id: string
@@ -49,10 +81,12 @@ export function ScheduleCalendar({
 }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [eventModal, setEventModal] = useState<SelectedEvent | null>(null)
-  const [selectedRange, setSelectedRange] = useState<{ start: string; end: string } | null>(null)
   // Cancelamento em duas etapas (sem window.confirm): 1º clique arma, 2º executa.
   const [confirmingCancel, setConfirmingCancel] = useState(false)
   const [canceling, setCanceling] = useState(false)
+  // Início/fim controlados pro fim seguir o início (+1h) automaticamente.
+  const [formStart, setFormStart] = useState('')
+  const [formEnd, setFormEnd] = useState('')
   const [state, action] = useActionState(createLesson, initial)
   // Ref pro FullCalendar — `refetchEvents()` preserva view (mês/semana/lista)
   // e data corrente. Antes era `key++`, que remontava tudo e mandava o usuário
@@ -61,8 +95,7 @@ export function ScheduleCalendar({
   function refetch() { calendarRef.current?.getApi().refetchEvents() }
 
   function handleDateSelect(info: DateSelectArg) {
-    setSelectedRange({ start: info.startStr, end: info.endStr })
-    setModalOpen(true)
+    openCreate({ start: info.startStr, end: info.endStr })
   }
 
   function handleEventClick(info: EventClickArg) {
@@ -83,7 +116,6 @@ export function ScheduleCalendar({
   function closeModals() {
     setModalOpen(false)
     setEventModal(null)
-    setSelectedRange(null)
     setConfirmingCancel(false)
   }
 
@@ -96,6 +128,14 @@ export function ScheduleCalendar({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok])
+
+  // Abre o modal de criação semeando início/fim. Fim = início + 1h por padrão.
+  function openCreate(range?: { start: string; end: string }) {
+    const start = range?.start?.slice(0, 16) ?? ''
+    setFormStart(start)
+    setFormEnd(range?.end?.slice(0, 16) || addHours(start, DEFAULT_LESSON_HOURS))
+    setModalOpen(true)
+  }
 
   async function handleCancelLesson() {
     if (!eventModal) return
@@ -118,7 +158,7 @@ export function ScheduleCalendar({
     <div className={styles.wrap}>
       {canManage && (
         <div className={styles.toolbar}>
-          <AppButton onClick={() => setModalOpen(true)}>+ Nova aula</AppButton>
+          <AppButton onClick={() => openCreate()}>+ Nova aula</AppButton>
         </div>
       )}
 
@@ -143,6 +183,7 @@ export function ScheduleCalendar({
           selectable={canManage}
           select={handleDateSelect}
           eventClick={handleEventClick}
+          eventContent={renderEvent}
           events="/api/lessons"
           eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
           slotMinTime="07:00:00"
@@ -211,7 +252,12 @@ export function ScheduleCalendar({
                     id="startDatetime"
                     name="startDatetime"
                     type="datetime-local"
-                    defaultValue={selectedRange?.start?.slice(0, 16) ?? ''}
+                    value={formStart}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setFormStart(v)
+                      setFormEnd(addHours(v, DEFAULT_LESSON_HOURS))
+                    }}
                     required
                   />
                 </AppField>
@@ -220,7 +266,8 @@ export function ScheduleCalendar({
                     id="endDatetime"
                     name="endDatetime"
                     type="datetime-local"
-                    defaultValue={selectedRange?.end?.slice(0, 16) ?? ''}
+                    value={formEnd}
+                    onChange={(e) => setFormEnd(e.target.value)}
                     required
                   />
                 </AppField>
