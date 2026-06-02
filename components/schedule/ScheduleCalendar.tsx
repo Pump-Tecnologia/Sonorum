@@ -50,6 +50,9 @@ export function ScheduleCalendar({
   const [modalOpen, setModalOpen] = useState(false)
   const [eventModal, setEventModal] = useState<SelectedEvent | null>(null)
   const [selectedRange, setSelectedRange] = useState<{ start: string; end: string } | null>(null)
+  // Cancelamento em duas etapas (sem window.confirm): 1º clique arma, 2º executa.
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [canceling, setCanceling] = useState(false)
   const [state, action] = useActionState(createLesson, initial)
   // Ref pro FullCalendar — `refetchEvents()` preserva view (mês/semana/lista)
   // e data corrente. Antes era `key++`, que remontava tudo e mandava o usuário
@@ -64,6 +67,7 @@ export function ScheduleCalendar({
 
   function handleEventClick(info: EventClickArg) {
     const ep = info.event.extendedProps
+    setConfirmingCancel(false)
     setEventModal({
       id: info.event.id,
       title: info.event.title,
@@ -80,6 +84,7 @@ export function ScheduleCalendar({
     setModalOpen(false)
     setEventModal(null)
     setSelectedRange(null)
+    setConfirmingCancel(false)
   }
 
   // Reage ao sucesso do create: fecha modal + refetch. Antes era um bloco
@@ -94,12 +99,16 @@ export function ScheduleCalendar({
 
   async function handleCancelLesson() {
     if (!eventModal) return
-    if (!window.confirm('Cancelar esta aula? O aluno será notificado.')) return
-    const fd = new FormData()
-    fd.set('lessonId', eventModal.id)
-    await cancelLesson(fd)
-    closeModals()
-    refetch()
+    setCanceling(true)
+    try {
+      const fd = new FormData()
+      fd.set('lessonId', eventModal.id)
+      await cancelLesson(fd)
+      closeModals()
+      refetch()
+    } finally {
+      setCanceling(false)
+    }
   }
 
   const canManage = ['admin', 'teacher'].includes(role)
@@ -294,13 +303,35 @@ export function ScheduleCalendar({
                 Abrir planejador →
               </a>
               {canManage && eventModal.status !== 'canceled' && (
-                <button
-                  type="button"
-                  onClick={handleCancelLesson}
-                  className={styles.linkDanger}
-                >
-                  Cancelar aula
-                </button>
+                confirmingCancel ? (
+                  <span className={styles.confirmGroup}>
+                    <button
+                      type="button"
+                      onClick={handleCancelLesson}
+                      disabled={canceling}
+                      className={styles.linkDanger}
+                    >
+                      {canceling ? 'Cancelando…' : 'Confirmar cancelamento'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingCancel(false)}
+                      disabled={canceling}
+                      className={styles.linkInline}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                    >
+                      Voltar
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingCancel(true)}
+                    className={styles.linkDanger}
+                  >
+                    Cancelar aula
+                  </button>
+                )
               )}
             </div>
           </div>

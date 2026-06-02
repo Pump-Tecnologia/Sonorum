@@ -259,3 +259,11 @@
   color: #DC2626;
 }
 .linkDanger:hover { text-decoration: underline; }
+.linkDanger:disabled { opacity: 0.6; cursor: default; text-decoration: none; }
+
+/* Cancelamento em duas etapas: agrupa "Confirmar" + "Voltar" no rodapé. */
+.confirmGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
