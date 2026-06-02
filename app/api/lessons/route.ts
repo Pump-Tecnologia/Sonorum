@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
     .from('lessons')
     .select('id, title, start_datetime, end_datetime, status, notes, student_id, teacher_id, users!lessons_student_id_fkey(name, instrument), room:rooms(name)')
 
+  // Aulas canceladas saem da agenda — o registro continua no banco (histórico),
+  // mas não polui o calendário. Quem precisa do histórico usa relatórios/planner.
+  query = query.neq('status', 'canceled')
+
   if (me.role === 'student') {
     query = query.eq('student_id', me.id)
   }
