@@ -409,6 +409,69 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          channel: string
+          created_at: string
+          error: string | null
+          event: string
+          id: string
+          payload: Json | null
+          recipient_email: string | null
+          recipient_phone: string | null
+          recipient_user_id: string | null
+          related_id: string | null
+          school_id: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error?: string | null
+          event: string
+          id?: string
+          payload?: Json | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          recipient_user_id?: string | null
+          related_id?: string | null
+          school_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error?: string | null
+          event?: string
+          id?: string
+          payload?: Json | null
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          recipient_user_id?: string | null
+          related_id?: string | null
+          school_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedagogical_resources: {
         Row: {
           body: string | null
@@ -908,6 +971,7 @@ export type Database = {
           instrument_category: string | null
           monthly_fee: number | null
           name: string
+          notify_to: string
           objectives: string | null
           parent_contact: string | null
           permanent_notes: string | null
@@ -928,6 +992,7 @@ export type Database = {
           instrument_category?: string | null
           monthly_fee?: number | null
           name: string
+          notify_to?: string
           objectives?: string | null
           parent_contact?: string | null
           permanent_notes?: string | null
@@ -948,6 +1013,7 @@ export type Database = {
           instrument_category?: string | null
           monthly_fee?: number | null
           name?: string
+          notify_to?: string
           objectives?: string | null
           parent_contact?: string | null
           permanent_notes?: string | null

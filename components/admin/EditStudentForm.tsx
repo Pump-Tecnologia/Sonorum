@@ -19,6 +19,7 @@ interface StudentData {
   monthly_fee: number | null
   due_day: number | null
   status: string
+  notify_to: string | null
   permanent_notes: string | null
 }
 
@@ -72,13 +73,22 @@ export function EditStudentForm({ student }: { student: StudentData }) {
           </Field>
         </div>
 
-        <Field label="Status" htmlFor="status" error={fe.status}>
-          <Select id="status" name="status" defaultValue={student.status}>
-            <option value="active">Ativo</option>
-            <option value="paused">Pausado</option>
-            <option value="inactive">Inativo</option>
-          </Select>
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Status" htmlFor="status" error={fe.status}>
+            <Select id="status" name="status" defaultValue={student.status}>
+              <option value="active">Ativo</option>
+              <option value="paused">Pausado</option>
+              <option value="inactive">Inativo</option>
+            </Select>
+          </Field>
+          <Field label="Notificar quem" htmlFor="notifyTo" error={fe.notifyTo} hint="Aulas, cobranças e relatórios">
+            <Select id="notifyTo" name="notifyTo" defaultValue={student.notify_to ?? 'both'}>
+              <option value="student">Aluno</option>
+              <option value="parent">Responsável</option>
+              <option value="both">Aluno e responsável</option>
+            </Select>
+          </Field>
+        </div>
 
         <Field label="Notas permanentes" htmlFor="permanentNotes" error={fe.permanentNotes}>
           <Textarea id="permanentNotes" name="permanentNotes" defaultValue={student.permanent_notes ?? ''} />

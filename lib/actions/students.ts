@@ -19,6 +19,7 @@ const createStudentSchema = z.object({
   monthlyFee: z.coerce.number().min(0).optional(),
   dueDay: z.coerce.number().int().min(1).max(31).optional(),
   status: z.enum(['active', 'paused', 'inactive']).default('active'),
+  notifyTo: z.enum(['student', 'parent', 'both']).default('both'),
   objectives: z.string().optional(),
 })
 
@@ -71,6 +72,7 @@ export async function createStudent(
     monthlyFee: formData.get('monthlyFee') || undefined,
     dueDay: formData.get('dueDay') || undefined,
     status: formData.get('status') || 'active',
+    notifyTo: formData.get('notifyTo') || 'both',
     objectives: formData.get('objectives') || undefined,
   })
   if (!parsed.success) {
@@ -104,6 +106,7 @@ export async function createStudent(
       monthly_fee: d.monthlyFee ?? null,
       due_day: d.dueDay ?? null,
       status: d.status,
+      notify_to: d.notifyTo,
     },
   })
 

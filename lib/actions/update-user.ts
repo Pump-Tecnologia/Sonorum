@@ -23,6 +23,7 @@ const updateStudentSchema = z.object({
   monthlyFee: z.coerce.number().min(0).optional(),
   dueDay: z.coerce.number().int().min(1).max(31).optional(),
   status: z.enum(['active', 'paused', 'inactive']).default('active'),
+  notifyTo: z.enum(['student', 'parent', 'both']).default('both'),
   permanentNotes: z.string().optional(),
 })
 
@@ -74,6 +75,7 @@ export async function updateStudent(
     monthlyFee: formData.get('monthlyFee') || undefined,
     dueDay: formData.get('dueDay') || undefined,
     status: formData.get('status') || 'active',
+    notifyTo: formData.get('notifyTo') || 'both',
     permanentNotes: formData.get('permanentNotes') || undefined,
   })
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) }
@@ -112,6 +114,7 @@ export async function updateStudent(
     monthly_fee: d.monthlyFee ?? null,
     due_day: d.dueDay ?? null,
     status: d.status,
+    notify_to: d.notifyTo,
     permanent_notes: d.permanentNotes ?? null,
   }).eq('id', studentId)
 

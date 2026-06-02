@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
+import { notify } from '@/lib/notifications/notify'
 
 export type LessonActionState = {
   ok: boolean
@@ -140,6 +141,13 @@ export async function createLesson(
   const { error } = await supabase.from('lessons').insert(occurrences.map(([s, e]) => toInsert(s, e)))
   if (error) return { ok: false, error: 'Não foi possível criar a aula.' }
 
+  // Notifica só a 1ª ocorrência (recorrência manda só um aviso geral).
+  const firstStart = new Date(occurrences[0][0])
+  await notify('lesson.scheduled', d.studentId, {
+    title: d.title,
+    when: firstStart.toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+  })
+
   revalidatePath('/schedule')
   return { ok: true }
 }
@@ -226,7 +234,22 @@ export async function cancelLesson(formData: FormData) {
   if (!me?.schoolId) return
   const lessonId = String(formData.get('lessonId') ?? '')
   const supabase = await createClient()
+
+  // Lê antes do update p/ ter dados pro template.
+  const { data: lesson } = await supabase
+    .from('lessons')
+    .select('student_id, start_datetime')
+    .eq('id', lessonId)
+    .maybeSingle()
+
   await supabase.from('lessons').update({ status: 'canceled' }).eq('id', lessonId)
+
+  if (lesson) {
+    await notify('lesson.canceled', lesson.student_id, {
+      when: new Date(lesson.start_datetime).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+    }, { relatedId: lessonId })
+  }
+
   revalidatePath('/schedule')
 }
 

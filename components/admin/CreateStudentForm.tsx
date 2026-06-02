@@ -58,13 +58,22 @@ export function CreateStudentForm() {
           </Field>
         </div>
 
-        <Field label="Status" htmlFor="status" error={fe.status}>
-          <Select id="status" name="status" defaultValue="active">
-            <option value="active">Ativo</option>
-            <option value="paused">Pausado</option>
-            <option value="inactive">Inativo</option>
-          </Select>
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Status" htmlFor="status" error={fe.status}>
+            <Select id="status" name="status" defaultValue="active">
+              <option value="active">Ativo</option>
+              <option value="paused">Pausado</option>
+              <option value="inactive">Inativo</option>
+            </Select>
+          </Field>
+          <Field label="Notificar quem" htmlFor="notifyTo" error={fe.notifyTo} hint="Aulas, cobranças e relatórios">
+            <Select id="notifyTo" name="notifyTo" defaultValue="both">
+              <option value="student">Aluno</option>
+              <option value="parent">Responsável</option>
+              <option value="both">Aluno e responsável</option>
+            </Select>
+          </Field>
+        </div>
 
         <Field
           label="Objetivos"

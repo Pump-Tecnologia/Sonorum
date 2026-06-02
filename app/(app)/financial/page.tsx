@@ -1,6 +1,7 @@
 import { PageHeader } from '@/components/app/PageHeader'
 import { ChargeStatusForm } from '@/components/financial/ChargeStatusForm'
 import { MonthPicker } from '@/components/financial/MonthPicker'
+import { WhatsAppNotifyButton } from '@/components/notifications/WhatsAppNotifyButton'
 import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
@@ -10,6 +11,7 @@ import { monthRange } from '@/lib/format'
 import { effectiveChargeStatus } from '@/lib/finance'
 import { createClient } from '@/lib/supabase/server'
 import { generateMonthlyCharges } from '@/lib/actions/charges'
+import { notifyCharge } from '@/lib/actions/notifications'
 import { redirect } from 'next/navigation'
 
 export const metadata = { title: 'Financeiro' }
@@ -92,10 +94,11 @@ export default async function FinancialPage({
             <Th>Vencimento</Th>
             <Th>Valor</Th>
             <Th>Status</Th>
+            <Th className="text-right">Lembrete</Th>
           </Tr>
         </Thead>
         <tbody>
-          {charges.length === 0 && <EmptyRow colSpan={5}>—</EmptyRow>}
+          {charges.length === 0 && <EmptyRow colSpan={6}>—</EmptyRow>}
           {charges.map((c) => (
             <Tr key={c.id}>
               <Td className="font-medium">{c.enrollment?.student?.name ?? '—'}</Td>
@@ -111,6 +114,18 @@ export default async function FinancialPage({
                     <span className="text-xs font-semibold text-red-600">⚠ vencida</span>
                   )}
                 </div>
+              </Td>
+              <Td className="text-right">
+                {c.status === 'pending' && (
+                  <WhatsAppNotifyButton
+                    action={notifyCharge}
+                    hidden={{
+                      chargeId: c.id,
+                      kind: effectiveChargeStatus(c.status, c.due_date, today) === 'overdue' ? 'charge.overdue' : 'charge.due_soon',
+                    }}
+                    label="Lembrar"
+                  />
+                )}
               </Td>
             </Tr>
           ))}
