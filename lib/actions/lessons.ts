@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 import { notify } from '@/lib/notifications/notify'
+import { localBrToServerISO } from '@/lib/timezone'
 
 export type LessonActionState = {
   ok: boolean
@@ -102,12 +103,19 @@ export async function createLesson(
   const roomId = d.roomId || null
   const supabase = await createClient()
 
+  // CORREÇÃO DE FUSO: <input type="datetime-local"> não envia offset, e o
+  // Postgres trataria a string como UTC — uma aula 'das 14:00' viraria
+  // '14:00 UTC = 11:00 BRT'. Anexamos BRT (-03:00) p/ o instante gravado
+  // corresponder ao horário que o usuário digitou.
+  const startISO = localBrToServerISO(d.startDatetime)
+  const endISO = localBrToServerISO(d.endDatetime)
+
   // Todas as ocorrências (aula principal + recorrência semanal).
-  const occurrences: Array<[string, string]> = [[d.startDatetime, d.endDatetime]]
+  const occurrences: Array<[string, string]> = [[startISO, endISO]]
   if (d.repeatWeekly && d.recurrenceMode) {
     const extras = weeklyOccurrences(
-      new Date(d.startDatetime),
-      new Date(d.endDatetime),
+      new Date(startISO),
+      new Date(endISO),
       d.recurrenceMode,
       d.recurrenceUntil,
       d.recurrenceCount,

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { notify } from '@/lib/notifications/notify'
 import { createAdminClient } from '@/lib/supabase/server'
+import { startOfTodayBR, startOfTomorrowBR } from '@/lib/timezone'
 
 // Endpoint de cron — chamado pelo Vercel Cron (ou cron-job.org) diariamente.
 // Protegido por bearer (CRON_SECRET). Roda 3 lembretes diários:
@@ -49,11 +50,13 @@ export async function GET(req: Request) {
   const admin = await createAdminClient()
   const summary: RemindersSummary = { ok: true, lessons: 0, dueSoon: 0, overdue: 0, skippedDuplicates: 0, errors: [] }
 
+  // Janelas no fuso BRT (não no fuso da Vercel, que é UTC) — assim "aula
+  // amanhã" e "vence hoje" significam o que o usuário entende.
   const now = new Date()
-  const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0)
-  const startOfTomorrow = new Date(startOfToday); startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
-  const endOfTomorrow = new Date(startOfTomorrow); endOfTomorrow.setDate(endOfTomorrow.getDate() + 1)
-  const todayISO = now.toISOString().slice(0, 10)
+  const startOfToday = startOfTodayBR(now)
+  const startOfTomorrow = startOfTomorrowBR(now)
+  const endOfTomorrow = new Date(startOfTomorrow.getTime() + 24 * 60 * 60 * 1000)
+  const todayISO = startOfToday.toISOString().slice(0, 10)
 
   // ── 1. Aulas amanhã ────────────────────────────────────────────────────────
   try {
