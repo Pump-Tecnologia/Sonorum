@@ -5,8 +5,9 @@ import { useActionState } from 'react'
 import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
+import { InstrumentFields } from '@/components/ui/InstrumentFields'
 import { createResource, updateResource, type ResourceActionState } from '@/lib/actions/resources'
-import { CATEGORIES, INST_CATEGORIES, DIFFICULTIES, CONTENT_TYPES } from '@/lib/constants/resources'
+import { CATEGORIES, DIFFICULTIES, CONTENT_TYPES } from '@/lib/constants/resources'
 
 interface ResourceData {
   id?: string
@@ -60,16 +61,12 @@ export function ResourceForm({
             </Select>
           </Field>
 
-          <Field label="Categoria do instrumento" htmlFor="instrumentCategory" error={fe.instrumentCategory}>
-            <Select id="instrumentCategory" name="instrumentCategory" defaultValue={resource?.instrument_category ?? ''}>
-              <option value="">— sem categoria —</option>
-              {INST_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </Select>
-          </Field>
-
-          <Field label="Instrumento específico" htmlFor="instrument" error={fe.instrument}>
-            <Input id="instrument" name="instrument" defaultValue={resource?.instrument ?? ''} placeholder="Violão, Piano…" />
-          </Field>
+          <InstrumentFields
+            defaultCategory={resource?.instrument_category}
+            defaultInstrument={resource?.instrument}
+            categoryError={fe.instrumentCategory}
+            instrumentError={fe.instrument}
+          />
         </div>
 
         <Field label="Tipo de conteúdo" htmlFor="contentType" error={fe.contentType}>

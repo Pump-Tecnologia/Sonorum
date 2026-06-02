@@ -6,6 +6,7 @@ import { SubmitButton } from '@/components/auth/SubmitButton'
 import { CreatePersonResult } from '@/components/admin/CreatePersonResult'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
+import { InstrumentFields } from '@/components/ui/InstrumentFields'
 import { createStudent, type StudentActionState } from '@/lib/actions/students'
 
 const initial: StudentActionState = { ok: false }
@@ -48,12 +49,7 @@ export function CreateStudentForm() {
           <Field label="Contato do responsável" htmlFor="parentContact" error={fe.parentContact}>
             <Input id="parentContact" name="parentContact" />
           </Field>
-          <Field label="Categoria do instrumento" htmlFor="instrumentCategory" error={fe.instrumentCategory}>
-            <Input id="instrumentCategory" name="instrumentCategory" placeholder="Cordas, Sopro…" />
-          </Field>
-          <Field label="Instrumento(s)" htmlFor="instrument" error={fe.instrument} hint="Separe por vírgula">
-            <Input id="instrument" name="instrument" placeholder="Violão" />
-          </Field>
+          <InstrumentFields categoryError={fe.instrumentCategory} instrumentError={fe.instrument} />
           <Field label="Mensalidade (R$)" htmlFor="monthlyFee" error={fe.monthlyFee}>
             <Input id="monthlyFee" name="monthlyFee" type="number" min="0" step="0.01" />
           </Field>

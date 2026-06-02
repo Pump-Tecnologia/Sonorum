@@ -5,6 +5,7 @@ import { useActionState } from 'react'
 import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
+import { InstrumentSelect } from '@/components/ui/InstrumentFields'
 import { createTranscription, type TranscriptionActionState } from '@/lib/actions/transcription'
 import { AUDIO_ACCEPT } from '@/lib/constants/transcription'
 
@@ -25,9 +26,7 @@ export function TranscriptionUploadForm() {
           <Input id="title" name="title" placeholder="Ex.: Asa Branca" required />
         </Field>
 
-        <Field label="Instrumento (opcional)" htmlFor="instrument" error={fe.instrument}>
-          <Input id="instrument" name="instrument" placeholder="Violão, Piano…" />
-        </Field>
+        <InstrumentSelect label="Instrumento (opcional)" error={fe.instrument} optional />
 
         <Field
           label="Áudio (MP3, WAV, M4A · até 25MB)"

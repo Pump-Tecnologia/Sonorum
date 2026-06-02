@@ -7,7 +7,8 @@ import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { createTemplate, updateTemplate, type TemplateActionState } from '@/lib/actions/resource-templates'
-import { CATEGORIES, INST_CATEGORIES, DIFFICULTIES, CONTENT_TYPES } from '@/lib/constants/resources'
+import { CATEGORIES, DIFFICULTIES, CONTENT_TYPES } from '@/lib/constants/resources'
+import { InstrumentFields } from '@/components/ui/InstrumentFields'
 
 interface TemplateData {
   id: string
@@ -56,15 +57,12 @@ export function TemplateForm({ template }: { template?: TemplateData }) {
               {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
             </Select>
           </Field>
-          <Field label="Categoria do instrumento" htmlFor="instrumentCategory" error={fe.instrumentCategory}>
-            <Select id="instrumentCategory" name="instrumentCategory" defaultValue={template?.instrument_category ?? ''}>
-              <option value="">—</option>
-              {INST_CATEGORIES.map((i) => <option key={i} value={i}>{i}</option>)}
-            </Select>
-          </Field>
-          <Field label="Instrumento" htmlFor="instrument" error={fe.instrument}>
-            <Input id="instrument" name="instrument" defaultValue={template?.instrument ?? ''} placeholder="Violão, Piano…" />
-          </Field>
+          <InstrumentFields
+            defaultCategory={template?.instrument_category}
+            defaultInstrument={template?.instrument}
+            categoryError={fe.instrumentCategory}
+            instrumentError={fe.instrument}
+          />
         </div>
 
         <Field label="Tipo de conteúdo" htmlFor="contentType" error={fe.contentType}>

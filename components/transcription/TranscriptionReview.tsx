@@ -5,6 +5,7 @@ import { useActionState } from 'react'
 import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
+import { InstrumentSelect } from '@/components/ui/InstrumentFields'
 import {
   approveTranscription,
   rejectTranscription,
@@ -66,9 +67,7 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Instrumento" htmlFor="instrument" error={fe.instrument}>
-              <Input id="instrument" name="instrument" defaultValue={job.instrument ?? ''} placeholder="Violão…" />
-            </Field>
+            <InstrumentSelect defaultValue={job.instrument} error={fe.instrument} optional />
             <Field label="Categoria" htmlFor="category" error={fe.category}>
               <Select id="category" name="category" defaultValue="Repertório">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}

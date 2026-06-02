@@ -5,6 +5,7 @@ import { useActionState } from 'react'
 import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
+import { InstrumentFields } from '@/components/ui/InstrumentFields'
 import { updateStudent, type UpdateActionState } from '@/lib/actions/update-user'
 
 interface StudentData {
@@ -57,12 +58,12 @@ export function EditStudentForm({ student }: { student: StudentData }) {
           <Field label="Responsável" htmlFor="parentContact" error={fe.parentContact}>
             <Input id="parentContact" name="parentContact" defaultValue={student.parent_contact ?? ''} />
           </Field>
-          <Field label="Categoria do instrumento" htmlFor="instrumentCategory" error={fe.instrumentCategory}>
-            <Input id="instrumentCategory" name="instrumentCategory" defaultValue={student.instrument_category ?? ''} />
-          </Field>
-          <Field label="Instrumento(s)" htmlFor="instrument" error={fe.instrument} hint="Separe por vírgula">
-            <Input id="instrument" name="instrument" defaultValue={instrumentStr(student.instrument)} />
-          </Field>
+          <InstrumentFields
+            defaultCategory={student.instrument_category}
+            defaultInstrument={instrumentStr(student.instrument)}
+            categoryError={fe.instrumentCategory}
+            instrumentError={fe.instrument}
+          />
           <Field label="Mensalidade (R$)" htmlFor="monthlyFee" error={fe.monthlyFee}>
             <Input id="monthlyFee" name="monthlyFee" type="number" min="0" step="0.01" defaultValue={student.monthly_fee ?? ''} />
           </Field>
