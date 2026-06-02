@@ -237,15 +237,20 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
           <Card>
             <h2 className="mb-4 text-base font-semibold text-ink">Recursos pedagógicos</h2>
 
-            <div className="space-y-4">
-              {SECTION_OPTS.map((s) => (
-                <div key={s}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    {SECTION_LABEL[s]}
-                  </p>
-                  {bySection[s]!.length === 0 ? (
-                    <p className="text-sm text-ink-muted">—</p>
-                  ) : (
+            {attachedList.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-hairline bg-surface-muted px-4 py-6 text-center">
+                <p className="text-sm font-medium text-ink">Nenhum recurso anexado a esta aula</p>
+                <p className="mx-auto mt-1 max-w-xs text-xs text-ink-muted">
+                  Use a busca abaixo para anexar partituras, áudios ou exercícios — eles aparecem aqui organizados por seção.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {SECTION_OPTS.filter((s) => bySection[s]!.length > 0).map((s) => (
+                  <div key={s}>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                      {SECTION_LABEL[s]}
+                    </p>
                     <ul className="space-y-1.5">
                       {bySection[s]!.map((r) => (
                         <li key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
@@ -259,10 +264,10 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                         </li>
                       ))}
                     </ul>
-                  )}
-                </div>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-5 border-t border-hairline pt-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Anexar recurso</p>
