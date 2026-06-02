@@ -23,6 +23,23 @@ interface Person { id: string; name: string }
 
 const initial: LessonActionState = { ok: false }
 
+// Duração padrão de uma aula. Ao escolher o início, o fim é preenchido sozinho.
+const DEFAULT_LESSON_HOURS = 1
+
+function toLocalInput(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Recebe "YYYY-MM-DDTHH:mm" (datetime-local) e devolve +N horas no mesmo formato.
+function addHours(value: string, hours: number): string {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  d.setHours(d.getHours() + hours)
+  return toLocalInput(d)
+}
+
 interface SelectedEvent {
   id: string
   title: string
@@ -53,6 +70,9 @@ export function ScheduleCalendar({
   // Cancelamento em duas etapas (sem window.confirm): 1º clique arma, 2º executa.
   const [confirmingCancel, setConfirmingCancel] = useState(false)
   const [canceling, setCanceling] = useState(false)
+  // Início/fim controlados pro fim seguir o início (+1h) automaticamente.
+  const [formStart, setFormStart] = useState('')
+  const [formEnd, setFormEnd] = useState('')
   const [state, action] = useActionState(createLesson, initial)
   // Ref pro FullCalendar — `refetchEvents()` preserva view (mês/semana/lista)
   // e data corrente. Antes era `key++`, que remontava tudo e mandava o usuário
@@ -96,6 +116,16 @@ export function ScheduleCalendar({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok])
+
+  // Ao abrir o modal de criação, semeia início/fim a partir da seleção do
+  // calendário (ou vazio se veio do botão "+ Nova aula"). Fim = início + 1h.
+  useEffect(() => {
+    if (!modalOpen) return
+    const start = selectedRange?.start?.slice(0, 16) ?? ''
+    const end = selectedRange?.end?.slice(0, 16) || addHours(start, DEFAULT_LESSON_HOURS)
+    setFormStart(start)
+    setFormEnd(end)
+  }, [modalOpen, selectedRange])
 
   async function handleCancelLesson() {
     if (!eventModal) return
@@ -211,7 +241,12 @@ export function ScheduleCalendar({
                     id="startDatetime"
                     name="startDatetime"
                     type="datetime-local"
-                    defaultValue={selectedRange?.start?.slice(0, 16) ?? ''}
+                    value={formStart}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      setFormStart(v)
+                      setFormEnd(addHours(v, DEFAULT_LESSON_HOURS))
+                    }}
                     required
                   />
                 </AppField>
@@ -220,7 +255,8 @@ export function ScheduleCalendar({
                     id="endDatetime"
                     name="endDatetime"
                     type="datetime-local"
-                    defaultValue={selectedRange?.end?.slice(0, 16) ?? ''}
+                    value={formEnd}
+                    onChange={(e) => setFormEnd(e.target.value)}
                     required
                   />
                 </AppField>
