@@ -2,13 +2,14 @@ import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
-import { LessonRoomForm } from '@/components/schedule/LessonRoomForm'
+import { LessonScheduleForm } from '@/components/schedule/LessonScheduleForm'
 import { ResourcePicker } from '@/components/schedule/ResourcePicker'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { detachResource, markAttendance, updateLesson, upsertLessonPlan } from '@/lib/actions/lessons'
 import { lessonStatus } from '@/lib/constants/lessons'
+import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Planejador de aula' }
@@ -38,16 +39,17 @@ const SECTION_LABEL: Record<string, string> = {
 export default async function PlannerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
+  const me = await getCurrentUser()
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, users!lessons_student_id_fkey(name, instrument)')
+    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, users!lessons_student_id_fkey(name, instrument)')
     .eq('id', id)
     .maybeSingle()
 
   if (!lesson) notFound()
 
-  const [{ data: plan }, { data: report }, { data: attached }, { data: rooms }] = await Promise.all([
+  const [{ data: plan }, { data: report }, { data: attached }, { data: rooms }, { data: teachers }] = await Promise.all([
     supabase.from('lesson_plans').select('*').eq('lesson_id', id).maybeSingle(),
     supabase.from('lesson_reports').select('*').eq('lesson_id', id).maybeSingle(),
     supabase
@@ -55,8 +57,12 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
       .select('id, section, pedagogical_resources(id, title, category, difficulty, instrument)')
       .eq('lesson_id', id),
     supabase.from('rooms').select('id, name').eq('active', true).order('name'),
+    me?.role === 'admin'
+      ? supabase.from('users').select('id, name').eq('role', 'teacher').eq('status', 'active').order('name')
+      : Promise.resolve({ data: [] }),
   ])
   const roomList = (rooms ?? []) as { id: string; name: string }[]
+  const teacherList = (teachers ?? []) as { id: string; name: string }[]
 
   type ResourceRef = {
     id: string
@@ -158,11 +164,19 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
               </button>
             </form>
 
-            {roomList.length > 0 && (
-              <div className="mt-4 border-t border-hairline pt-4">
-                <LessonRoomForm lessonId={lesson.id} currentRoomId={lesson.room_id} rooms={roomList} />
-              </div>
-            )}
+            <div className="mt-4 border-t border-hairline pt-4">
+              <h3 className="mb-3 text-sm font-semibold text-ink">Editar horário e atribuição</h3>
+              <LessonScheduleForm
+                lessonId={lesson.id}
+                startDatetime={lesson.start_datetime}
+                endDatetime={lesson.end_datetime}
+                currentRoomId={lesson.room_id}
+                currentTeacherId={lesson.teacher_id}
+                rooms={roomList}
+                teachers={teacherList}
+                canEditTeacher={me?.role === 'admin'}
+              />
+            </div>
           </Card>
 
           <Card>

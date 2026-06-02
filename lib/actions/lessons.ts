@@ -233,33 +233,92 @@ export async function updateLesson(formData: FormData) {
   revalidatePath(`/lessons/${lessonId}/planner`)
 }
 
-// Troca a sala de uma aula existente (planner) com checagem de conflito.
-export async function updateLessonRoom(
+// Edita horário/sala/professor de uma aula existente (planner).
+// Aceita campos opcionais: só atualiza o que foi enviado no form.
+const updateScheduleSchema = z.object({
+  lessonId: z.string().uuid(),
+  startDatetime: z.string().min(1).optional(),
+  endDatetime: z.string().min(1).optional(),
+  roomId: z.string().uuid().optional().or(z.literal('')).or(z.literal('clear')),
+  teacherId: z.string().uuid().optional().or(z.literal('')).or(z.literal('clear')),
+})
+
+export async function updateLessonSchedule(
   _prev: LessonActionState,
   formData: FormData,
 ): Promise<LessonActionState> {
   const me = await getCurrentUser()
   if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return { ok: false, error: 'Acesso negado.' }
 
-  const lessonId = String(formData.get('lessonId') ?? '')
-  const roomId = String(formData.get('roomId') ?? '') || null
-  if (!lessonId) return { ok: false, error: 'Aula inválida.' }
+  const parsed = updateScheduleSchema.safeParse({
+    lessonId: formData.get('lessonId'),
+    startDatetime: formData.get('startDatetime') || undefined,
+    endDatetime: formData.get('endDatetime') || undefined,
+    roomId: formData.get('roomId') ?? undefined,
+    teacherId: formData.get('teacherId') ?? undefined,
+  })
+  if (!parsed.success) return { ok: false, error: 'Dados inválidos.' }
+  const d = parsed.data
 
   const supabase = await createClient()
+  // Lê o estado atual da aula p/ preencher campos faltantes (necessário p/
+  // validar conflito de sala mesmo quando só o horário muda, e vice-versa).
+  const { data: lesson } = await supabase
+    .from('lessons')
+    .select('start_datetime, end_datetime, room_id, teacher_id, school_id')
+    .eq('id', d.lessonId)
+    .eq('school_id', me.schoolId)
+    .maybeSingle()
+  if (!lesson) return { ok: false, error: 'Aula não encontrada.' }
 
-  if (roomId) {
-    const { data: lesson } = await supabase
-      .from('lessons')
-      .select('start_datetime, end_datetime')
-      .eq('id', lessonId)
-      .maybeSingle()
-    if (lesson && (await roomHasConflict(supabase, roomId, lesson.start_datetime, lesson.end_datetime, lessonId))) {
-      return { ok: false, error: 'Essa sala já está ocupada nesse horário.' }
+  type LessonUpdate = {
+    start_datetime?: string; end_datetime?: string
+    room_id?: string | null; teacher_id?: string | null
+  }
+  const update: LessonUpdate = {}
+
+  // Horário (com correção de fuso e validação start<end).
+  let nextStart = lesson.start_datetime
+  let nextEnd = lesson.end_datetime
+  if (d.startDatetime) { nextStart = localBrToServerISO(d.startDatetime); update.start_datetime = nextStart }
+  if (d.endDatetime) { nextEnd = localBrToServerISO(d.endDatetime); update.end_datetime = nextEnd }
+  if (new Date(nextEnd) <= new Date(nextStart)) {
+    return { ok: false, fieldErrors: { endDatetime: 'O fim precisa ser depois do início.' } }
+  }
+
+  // Sala: '' / 'clear' = remover; uuid = nova sala. Valida cross-tenant + conflito.
+  let nextRoom: string | null = lesson.room_id
+  if (d.roomId !== undefined) {
+    if (!d.roomId || d.roomId === 'clear') {
+      nextRoom = null
+    } else {
+      const { data: r } = await supabase.from('rooms').select('id').eq('id', d.roomId).eq('school_id', me.schoolId).maybeSingle()
+      if (!r) return { ok: false, fieldErrors: { roomId: 'Sala não encontrada na escola.' } }
+      nextRoom = d.roomId
+    }
+    update.room_id = nextRoom
+  }
+  if (nextRoom && (await roomHasConflict(supabase, nextRoom, nextStart, nextEnd, d.lessonId))) {
+    return { ok: false, fieldErrors: { roomId: 'Essa sala já está ocupada nesse horário.' } }
+  }
+
+  // Professor: '' / 'clear' = remover; uuid = novo professor.
+  if (d.teacherId !== undefined) {
+    if (!d.teacherId || d.teacherId === 'clear') {
+      update.teacher_id = null
+    } else {
+      const { data: t } = await supabase.from('users').select('id').eq('id', d.teacherId).eq('school_id', me.schoolId).eq('role', 'teacher').maybeSingle()
+      if (!t) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
+      update.teacher_id = d.teacherId
     }
   }
 
-  await supabase.from('lessons').update({ room_id: roomId }).eq('id', lessonId)
-  revalidatePath(`/lessons/${lessonId}/planner`)
+  if (Object.keys(update).length === 0) return { ok: true }
+
+  const { error } = await supabase.from('lessons').update(update).eq('id', d.lessonId).eq('school_id', me.schoolId)
+  if (error) return { ok: false, error: 'Não foi possível atualizar a aula.' }
+
+  revalidatePath(`/lessons/${d.lessonId}/planner`)
   revalidatePath('/schedule')
   return { ok: true }
 }
