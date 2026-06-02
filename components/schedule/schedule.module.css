@@ -116,20 +116,62 @@
 }
 .calendar :global(.fc-timegrid-slot) { height: 2.25rem; }
 
-/* Eventos — fontes mais sutis */
+/* Eventos — chip com fundo tonal, barra de acento e conteúdo próprio.
+   O FC só fornece o fundo (backgroundColor); a estrutura vem do renderEvent. */
 .calendar :global(.fc-event) {
-  border-radius: 0.5rem;
   border: none;
-  padding: 0.125rem 0.375rem;
+  border-radius: 0.5rem;
+  padding: 0;
+  overflow: hidden;
   font-family: var(--font-body);
-  font-size: 0.6875rem;
-  font-weight: 500;
+  cursor: pointer;
+  box-shadow: none;
+  transition: box-shadow 150ms ease, transform 150ms ease;
 }
-.calendar :global(.fc-event-title) { font-weight: 600; }
-.calendar :global(.fc-event-time) {
+.calendar :global(.fc-timegrid-event:hover),
+.calendar :global(.fc-daygrid-event:hover) {
+  box-shadow: 0 6px 14px -6px rgb(20 40 68 / 0.28);
+  transform: translateY(-1px);
+}
+.calendar :global(.fc-timegrid-event .fc-event-main),
+.calendar :global(.fc-daygrid-event .fc-event-main) { padding: 0; }
+
+/* Conteúdo interno do evento (timeGrid/dayGrid) */
+.eventInner {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  height: 100%;
+  padding: 0.1875rem 0.4375rem;
+  border-left: 3px solid var(--accent, var(--ds-ink));
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+.eventTime {
   font-size: 0.625rem;
-  opacity: 0.85;
+  font-weight: 700;
+  color: var(--accent, var(--ds-ink));
+  line-height: 1.2;
+  letter-spacing: 0.01em;
 }
+.eventTitle {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--ds-ink);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Mês: evento é uma faixa fina — hora e título lado a lado */
+.calendar :global(.fc-daygrid-event) .eventInner {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.375rem;
+  padding: 0.125rem 0.375rem;
+}
+.calendar :global(.fc-daygrid-event) .eventTitle { font-weight: 500; }
+
+.eventListTitle { font-weight: 600; color: var(--ds-ink); }
 
 /* Day grid (visão mês) */
 .calendar :global(.fc-daygrid-day-number) {

@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import { useActionState, useEffect, useRef, useState } from 'react'
-import type { EventClickArg, DateSelectArg } from '@fullcalendar/core'
+import type { EventClickArg, DateSelectArg, EventContentArg } from '@fullcalendar/core'
 
 import { AppButton } from '@/components/app/AppButton'
 import { AppField, AppInput, AppSelect, AppTextarea } from '@/components/app/AppField'
@@ -40,6 +40,21 @@ function addHours(value: string, hours: number): string {
   return toLocalInput(d)
 }
 
+// Render custom do evento: barra de acento (via border-left no CSS) + hora + título.
+// Na visão lista mantém o título simples (o FC já estrutura as colunas).
+function renderEvent(arg: EventContentArg) {
+  const accent = (arg.event.extendedProps as { accent?: string }).accent ?? 'var(--ds-ink)'
+  if (arg.view.type.startsWith('list')) {
+    return <span className={styles.eventListTitle}>{arg.event.title}</span>
+  }
+  return (
+    <div className={styles.eventInner} style={{ '--accent': accent } as React.CSSProperties}>
+      {arg.timeText && <span className={styles.eventTime}>{arg.timeText}</span>}
+      <span className={styles.eventTitle}>{arg.event.title}</span>
+    </div>
+  )
+}
+
 interface SelectedEvent {
   id: string
   title: string
@@ -66,7 +81,6 @@ export function ScheduleCalendar({
 }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [eventModal, setEventModal] = useState<SelectedEvent | null>(null)
-  const [selectedRange, setSelectedRange] = useState<{ start: string; end: string } | null>(null)
   // Cancelamento em duas etapas (sem window.confirm): 1º clique arma, 2º executa.
   const [confirmingCancel, setConfirmingCancel] = useState(false)
   const [canceling, setCanceling] = useState(false)
@@ -81,8 +95,7 @@ export function ScheduleCalendar({
   function refetch() { calendarRef.current?.getApi().refetchEvents() }
 
   function handleDateSelect(info: DateSelectArg) {
-    setSelectedRange({ start: info.startStr, end: info.endStr })
-    setModalOpen(true)
+    openCreate({ start: info.startStr, end: info.endStr })
   }
 
   function handleEventClick(info: EventClickArg) {
@@ -103,7 +116,6 @@ export function ScheduleCalendar({
   function closeModals() {
     setModalOpen(false)
     setEventModal(null)
-    setSelectedRange(null)
     setConfirmingCancel(false)
   }
 
@@ -117,15 +129,13 @@ export function ScheduleCalendar({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok])
 
-  // Ao abrir o modal de criação, semeia início/fim a partir da seleção do
-  // calendário (ou vazio se veio do botão "+ Nova aula"). Fim = início + 1h.
-  useEffect(() => {
-    if (!modalOpen) return
-    const start = selectedRange?.start?.slice(0, 16) ?? ''
-    const end = selectedRange?.end?.slice(0, 16) || addHours(start, DEFAULT_LESSON_HOURS)
+  // Abre o modal de criação semeando início/fim. Fim = início + 1h por padrão.
+  function openCreate(range?: { start: string; end: string }) {
+    const start = range?.start?.slice(0, 16) ?? ''
     setFormStart(start)
-    setFormEnd(end)
-  }, [modalOpen, selectedRange])
+    setFormEnd(range?.end?.slice(0, 16) || addHours(start, DEFAULT_LESSON_HOURS))
+    setModalOpen(true)
+  }
 
   async function handleCancelLesson() {
     if (!eventModal) return
@@ -148,7 +158,7 @@ export function ScheduleCalendar({
     <div className={styles.wrap}>
       {canManage && (
         <div className={styles.toolbar}>
-          <AppButton onClick={() => setModalOpen(true)}>+ Nova aula</AppButton>
+          <AppButton onClick={() => openCreate()}>+ Nova aula</AppButton>
         </div>
       )}
 
@@ -173,6 +183,7 @@ export function ScheduleCalendar({
           selectable={canManage}
           select={handleDateSelect}
           eventClick={handleEventClick}
+          eventContent={renderEvent}
           events="/api/lessons"
           eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
           slotMinTime="07:00:00"
