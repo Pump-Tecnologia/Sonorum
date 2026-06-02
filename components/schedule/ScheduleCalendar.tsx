@@ -6,7 +6,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import type { EventClickArg, DateSelectArg } from '@fullcalendar/core'
 
 import { AppButton } from '@/components/app/AppButton'
@@ -14,6 +14,8 @@ import { AppField, AppInput, AppSelect, AppTextarea } from '@/components/app/App
 import { AppSubmit } from '@/components/app/AppSubmit'
 import appStyles from '@/components/app/app.module.css'
 import styles from '@/components/schedule/schedule.module.css'
+import { Badge } from '@/components/ui/Badge'
+import { lessonStatus } from '@/lib/constants/lessons'
 import { cancelLesson, createLesson, type LessonActionState } from '@/lib/actions/lessons'
 
 interface Person { id: string; name: string }
@@ -29,14 +31,6 @@ interface SelectedEvent {
   notes: string
   student_name: string
   room: string
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  scheduled: 'Agendada',
-  completed: 'Realizada',
-  late: 'Atrasado',
-  missed: 'Faltou',
-  canceled: 'Cancelada',
 }
 
 export function ScheduleCalendar({
@@ -57,7 +51,11 @@ export function ScheduleCalendar({
   const [selectedRange, setSelectedRange] = useState<{ start: string; end: string } | null>(null)
   const [state, action] = useActionState(createLesson, initial)
   const [repeatWeekly, setRepeatWeekly] = useState(false)
-  const [calendarKey, setCalendarKey] = useState(0)
+  // Ref pro FullCalendar — `refetchEvents()` preserva view (mês/semana/lista)
+  // e data corrente. Antes era `key++`, que remontava tudo e mandava o usuário
+  // de volta pra semana atual.
+  const calendarRef = useRef<FullCalendar | null>(null)
+  function refetch() { calendarRef.current?.getApi().refetchEvents() }
 
   function handleDateSelect(info: DateSelectArg) {
     setSelectedRange({ start: info.startStr, end: info.endStr })
@@ -84,13 +82,28 @@ export function ScheduleCalendar({
     setSelectedRange(null)
   }
 
-  // Fecha o modal e remonta o calendário para refetch após criar
-  if (state.ok && modalOpen) {
+  // Reage ao sucesso do create: fecha modal + refetch. Antes era um bloco
+  // condicional no corpo do componente (setState durante render = warning/loop).
+  useEffect(() => {
+    if (state.ok) {
+      closeModals()
+      refetch()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.ok])
+
+  async function handleCancelLesson() {
+    if (!eventModal) return
+    if (!window.confirm('Cancelar esta aula? O aluno será notificado.')) return
+    const fd = new FormData()
+    fd.set('lessonId', eventModal.id)
+    await cancelLesson(fd)
     closeModals()
-    setCalendarKey((k) => k + 1)
+    refetch()
   }
 
   const canManage = ['admin', 'teacher'].includes(role)
+  const detailStatus = eventModal ? lessonStatus(eventModal.status) : null
 
   return (
     <div className={styles.wrap}>
@@ -102,7 +115,7 @@ export function ScheduleCalendar({
 
       <div className={styles.calendar}>
         <FullCalendar
-          key={calendarKey}
+          ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
           locale={ptBrLocale}
           initialView="timeGridWeek"
@@ -262,7 +275,7 @@ export function ScheduleCalendar({
       )}
 
       {/* Modal detalhe de evento */}
-      {eventModal && (
+      {eventModal && detailStatus && (
         <div className={styles.backdrop} onClick={closeModals}>
           <div
             className={`${styles.modal} ${styles.modalSmall}`}
@@ -289,7 +302,7 @@ export function ScheduleCalendar({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <p className={styles.detailRow}>
                 <span className={styles.detailLabel}>Status:</span>
-                <strong>{STATUS_LABEL[eventModal.status] ?? eventModal.status}</strong>
+                <Badge tone={detailStatus.tone}>{detailStatus.label}</Badge>
               </p>
               {eventModal.room && (
                 <p className={styles.detailRow}>
@@ -310,16 +323,13 @@ export function ScheduleCalendar({
                 Abrir planejador →
               </a>
               {canManage && eventModal.status !== 'canceled' && (
-                <form action={cancelLesson}>
-                  <input type="hidden" name="lessonId" value={eventModal.id} />
-                  <button
-                    type="submit"
-                    onClick={() => closeModals()}
-                    className={styles.linkDanger}
-                  >
-                    Cancelar aula
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  onClick={handleCancelLesson}
+                  className={styles.linkDanger}
+                >
+                  Cancelar aula
+                </button>
               )}
             </div>
           </div>
