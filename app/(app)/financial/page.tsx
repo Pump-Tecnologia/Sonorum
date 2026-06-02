@@ -1,11 +1,12 @@
 import { PageHeader } from '@/components/app/PageHeader'
 import { ChargeStatusForm } from '@/components/financial/ChargeStatusForm'
 import { MonthPicker } from '@/components/financial/MonthPicker'
+import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { requireFeature } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
-import { formatBRL, monthRange } from '@/lib/format'
+import { monthRange } from '@/lib/format'
 import { effectiveChargeStatus } from '@/lib/finance'
 import { createClient } from '@/lib/supabase/server'
 import { generateMonthlyCharges } from '@/lib/actions/charges'
@@ -59,15 +60,16 @@ export default async function FinancialPage({
         subtitle={new Date(`${month}-01`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
         action={
           <div className="flex items-center gap-3">
+            <FinanceToggle />
             <MonthPicker month={month} />
           </div>
         }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Pago" value={formatBRL(paid)} />
-        <StatCard label="Pendente" value={formatBRL(pending)} />
-        <StatCard label="Atrasado" value={formatBRL(overdue)} />
+        <StatCard label="Pago" value={<MoneyValue value={paid} />} />
+        <StatCard label="Pendente" value={<MoneyValue value={pending} />} />
+        <StatCard label="Atrasado" value={<MoneyValue value={overdue} />} />
       </div>
 
       {charges.length === 0 && (
@@ -101,7 +103,7 @@ export default async function FinancialPage({
               <Td className="text-ink-muted">
                 {new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR')}
               </Td>
-              <Td className="font-semibold">{formatBRL(Number(c.amount))}</Td>
+              <Td className="font-semibold"><MoneyValue value={Number(c.amount)} /></Td>
               <Td>
                 <div className="flex items-center gap-2">
                   <ChargeStatusForm chargeId={c.id} currentStatus={c.status} />

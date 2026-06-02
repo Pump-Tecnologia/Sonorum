@@ -1,12 +1,13 @@
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
+import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
 import { effectiveChargeStatus } from '@/lib/finance'
-import { formatBRL, monthRange } from '@/lib/format'
+import { monthRange } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -79,16 +80,16 @@ export default async function ReportsPage() {
 
   return (
     <>
-      <PageHeader title="Relatórios" />
+      <PageHeader title="Relatórios" action={features.financial ? <FinanceToggle /> : undefined} />
 
       {/* Financeiro */}
       {features.financial ? (
         <section className="mb-8">
           <h2 className="mb-4 text-base font-semibold text-ink">Financeiro — {new Date(month.start).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2>
           <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Pago" value={formatBRL(paid)} />
-            <StatCard label="Pendente" value={formatBRL(pending)} />
-            <StatCard label="Atrasado" value={formatBRL(overdue)} />
+            <StatCard label="Pago" value={<MoneyValue value={paid} />} />
+            <StatCard label="Pendente" value={<MoneyValue value={pending} />} />
+            <StatCard label="Atrasado" value={<MoneyValue value={overdue} />} />
           </div>
         </section>
       ) : (

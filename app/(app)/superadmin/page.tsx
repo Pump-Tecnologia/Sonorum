@@ -5,9 +5,10 @@ import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
 import { PageHeader } from '@/components/app/PageHeader'
 import { LinkButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { Sparkline } from '@/components/ui/Sparkline'
 import { StatCard } from '@/components/ui/StatCard'
-import { formatBRL, monthRange } from '@/lib/format'
+import { monthRange } from '@/lib/format'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Visão geral da rede' }
@@ -93,13 +94,18 @@ export default async function SuperAdminDashboard() {
       <PageHeader
         title="Visão geral da rede"
         subtitle={`Monitoramento de ${totalSchools} unidade(s) Sonorum`}
-        action={<AppLinkButton href="/superadmin/schools/new">Nova escola</AppLinkButton>}
+        action={
+          <div className="flex items-center gap-2">
+            <FinanceToggle />
+            <AppLinkButton href="/superadmin/schools/new">Nova escola</AppLinkButton>
+          </div>
+        }
       />
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Unidades" value={totalSchools} hint={newSchools > 0 ? `+${newSchools} nova(s) este mês` : undefined} />
         <StatCard label="Alunos na rede" value={totalStudents} hint={newStudents > 0 ? `+${newStudents} este mês` : undefined} />
-        <StatCard label="Receita da rede (mês)" value={formatBRL(revenueMonth)} />
+        <StatCard label="Receita da rede (mês)" value={<MoneyValue value={revenueMonth} />} />
         <StatCard label="Aulas na rede (mês)" value={lessonsMonth.count ?? 0} />
       </div>
 
@@ -107,7 +113,7 @@ export default async function SuperAdminDashboard() {
         {/* Receita consolidada */}
         <Card className="lg:col-span-2">
           <h2 className="mb-1 text-base font-semibold text-ink">Receita consolidada</h2>
-          <p className="mb-4 text-xs text-ink-muted">Últimos 6 meses · {formatBRL(series.reduce((s, m) => s + m.value, 0))} no período</p>
+          <p className="mb-4 text-xs text-ink-muted">Últimos 6 meses · <MoneyValue value={series.reduce((s, m) => s + m.value, 0)} /> no período</p>
           {series.every((m) => m.value === 0) ? (
             <p className="py-8 text-center text-sm text-ink-muted">Sem receita registrada ainda na rede.</p>
           ) : (
@@ -173,7 +179,7 @@ export default async function SuperAdminDashboard() {
                   </td>
                   <td><AppBadge tone={s.plan_type === 'free' ? 'neutral' : 'brand'}>{PLAN_LABEL[s.plan_type] ?? s.plan_type}</AppBadge></td>
                   <td className={cellMuted}>{s.alunos}</td>
-                  <td className={cellMuted}>{formatBRL(s.faturamento)}</td>
+                  <td className={cellMuted}><MoneyValue value={s.faturamento} /></td>
                   <td><AppBadge tone={s.ativa ? 'success' : 'danger'}>{s.ativa ? 'Ativa' : 'Expirada'}</AppBadge></td>
                   <td className={tableRight}>
                     <div className="flex items-center justify-end gap-2">

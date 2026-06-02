@@ -3,11 +3,11 @@ import { redirect } from 'next/navigation'
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
+import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { getCurrentUser } from '@/lib/auth/session'
 import { chargeStatusMeta, effectiveChargeStatus } from '@/lib/finance'
-import { formatBRL } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Minhas mensalidades' }
@@ -39,10 +39,10 @@ export default async function StudentChargesPage() {
 
   return (
     <>
-      <PageHeader title="Minhas mensalidades" subtitle="Seu histórico de cobranças" />
+      <PageHeader title="Minhas mensalidades" subtitle="Seu histórico de cobranças" action={<FinanceToggle />} />
 
       <div className="mb-6 max-w-xs">
-        <StatCard label="Em aberto" value={formatBRL(emAberto)} hint="Pendentes + atrasadas" />
+        <StatCard label="Em aberto" value={<MoneyValue value={emAberto} />} hint="Pendentes + atrasadas" />
       </div>
 
       <Table>
@@ -64,7 +64,7 @@ export default async function StudentChargesPage() {
                 <Td className="text-ink-muted">
                   {new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR')}
                 </Td>
-                <Td className="font-semibold">{formatBRL(Number(c.amount))}</Td>
+                <Td className="font-semibold"><MoneyValue value={Number(c.amount)} /></Td>
                 <Td><Badge tone={meta.tone}>{meta.label}</Badge></Td>
               </Tr>
             )

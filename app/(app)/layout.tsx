@@ -4,6 +4,7 @@ import { cache } from 'react'
 import { ImpersonationBanner } from '@/components/app/ImpersonationBanner'
 import { Sidebar } from '@/components/app/Sidebar'
 import styles from '@/components/app/app.module.css'
+import { FinanceVisibilityProvider } from '@/components/ui/FinanceVisibility'
 import { getImpersonatorId } from '@/lib/actions/impersonate'
 import { getCurrentUser } from '@/lib/auth/session'
 import { planFeatures } from '@/lib/constants/plans'
@@ -57,18 +58,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isImpersonating = Boolean(impersonatorId) && impersonatorId !== user.id
 
   return (
-    <div className={styles.shell} style={shellStyle as React.CSSProperties}>
-      {isImpersonating && <ImpersonationBanner asUserName={user.name} />}
-      <div className={styles.shellMain}>
-        <Sidebar
-          role={user.role}
-          name={user.name}
-          schoolName={branding?.name ?? null}
-          logoUrl={branding?.logoUrl ?? null}
-          brandWord={branding?.branded ? (branding.name ?? 'Sonorum') : 'Sonorum'}
-        />
-        <main className={styles.main}>{children}</main>
+    <FinanceVisibilityProvider>
+      <div className={styles.shell} style={shellStyle as React.CSSProperties}>
+        {isImpersonating && <ImpersonationBanner asUserName={user.name} />}
+        <div className={styles.shellMain}>
+          <Sidebar
+            role={user.role}
+            name={user.name}
+            schoolName={branding?.name ?? null}
+            logoUrl={branding?.logoUrl ?? null}
+            brandWord={branding?.branded ? (branding.name ?? 'Sonorum') : 'Sonorum'}
+          />
+          <main className={styles.main}>{children}</main>
+        </div>
       </div>
-    </div>
+    </FinanceVisibilityProvider>
   )
 }

@@ -6,7 +6,7 @@ export function StatCard({
   hint,
 }: {
   label: string
-  value: string | number
+  value: React.ReactNode
   hint?: string
 }) {
   return (

@@ -4,12 +4,13 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Button, LinkButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { StatCard } from '@/components/ui/StatCard'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { getCurrentUser } from '@/lib/auth/session'
 import { getPlanContext } from '@/lib/auth/plan'
 import { effectiveChargeStatus } from '@/lib/finance'
-import { dayRange, formatBRL, monthRange } from '@/lib/format'
+import { dayRange, monthRange } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Dashboard' }
@@ -118,10 +119,10 @@ export default async function AdminDashboard() {
   }).sort((a, b) => b.completed - a.completed).slice(0, 5)
 
   // Atenção necessária — sinais reais e acionáveis
-  type Alert = { label: string; detail: string; href: string; tone: 'danger' | 'warning' }
+  type Alert = { label: string; detail: React.ReactNode; href: string; tone: 'danger' | 'warning' }
   const alerts: Alert[] = []
   if (plan.features.financial && overdue.length > 0)
-    alerts.push({ label: `${overdue.length} cobrança(s) vencida(s)`, detail: `${formatBRL(overdueSum)} em atraso`, href: '/financial', tone: 'danger' })
+    alerts.push({ label: `${overdue.length} cobrança(s) vencida(s)`, detail: <><MoneyValue value={overdueSum} /> em atraso</>, href: '/financial', tone: 'danger' })
   if ((unassigned.count ?? 0) > 0)
     alerts.push({ label: `${unassigned.count} aula(s) sem professor`, detail: 'Atribua um professor na agenda', href: '/schedule', tone: 'warning' })
   for (const r of retentionRisk.filter((r) => r.count >= 3))
@@ -137,6 +138,7 @@ export default async function AdminDashboard() {
         subtitle={`Bem-vindo, ${user?.name ?? ''}`}
         action={
           <div className="flex items-center gap-2">
+            {plan.features.financial && <FinanceToggle />}
             <span className="hidden items-center rounded-xl border border-hairline bg-surface px-3 py-2 text-sm text-ink-muted sm:inline-flex">{datePill}</span>
             <Link href="/admin/students/new"><Button>Novo aluno</Button></Link>
           </div>
@@ -158,7 +160,7 @@ export default async function AdminDashboard() {
         <Link href="/admin/teachers"><StatCard label="Professores" value={teachersCount.count ?? 0} /></Link>
         <Link href="/schedule"><StatCard label="Aulas hoje" value={lessonsToday.count ?? 0} /></Link>
         {plan.features.financial ? (
-          <Link href="/financial"><StatCard label="Receita prevista (mês)" value={formatBRL(expectedRevenue)} hint={pctTrend(expectedRevenue, lastRevenue)} /></Link>
+          <Link href="/financial"><StatCard label="Receita prevista (mês)" value={<MoneyValue value={expectedRevenue} />} hint={pctTrend(expectedRevenue, lastRevenue)} /></Link>
         ) : (
           <StatCard label="Receita prevista" value="—" hint="Disponível em planos pagos" />
         )}
