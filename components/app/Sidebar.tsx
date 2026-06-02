@@ -39,19 +39,39 @@ export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum'
   return (
     <aside className={styles.sidebar}>
       <div className={styles.sidebarHeader}>
-        <Link href="/dashboard" className={styles.sidebarBrand} aria-label={brandWord}>
-          <Image
-            src={logoUrl || LOGO}
-            alt=""
-            width={32}
-            height={32}
-            priority
-            unoptimized={Boolean(logoUrl)}
-            className={styles.sidebarBrandMark}
-          />
-          <span className={styles.sidebarBrandWord}>{brandWord}</span>
-        </Link>
-        {schoolName && schoolName !== brandWord && <p className={styles.sidebarSchool}>{schoolName}</p>}
+        {logoUrl ? (
+          // Logo customizado: tile branca arredondada (contraste universal) + nome.
+          <>
+            <Link href="/dashboard" className={styles.sidebarBrandTile} aria-label={brandWord}>
+              <Image
+                src={logoUrl}
+                alt=""
+                width={44}
+                height={44}
+                priority
+                unoptimized
+                className={styles.sidebarBrandMark}
+              />
+            </Link>
+            <div className={styles.sidebarBrandStack}>
+              <span className={styles.sidebarBrandWord}>{brandWord}</span>
+              {schoolName && schoolName !== brandWord && (
+                <span className={styles.sidebarSchool}>{schoolName}</span>
+              )}
+            </div>
+          </>
+        ) : (
+          // Padrão Sonorum: violão vazado já é feito p/ fundo escuro — sem tile.
+          <>
+            <Link href="/dashboard" className={styles.sidebarBrand} aria-label={brandWord}>
+              <Image src={LOGO} alt="" width={32} height={32} priority className={styles.sidebarBrandMark} />
+              <span className={styles.sidebarBrandWord}>{brandWord}</span>
+            </Link>
+            {schoolName && schoolName !== brandWord && (
+              <p className={styles.sidebarSchool}>{schoolName}</p>
+            )}
+          </>
+        )}
       </div>
 
       <nav className={styles.sidebarNav} aria-label="Navegação principal">

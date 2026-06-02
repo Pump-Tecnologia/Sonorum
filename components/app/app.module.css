@@ -62,6 +62,9 @@
 
 .sidebarHeader {
   padding: 1.5rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
 }
 .sidebarBrand {
   display: inline-flex;
@@ -71,6 +74,24 @@
   color: #fff;
 }
 .sidebarBrandMark { width: 2rem; height: 2rem; object-fit: contain; }
+
+/* Variante "tile": fundo branco arredondado atrás do logo customizado. Garante
+   contraste universal pra logos do cliente (SVG vazado, PNG transparente, etc.).
+   Layout fica vertical: tile em cima, nome embaixo. */
+.sidebarBrandTile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 4px 12px -4px rgb(0 0 0 / 0.25);
+}
+.sidebarBrandTile .sidebarBrandMark { width: 100%; height: 100%; }
+
 .sidebarBrandWord {
   font-family: var(--font-display);
   font-size: 1.0625rem;
@@ -78,10 +99,15 @@
   letter-spacing: -0.01em;
   color: #fff;
 }
+.sidebarBrandStack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
 .sidebarSchool {
-  margin-top: 0.375rem;
-  font-size: 0.6875rem;
-  color: color-mix(in oklab, #fff 65%, transparent);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: color-mix(in oklab, #fff 72%, transparent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
