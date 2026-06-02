@@ -9,6 +9,7 @@ export interface PlanFeatures {
   financial: boolean // planos, matrículas, cobranças
   reports: boolean // módulo de relatórios
   transcription: boolean // transcrição de cifra por IA (exclusivo Premium)
+  branding: boolean // logo e cores da marca personalizados (exclusivo Premium)
 }
 
 export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
@@ -19,6 +20,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     financial: false,
     reports: false,
     transcription: false,
+    branding: false,
   },
   basic: {
     label: 'Básico',
@@ -27,6 +29,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     financial: true,
     reports: false,
     transcription: false,
+    branding: false,
   },
   professional: {
     label: 'Profissional',
@@ -35,6 +38,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     financial: true,
     reports: true,
     transcription: false,
+    branding: false,
   },
   premium: {
     label: 'Premium',
@@ -43,6 +47,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     financial: true,
     reports: true,
     transcription: true,
+    branding: true,
   },
 }
 
@@ -50,4 +55,4 @@ export function planFeatures(planType: string | null | undefined): PlanFeatures 
   return PLAN_FEATURES[(planType as SchoolPlanType) ?? 'free'] ?? PLAN_FEATURES.free
 }
 
-export type PlanFeatureKey = 'financial' | 'reports' | 'transcription'
+export type PlanFeatureKey = 'financial' | 'reports' | 'transcription' | 'branding'

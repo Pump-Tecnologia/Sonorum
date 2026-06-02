@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useActionState, useState } from 'react'
 
 import { SubmitButton } from '@/components/auth/SubmitButton'
@@ -14,6 +15,7 @@ interface SchoolData {
   customName: string | null
   brandPrimary: string | null
   brandSecondary: string | null
+  logoUrl: string | null
   planType: string
   studentLimit: number
 }
@@ -23,7 +25,7 @@ const initial: SettingsActionState = { ok: false }
 const DEFAULT_PRIMARY = '#2B4C79'
 const DEFAULT_SECONDARY = '#7CC99B'
 
-export function SchoolSettingsForm({ school }: { school: SchoolData }) {
+export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; canBrand: boolean }) {
   const [state, action] = useActionState(updateSchoolSettings, initial)
   const fe = state.fieldErrors ?? {}
   const [primary, setPrimary] = useState(school.brandPrimary ?? DEFAULT_PRIMARY)
@@ -83,61 +85,67 @@ export function SchoolSettingsForm({ school }: { school: SchoolData }) {
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Cor primária" htmlFor="brandPrimary" error={fe.brandPrimary}>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={primary}
-                  onChange={(e) => setPrimary(e.target.value)}
-                  className="h-10 w-10 cursor-pointer rounded-lg border border-hairline"
-                />
-                <Input
-                  id="brandPrimary"
-                  name="brandPrimary"
-                  value={primary}
-                  onChange={(e) => setPrimary(e.target.value)}
-                  placeholder={DEFAULT_PRIMARY}
-                  className="font-mono"
-                />
+          {canBrand ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Cor primária" htmlFor="brandPrimary" error={fe.brandPrimary}>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={primary}
+                      onChange={(e) => setPrimary(e.target.value)}
+                      className="h-10 w-10 cursor-pointer rounded-lg border border-hairline"
+                    />
+                    <Input id="brandPrimary" name="brandPrimary" value={primary} onChange={(e) => setPrimary(e.target.value)} placeholder={DEFAULT_PRIMARY} className="font-mono" />
+                  </div>
+                </Field>
+                <Field label="Cor secundária" htmlFor="brandSecondary" error={fe.brandSecondary}>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={secondary}
+                      onChange={(e) => setSecondary(e.target.value)}
+                      className="h-10 w-10 cursor-pointer rounded-lg border border-hairline"
+                    />
+                    <Input id="brandSecondary" name="brandSecondary" value={secondary} onChange={(e) => setSecondary(e.target.value)} placeholder={DEFAULT_SECONDARY} className="font-mono" />
+                  </div>
+                </Field>
               </div>
-            </Field>
 
-            <Field label="Cor secundária" htmlFor="brandSecondary" error={fe.brandSecondary}>
-              <div className="flex gap-2">
+              <Field label="Logo (PNG, JPG, WEBP ou SVG · até 2MB)" htmlFor="logo" error={fe.logo}>
                 <input
-                  type="color"
-                  value={secondary}
-                  onChange={(e) => setSecondary(e.target.value)}
-                  className="h-10 w-10 cursor-pointer rounded-lg border border-hairline"
+                  id="logo"
+                  name="logo"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="block w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
                 />
-                <Input
-                  id="brandSecondary"
-                  name="brandSecondary"
-                  value={secondary}
-                  onChange={(e) => setSecondary(e.target.value)}
-                  placeholder={DEFAULT_SECONDARY}
-                  className="font-mono"
-                />
-              </div>
-            </Field>
-          </div>
+                {school.logoUrl && (
+                  <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={school.logoUrl} alt="Logo atual" className="h-8 w-8 object-contain" />
+                    <label className="flex items-center gap-1.5 text-xs text-ink-muted">
+                      <input type="checkbox" name="removeLogo" /> Remover logo
+                    </label>
+                  </div>
+                )}
+              </Field>
 
-          {/* Preview */}
-          <div
-            className="flex h-12 items-center gap-3 rounded-xl px-4"
-            style={{ backgroundColor: primary }}
-          >
-            <span className="text-sm font-semibold text-white">
-              {school.customName || school.name}
-            </span>
-            <span
-              className="rounded-full px-2 py-0.5 text-xs font-medium"
-              style={{ backgroundColor: secondary, color: primary }}
-            >
-              Preview
-            </span>
-          </div>
+              {/* Preview */}
+              <div className="flex h-12 items-center gap-3 rounded-xl px-4" style={{ backgroundColor: primary }}>
+                <span className="text-sm font-semibold text-white">{school.customName || school.name}</span>
+                <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: secondary, color: primary }}>Preview</span>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-xl border border-dashed border-hairline bg-surface-muted/40 p-4">
+              <p className="text-sm font-medium text-ink">Logo e cores da marca — Premium</p>
+              <p className="mt-1 text-sm text-ink-muted">
+                Personalize a identidade da sua escola (logo e cores) no plano Premium.{' '}
+                <Link href="/upgrade" className="font-medium text-brand-600 hover:underline">Fazer upgrade</Link>
+              </p>
+            </div>
+          )}
 
           <SubmitButton pendingLabel="Salvando…">Salvar configurações</SubmitButton>
         </form>

@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { RoomsManager } from '@/components/admin/RoomsManager'
 import { SchoolSettingsForm } from '@/components/admin/SchoolSettingsForm'
 import { getCurrentUser } from '@/lib/auth/session'
+import { planFeatures } from '@/lib/constants/plans'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Configurações' }
@@ -16,7 +17,7 @@ export default async function SettingsPage() {
   const [{ data: school }, { data: rooms }] = await Promise.all([
     supabase
       .from('schools')
-      .select('name, custom_name, brand_primary, brand_secondary, plan_type, student_limit')
+      .select('name, custom_name, brand_primary, brand_secondary, logo_path, plan_type, student_limit')
       .eq('id', user.schoolId)
       .single(),
     supabase.from('rooms').select('id, name').eq('school_id', user.schoolId).order('name'),
@@ -34,9 +35,11 @@ export default async function SettingsPage() {
             customName: school.custom_name,
             brandPrimary: school.brand_primary,
             brandSecondary: school.brand_secondary,
+            logoUrl: school.logo_path,
             planType: school.plan_type,
             studentLimit: school.student_limit,
           }}
+          canBrand={planFeatures(school.plan_type).branding}
         />
         <RoomsManager rooms={(rooms ?? []) as { id: string; name: string }[]} />
       </div>

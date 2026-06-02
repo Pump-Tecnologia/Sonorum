@@ -15,9 +15,11 @@ interface SidebarProps {
   role: Role
   name: string
   schoolName: string | null
+  logoUrl?: string | null
+  brandWord?: string
 }
 
-export function Sidebar({ role, name, schoolName }: SidebarProps) {
+export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum' }: SidebarProps) {
   const pathname = usePathname()
   const items = NAV_BY_ROLE[role]
 
@@ -37,18 +39,19 @@ export function Sidebar({ role, name, schoolName }: SidebarProps) {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.sidebarHeader}>
-        <Link href="/dashboard" className={styles.sidebarBrand} aria-label="Sonorum">
+        <Link href="/dashboard" className={styles.sidebarBrand} aria-label={brandWord}>
           <Image
-            src={LOGO}
+            src={logoUrl || LOGO}
             alt=""
             width={32}
             height={32}
             priority
+            unoptimized={Boolean(logoUrl)}
             className={styles.sidebarBrandMark}
           />
-          <span className={styles.sidebarBrandWord}>Sonorum</span>
+          <span className={styles.sidebarBrandWord}>{brandWord}</span>
         </Link>
-        {schoolName && <p className={styles.sidebarSchool}>{schoolName}</p>}
+        {schoolName && schoolName !== brandWord && <p className={styles.sidebarSchool}>{schoolName}</p>}
       </div>
 
       <nav className={styles.sidebarNav} aria-label="Navegação principal">
