@@ -22,11 +22,19 @@ const createLessonSchema = z.object({
   startDatetime: z.string().datetime({ local: true }).or(z.string().min(1)),
   endDatetime: z.string().datetime({ local: true }).or(z.string().min(1)),
   notes: z.string().optional(),
-  repeatWeekly: z.coerce.boolean().default(false),
+  // Checkbox HTML manda 'true' ou ausente; coerce.boolean() aceitaria
+  // 'false' como true (qualquer string não-vazia). Usar literal explícito.
+  repeatWeekly: z.preprocess((v) => v === 'true' || v === true, z.boolean()),
   recurrenceMode: z.enum(['until', 'count']).optional(),
-  recurrenceUntil: z.string().optional(),
+  // Aceita 'YYYY-MM-DD' do input type='date'; refine garante data válida.
+  recurrenceUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida').optional().or(z.literal('')),
   recurrenceCount: z.coerce.number().int().min(1).max(52).optional(),
-})
+}).refine(
+  // Se repetir, o modo correspondente precisa ter campo preenchido.
+  (d) => !d.repeatWeekly || !d.recurrenceMode ||
+    (d.recurrenceMode === 'count' ? typeof d.recurrenceCount === 'number' : Boolean(d.recurrenceUntil)),
+  { message: 'Preencha o campo de recorrência.', path: ['recurrenceCount'] },
+)
 
 // Gera datas recorrentes semanais a partir de um par início/fim
 function weeklyOccurrences(
@@ -109,6 +117,25 @@ export async function createLesson(
   // corresponder ao horário que o usuário digitou.
   const startISO = localBrToServerISO(d.startDatetime)
   const endISO = localBrToServerISO(d.endDatetime)
+  if (new Date(endISO) <= new Date(startISO)) {
+    return { ok: false, fieldErrors: { endDatetime: 'O fim precisa ser depois do início.' } }
+  }
+
+  // Cross-tenant: aluno/professor/sala precisam ser da MESMA escola do user.
+  // RLS protege o INSERT (school_id colado é o meu), mas sem essa checagem
+  // dá pra criar uma aula apontando aluno/prof/sala de outra escola.
+  const [studentCheck, teacherCheck, roomCheck] = await Promise.all([
+    supabase.from('users').select('id').eq('id', d.studentId).eq('school_id', me.schoolId).eq('role', 'student').maybeSingle(),
+    teacherId
+      ? supabase.from('users').select('id').eq('id', teacherId).eq('school_id', me.schoolId).eq('role', 'teacher').maybeSingle()
+      : Promise.resolve({ data: 'skip' as const }),
+    roomId
+      ? supabase.from('rooms').select('id').eq('id', roomId).eq('school_id', me.schoolId).maybeSingle()
+      : Promise.resolve({ data: 'skip' as const }),
+  ])
+  if (!studentCheck.data) return { ok: false, fieldErrors: { studentId: 'Aluno não encontrado na escola.' } }
+  if (teacherCheck.data === null) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
+  if (roomCheck.data === null) return { ok: false, fieldErrors: { roomId: 'Sala não encontrada na escola.' } }
 
   // Todas as ocorrências (aula principal + recorrência semanal).
   const occurrences: Array<[string, string]> = [[startISO, endISO]]

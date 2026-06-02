@@ -9,13 +9,14 @@ export default async function SchedulePage() {
   const user = await getCurrentUser()
   const supabase = await createClient()
 
-  // Admin/Teacher: carrega listas para o modal de criar aula
+  // Admin/Teacher: carrega listas para o modal de criar aula.
+  // Filtra alunos/professores ATIVOS — não faz sentido agendar com inativo.
   const [studentsRes, teachersRes, roomsRes] = await Promise.all([
     user?.role !== 'student'
-      ? supabase.from('users').select('id, name').eq('role', 'student').order('name')
+      ? supabase.from('users').select('id, name').eq('role', 'student').eq('status', 'active').order('name')
       : Promise.resolve({ data: [] }),
     user?.role === 'admin'
-      ? supabase.from('users').select('id, name').eq('role', 'teacher').order('name')
+      ? supabase.from('users').select('id, name').eq('role', 'teacher').eq('status', 'active').order('name')
       : Promise.resolve({ data: [] }),
     user?.role !== 'student'
       ? supabase.from('rooms').select('id, name').eq('active', true).order('name')
