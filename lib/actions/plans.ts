@@ -111,7 +111,12 @@ export async function updatePlan(_prev: PlanActionState, formData: FormData): Pr
   if (!parsed.success) return toFieldErrors(parsed.error)
 
   const supabase = await createClient()
-  await supabase.from('plans').update(planRow(parsed.data)).eq('id', planId).eq('school_id', me.schoolId)
+  const { error } = await supabase
+    .from('plans')
+    .update(planRow(parsed.data))
+    .eq('id', planId)
+    .eq('school_id', me.schoolId)
+  if (error) return { ok: false, error: 'Não foi possível salvar o plano.' }
 
   revalidatePath('/plans')
   return { ok: true }

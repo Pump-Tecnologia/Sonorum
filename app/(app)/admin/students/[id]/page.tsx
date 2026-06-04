@@ -59,11 +59,11 @@ export default async function StudentDetailPage({
     const [{ data: enr }, { data: plansData }] = await Promise.all([
       supabase
         .from('enrollments')
-        .select('id, status, due_day, custom_amount, plan:plans(id, name, amount)')
+        .select('id, status, due_day, custom_amount, plan:plans(id, name, amount, billing_type)')
         .eq('student_id', id)
         .eq('status', 'active')
         .maybeSingle(),
-      supabase.from('plans').select('id, name, amount').order('amount'),
+      supabase.from('plans').select('id, name, amount, billing_type').eq('active', true).order('amount'),
     ])
     enrollment = enr as typeof enrollment
     plans = (plansData ?? []) as typeof plans

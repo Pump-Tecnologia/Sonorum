@@ -27,7 +27,7 @@ export async function updateChargeStatus(formData: FormData) {
   // vencimento para decidir quanto foi efetivamente pago.
   const { data: charge } = await supabase
     .from('charges')
-    .select('amount, early_pay_amount, due_date, enrollment:enrollments(student_id)')
+    .select('status, amount, early_pay_amount, due_date, enrollment:enrollments(student_id)')
     .eq('id', chargeId)
     .eq('school_id', me.schoolId)
     .maybeSingle()
@@ -39,6 +39,9 @@ export async function updateChargeStatus(formData: FormData) {
     payment_method?: string | null
     paid_amount?: number | null
   }
+  // Não reabre cobrança cancelada por engano (cancelled → paid/pending).
+  if (charge.status === 'cancelled' && status !== 'cancelled') return
+
   const update: ChargeUpdate = { status }
   let paidAmount: number | null = null
 
@@ -124,9 +127,13 @@ export async function generateMonthlyCharges(formData: FormData) {
   }
   const charges: ChargeInsert[] = []
 
+  // Último dia do mês alvo — evita que due_day 29–31 role pro mês seguinte.
+  const lastDayOfMonth = new Date(year, month, 0).getDate()
+
   for (const e of enrollments) {
     const plan = e.plan as { amount: number; billing_type: string; early_pay_amount: number | null } | null
-    const dueDate = new Date(year, month - 1, e.due_day).toISOString().slice(0, 10)
+    const dueDay = Math.min(e.due_day, lastDayOfMonth)
+    const dueDate = new Date(year, month - 1, dueDay).toISOString().slice(0, 10)
     const unit = e.custom_amount != null ? Number(e.custom_amount) : Number(plan?.amount ?? 0)
 
     if (plan?.billing_type === 'per_class') {

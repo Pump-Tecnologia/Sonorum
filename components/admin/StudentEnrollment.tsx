@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { SubmitButton } from '@/components/auth/SubmitButton'
@@ -8,12 +8,14 @@ import { Card } from '@/components/ui/Card'
 import { Field, Input, Select } from '@/components/ui/Field'
 import { Badge } from '@/components/ui/Badge'
 import { cancelEnrollment, enrollStudent, type EnrollActionState } from '@/lib/actions/enrollments'
+import { billingTypeLabel } from '@/lib/finance'
 import { formatBRL } from '@/lib/format'
 
 interface Plan {
   id: string
   name: string
   amount: number
+  billing_type: string
 }
 
 interface Enrollment {
@@ -37,6 +39,9 @@ export function StudentEnrollment({
 }) {
   const [state, action] = useActionState(enrollStudent, initial)
   const fe = state.fieldErrors ?? {}
+  const [planId, setPlanId] = useState(enrollment?.plan?.id ?? '')
+  const selectedPlan = plans.find((p) => p.id === planId)
+  const isPerClass = selectedPlan?.billing_type === 'per_class'
 
   return (
     <Card>
@@ -90,11 +95,11 @@ export function StudentEnrollment({
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Plano" htmlFor="planId" error={fe.planId}>
-              <Select id="planId" name="planId" defaultValue={enrollment?.plan?.id ?? ''}>
+              <Select id="planId" name="planId" value={planId} onChange={(e) => setPlanId(e.target.value)}>
                 <option value="" disabled>Selecione…</option>
                 {plans.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — {formatBRL(Number(p.amount))}
+                    {p.name} — {formatBRL(Number(p.amount))}{p.billing_type === 'per_class' ? '/aula' : '/mês'} ({billingTypeLabel(p.billing_type)})
                   </option>
                 ))}
               </Select>
@@ -112,9 +117,12 @@ export function StudentEnrollment({
           </div>
 
           <Field
-            label="Valor personalizado (deixe em branco para usar o do plano)"
+            label={isPerClass
+              ? 'Preço por aula personalizado (em branco = usa o do plano)'
+              : 'Valor mensal personalizado (em branco = usa o do plano)'}
             htmlFor="customAmount"
             error={fe.customAmount}
+            hint={isPerClass ? 'Será multiplicado pelo nº de aulas realizadas no mês.' : undefined}
           >
             <Input
               id="customAmount"
