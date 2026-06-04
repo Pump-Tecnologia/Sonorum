@@ -76,6 +76,7 @@ export type Database = {
       }
       enrollments: {
         Row: {
+          cancelled_at: string | null
           created_at: string
           custom_amount: number | null
           due_day: number
@@ -87,6 +88,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancelled_at?: string | null
           created_at?: string
           custom_amount?: number | null
           due_day: number
@@ -98,6 +100,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancelled_at?: string | null
           created_at?: string
           custom_amount?: number | null
           due_day?: number

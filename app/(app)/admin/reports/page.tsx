@@ -37,14 +37,16 @@ export default async function ReportsPage({
   const isoDate = /^\d{4}-\d{2}-\d{2}$/
   const from = sp.from && isoDate.test(sp.from) ? sp.from : `${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`
   const to = sp.to && isoDate.test(sp.to) ? sp.to : ymd(today)
-  const fromTs = `${from}T00:00:00`
-  const toTs = `${to}T23:59:59.999`
+  // Offset BRT (-03:00) pra que aulas à noite (UTC do dia seguinte) entrem no dia certo.
+  const fromTs = `${from}T00:00:00-03:00`
+  const toTs = `${to}T23:59:59.999-03:00`
   const nowIso = today.toISOString()
 
   // ── Aulas do período (uma busca alimenta frequência, pendentes e produtividade)
   const { data: lessonsRaw } = await supabase
     .from('lessons')
     .select('status, student_id, teacher_id, start_datetime, student:users!lessons_student_id_fkey(name), teacher:users!lessons_teacher_id_fkey(name)')
+    .eq('school_id', user.schoolId)
     .gte('start_datetime', fromTs)
     .lte('start_datetime', toTs)
 
@@ -93,8 +95,10 @@ export default async function ReportsPage({
   const pendings = [...pendingByTeacher.values()].sort((a, b) => b.count - a.count)
   const productivity = [...prodMap.values()]
     .map((p) => {
-      const occurred = p.done + p.missed + p.toMark
-      return { ...p, doneRate: occurred > 0 ? Math.round((p.done / occurred) * 100) : 0 }
+      // Taxa de presença das aulas já lançadas (não pune o professor por atraso
+      // de lançamento — as pendentes ficam na coluna 'A lançar').
+      const decided = p.done + p.missed
+      return { ...p, doneRate: decided > 0 ? Math.round((p.done / decided) * 100) : 0 }
     })
     .sort((a, b) => b.done - a.done)
 
@@ -106,6 +110,7 @@ export default async function ReportsPage({
     const { data: charges } = await supabase
       .from('charges')
       .select('status, amount, paid_amount, due_date, enrollment:enrollments(student_id, student:users(name))')
+      .eq('school_id', user.schoolId)
       .gte('due_date', from)
       .lte('due_date', to)
     type ChargeRow = {
@@ -135,18 +140,26 @@ export default async function ReportsPage({
     .from('users')
     .select('id, status, created_at')
     .eq('role', 'student')
+    .eq('school_id', user.schoolId)
   type StudentRow = { id: string; status: string; created_at: string }
   const students = (studentsRaw ?? []) as StudentRow[]
-  const newStudents = students.filter((s) => s.created_at >= fromTs && s.created_at <= toTs).length
+  // Comparação por timestamp (não string) — created_at e o range têm offsets diferentes.
+  const fromMs = new Date(fromTs).getTime()
+  const toMs = new Date(toTs).getTime()
+  const newStudents = students.filter((s) => {
+    const t = new Date(s.created_at).getTime()
+    return t >= fromMs && t <= toMs
+  }).length
   const byStatus = { active: 0, paused: 0, inactive: 0 } as Record<string, number>
   for (const s of students) byStatus[s.status] = (byStatus[s.status] ?? 0) + 1
 
   const { count: churn } = await supabase
     .from('enrollments')
     .select('id', { count: 'exact', head: true })
+    .eq('school_id', user.schoolId)
     .eq('status', 'cancelled')
-    .gte('updated_at', fromTs)
-    .lte('updated_at', toTs)
+    .gte('cancelled_at', fromTs)
+    .lte('cancelled_at', toTs)
 
   const rangeLabel = `${new Date(from + 'T12:00:00').toLocaleDateString('pt-BR')} – ${new Date(to + 'T12:00:00').toLocaleDateString('pt-BR')} (${daysBetween(from, to)} dias)`
 
@@ -204,8 +217,8 @@ export default async function ReportsPage({
         <h2 className="mb-4 text-base font-semibold text-ink">Crescimento de alunos</h2>
         <div className="grid gap-4 sm:grid-cols-4">
           <StatCard label="Novos no período" value={String(newStudents)} />
-          <StatCard label="Ativos" value={String(byStatus.active ?? 0)} />
-          <StatCard label="Pausados" value={String(byStatus.paused ?? 0)} />
+          <StatCard label="Ativos" value={String(byStatus.active ?? 0)} hint="situação atual" />
+          <StatCard label="Pausados" value={String(byStatus.paused ?? 0)} hint="situação atual" />
           <StatCard label="Matrículas canceladas" value={String(churn ?? 0)} hint="no período" />
         </div>
       </section>

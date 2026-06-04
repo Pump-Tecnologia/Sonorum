@@ -45,12 +45,21 @@ export async function sendStudentReport(
     return { ok: false, error: 'Aluno não encontrado.' }
   }
 
-  const progress = await getStudentProgress(studentId)
+  // Mês-calendário corrente, em BRT (-03:00), pra os números baterem com o rótulo.
+  const now = new Date()
+  const y = now.getFullYear()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const lastDay = new Date(y, now.getMonth() + 1, 0).getDate()
+  const range = {
+    from: `${y}-${mm}-01T00:00:00-03:00`,
+    to: `${y}-${mm}-${String(lastDay).padStart(2, '0')}T23:59:59.999-03:00`,
+  }
+  const progress = await getStudentProgress(studentId, range)
   if (!progress.hasData) {
-    return { ok: false, error: 'Sem dados suficientes para gerar o relatório deste aluno.' }
+    return { ok: false, error: 'Sem aulas registradas neste mês para gerar o relatório.' }
   }
 
-  const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const monthLabel = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   const result = await notify('progress.monthly_report', studentId, {
     monthLabel,
     lessonsDone: progress.lessonsCount,

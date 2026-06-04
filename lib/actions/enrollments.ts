@@ -50,7 +50,7 @@ export async function enrollStudent(
   // Cancela matrícula ativa anterior (um aluno = uma matrícula ativa por vez).
   await supabase
     .from('enrollments')
-    .update({ status: 'cancelled' })
+    .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
     .eq('school_id', me.schoolId)
     .eq('student_id', d.studentId)
     .eq('status', 'active')
@@ -81,7 +81,7 @@ export async function cancelEnrollment(formData: FormData) {
   const supabase = await createClient()
   await supabase
     .from('enrollments')
-    .update({ status: 'cancelled' })
+    .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
     .eq('student_id', studentId)
     .eq('school_id', me.schoolId)
     .eq('status', 'active')
