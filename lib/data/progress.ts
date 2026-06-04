@@ -42,17 +42,25 @@ interface LessonRow {
   lesson_reports: ReportRow[] | ReportRow | null
 }
 
-export async function getStudentProgress(studentId: string): Promise<StudentProgress> {
+// range opcional (ISO com timezone) restringe a frequência/laudos a um período;
+// sem range = histórico completo (usado no painel do perfil).
+export async function getStudentProgress(
+  studentId: string,
+  range?: { from: string; to: string },
+): Promise<StudentProgress> {
   const supabase = await createClient()
 
+  let lessonsQuery = supabase
+    .from('lessons')
+    .select(
+      'status, lesson_reports(technique_score, theory_score, repertoire_score, practice_score, current_song, initial_bpm, reached_bpm)',
+    )
+    .eq('student_id', studentId)
+    .order('start_datetime', { ascending: true })
+  if (range) lessonsQuery = lessonsQuery.gte('start_datetime', range.from).lte('start_datetime', range.to)
+
   const [{ data: lessonsRaw }, { data: goalsRaw }] = await Promise.all([
-    supabase
-      .from('lessons')
-      .select(
-        'status, lesson_reports(technique_score, theory_score, repertoire_score, practice_score, current_song, initial_bpm, reached_bpm)',
-      )
-      .eq('student_id', studentId)
-      .order('start_datetime', { ascending: true }),
+    lessonsQuery,
     supabase.from('student_goals').select('completed').eq('student_id', studentId),
   ])
 
