@@ -102,35 +102,49 @@ export default async function ReportsPage({
     })
     .sort((a, b) => b.done - a.done)
 
-  // ── Financeiro (gated): receita + inadimplentes ─────────────────────────────
-  let paid = 0, pending = 0, overdue = 0
+  // ── Financeiro (gated) ──────────────────────────────────────────────────────
+  // Período: recebido + a receber (por vencimento no range).
+  // Inadimplência: snapshot GLOBAL (toda cobrança em atraso, fora do período) —
+  // é o que importa para cobrança.
+  type ChargeRow = {
+    status: string; amount: number; paid_amount: number | null; due_date: string
+    enrollment: { student_id: string; student: { name: string } | null } | null
+  }
   type Debtor = { id: string; name: string; total: number; oldest: string; count: number }
+  let paid = 0, pending = 0, overdueTotal = 0
   const debtorsMap = new Map<string, Debtor>()
   if (features.financial) {
-    const { data: charges } = await supabase
-      .from('charges')
-      .select('status, amount, paid_amount, due_date, enrollment:enrollments(student_id, student:users(name))')
-      .eq('school_id', user.schoolId)
-      .gte('due_date', from)
-      .lte('due_date', to)
-    type ChargeRow = {
-      status: string; amount: number; paid_amount: number | null; due_date: string
-      enrollment: { student_id: string; student: { name: string } | null } | null
-    }
-    for (const c of (charges ?? []) as unknown as ChargeRow[]) {
+    const [{ data: periodCharges }, { data: openCharges }] = await Promise.all([
+      supabase
+        .from('charges')
+        .select('status, amount, paid_amount, due_date, enrollment:enrollments(student_id, student:users(name))')
+        .eq('school_id', user.schoolId)
+        .gte('due_date', from)
+        .lte('due_date', to),
+      // Em aberto (não pagas), sem filtro de período → inadimplência real.
+      supabase
+        .from('charges')
+        .select('status, amount, paid_amount, due_date, enrollment:enrollments(student_id, student:users(name))')
+        .eq('school_id', user.schoolId)
+        .in('status', ['pending', 'overdue']),
+    ])
+
+    for (const c of (periodCharges ?? []) as unknown as ChargeRow[]) {
       const eff = effectiveChargeStatus(c.status, c.due_date, today)
       if (eff === 'paid') paid += c.paid_amount != null ? Number(c.paid_amount) : Number(c.amount)
-      else if (eff === 'overdue') {
-        overdue += Number(c.amount)
-        const enr = c.enrollment
-        if (enr) {
-          const d = debtorsMap.get(enr.student_id) ?? { id: enr.student_id, name: enr.student?.name ?? '—', total: 0, oldest: c.due_date, count: 0 }
-          d.total += Number(c.amount)
-          d.count++
-          if (c.due_date < d.oldest) d.oldest = c.due_date
-          debtorsMap.set(enr.student_id, d)
-        }
-      } else if (eff === 'pending') pending += Number(c.amount)
+      else if (eff === 'pending') pending += Number(c.amount)
+    }
+
+    for (const c of (openCharges ?? []) as unknown as ChargeRow[]) {
+      if (effectiveChargeStatus(c.status, c.due_date, today) !== 'overdue') continue
+      overdueTotal += Number(c.amount)
+      const enr = c.enrollment
+      if (!enr) continue
+      const d = debtorsMap.get(enr.student_id) ?? { id: enr.student_id, name: enr.student?.name ?? '—', total: 0, oldest: c.due_date, count: 0 }
+      d.total += Number(c.amount)
+      d.count++
+      if (c.due_date < d.oldest) d.oldest = c.due_date
+      debtorsMap.set(enr.student_id, d)
     }
   }
   const debtors = [...debtorsMap.values()].sort((a, b) => b.total - a.total)
@@ -179,20 +193,22 @@ export default async function ReportsPage({
       {/* Financeiro */}
       {features.financial ? (
         <section className="mb-8">
-          <h2 className="mb-4 text-base font-semibold text-ink">Financeiro</h2>
-          <div className="mb-4 grid gap-4 sm:grid-cols-3">
-            <StatCard label="Recebido" value={<MoneyValue value={paid} />} />
-            <StatCard label="A receber" value={<MoneyValue value={pending} />} />
-            <StatCard label="Em atraso" value={<MoneyValue value={overdue} />} hint={`${debtors.length} aluno(s)`} />
+          <h2 className="mb-4 text-base font-semibold text-ink">Financeiro — no período</h2>
+          <div className="mb-6 grid gap-4 sm:grid-cols-2">
+            <StatCard label="Recebido" value={<MoneyValue value={paid} />} hint="pagamentos com vencimento no período" />
+            <StatCard label="A receber" value={<MoneyValue value={pending} />} hint="ainda não vencidas no período" />
           </div>
 
-          <h3 className="mb-2 text-sm font-semibold text-ink">Inadimplentes</h3>
+          <div className="mb-2 flex items-baseline justify-between gap-3">
+            <h3 className="text-sm font-semibold text-ink">Inadimplência <span className="font-normal text-ink-muted">(total, todos os meses)</span></h3>
+            <span className="text-sm font-bold text-red-600"><MoneyValue value={overdueTotal} /></span>
+          </div>
           <Table>
             <Thead>
               <Tr><Th>Aluno</Th><Th>Cobranças</Th><Th>Vencida mais antiga</Th><Th className="text-right">Total devido</Th></Tr>
             </Thead>
             <tbody>
-              {debtors.length === 0 && <EmptyRow colSpan={4}>Nenhum aluno em atraso no período. 🎉</EmptyRow>}
+              {debtors.length === 0 && <EmptyRow colSpan={4}>Nenhum aluno em atraso. 🎉</EmptyRow>}
               {debtors.map((d) => (
                 <Tr key={d.id}>
                   <Td className="font-medium">
