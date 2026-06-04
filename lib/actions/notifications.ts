@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/lib/auth/session'
 import { notify } from '@/lib/notifications/notify'
 import type { NotificationEvent } from '@/lib/notifications/types'
+import { getStudentProgress } from '@/lib/data/progress'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export type NotifyActionState = {
@@ -20,6 +21,46 @@ async function requireStaff() {
 }
 
 const CHARGE_EVENTS = new Set<NotificationEvent>(['charge.created', 'charge.due_soon', 'charge.overdue', 'charge.paid'])
+
+// Envia ao aluno (e/ou responsável) o relatório de progresso do mês: resume
+// aulas, frequência e metas via e-mail + WhatsApp. Reaproveita getStudentProgress.
+export async function sendStudentReport(
+  _prev: NotifyActionState,
+  formData: FormData,
+): Promise<NotifyActionState> {
+  const me = await requireStaff()
+  if (!me) return { ok: false, error: 'Acesso negado.' }
+
+  const studentId = String(formData.get('studentId') ?? '')
+  if (!studentId) return { ok: false, error: 'Aluno inválido.' }
+
+  // Confirma que o aluno é da escola do staff.
+  const admin = await createAdminClient()
+  const { data: student } = await admin
+    .from('users')
+    .select('id, school_id, role')
+    .eq('id', studentId)
+    .maybeSingle()
+  if (!student || student.role !== 'student' || student.school_id !== me.schoolId) {
+    return { ok: false, error: 'Aluno não encontrado.' }
+  }
+
+  const progress = await getStudentProgress(studentId)
+  if (!progress.hasData) {
+    return { ok: false, error: 'Sem dados suficientes para gerar o relatório deste aluno.' }
+  }
+
+  const monthLabel = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const result = await notify('progress.monthly_report', studentId, {
+    monthLabel,
+    lessonsDone: progress.lessonsCount,
+    attendanceRate: progress.attendance.rate,
+    goalsDone: progress.goals.completed,
+    goalsTotal: progress.goals.total,
+  })
+
+  return { ok: true, whatsappLinks: result.whatsapp.links }
+}
 
 // Manda lembrete/aviso de uma cobrança específica. O 'kind' decide o template.
 export async function notifyCharge(

@@ -7,10 +7,12 @@ import { StudentEnrollment } from '@/components/admin/StudentEnrollment'
 import { StudentGoals } from '@/components/admin/StudentGoals'
 import { StudentNotes } from '@/components/admin/StudentNotes'
 import { ProgressPanel } from '@/components/students/ProgressPanel'
+import { WhatsAppNotifyButton } from '@/components/notifications/WhatsAppNotifyButton'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { deleteStudent } from '@/lib/actions/students'
+import { sendStudentReport } from '@/lib/actions/notifications'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getStudentProgress } from '@/lib/data/progress'
 import { createClient } from '@/lib/supabase/server'
@@ -128,6 +130,15 @@ export default async function StudentDetailPage({
 
         {/* Coluna direita: progresso + metas + notas */}
         <div className="space-y-6 lg:col-span-2">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-ink">Progresso do mês</h2>
+            <WhatsAppNotifyButton
+              action={sendStudentReport}
+              hidden={{ studentId: student.id }}
+              label="Enviar relatório ao aluno"
+              title="Envia o resumo de aulas, frequência e metas por e-mail e WhatsApp"
+            />
+          </div>
           <ProgressPanel progress={progress} />
           <StudentGoals studentId={student.id} goals={(goals ?? []) as Parameters<typeof StudentGoals>[0]['goals']} />
           <StudentNotes studentId={student.id} notes={(notes ?? []) as Parameters<typeof StudentNotes>[0]['notes']} />
