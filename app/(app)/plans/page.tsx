@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
-import { CreatePlanForm } from '@/components/financial/PlanForm'
+import { CreatePlanForm, type Plan } from '@/components/financial/PlanForm'
 import { PlansList } from '@/components/financial/PlansList'
 import { Card } from '@/components/ui/Card'
 import { requireFeature } from '@/lib/auth/plan'
@@ -19,7 +19,8 @@ export default async function PlansPage() {
   const supabase = await createClient()
   const { data: plans } = await supabase
     .from('plans')
-    .select('id, name, description, amount')
+    .select('id, name, description, amount, billing_type, early_pay_amount, min_age, max_age, active')
+    .order('active', { ascending: false })
     .order('amount')
 
   return (
@@ -29,7 +30,7 @@ export default async function PlansPage() {
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
         <div>
           <h2 className="mb-4 text-base font-semibold text-ink">Planos cadastrados</h2>
-          <PlansList plans={(plans ?? []) as { id: string; name: string; description: string | null; amount: number }[]} />
+          <PlansList plans={(plans ?? []) as Plan[]} />
         </div>
 
         <Card className="h-fit">

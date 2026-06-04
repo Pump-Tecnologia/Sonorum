@@ -27,3 +27,28 @@ export function chargeStatusMeta(status: string): { label: string; tone: StatusT
 }
 
 export const PAYMENT_METHODS = ['Pix', 'Dinheiro', 'Cartão', 'Transferência', 'Boleto'] as const
+
+// ── Tipo de cobrança do plano ────────────────────────────────────────────────
+export type BillingType = 'monthly' | 'per_class'
+
+export const BILLING_TYPES: { value: BillingType; label: string; hint: string }[] = [
+  { value: 'monthly', label: 'Mensalidade', hint: 'Valor fixo todo mês' },
+  { value: 'per_class', label: 'Por aula', hint: 'Preço por aula realizada no mês' },
+]
+
+export function billingTypeLabel(t: string): string {
+  return t === 'per_class' ? 'Por aula' : 'Mensalidade'
+}
+
+// Valor a receber numa cobrança considerando o desconto de pontualidade:
+// se há valor com desconto e o pagamento ocorre até o vencimento → valor com
+// desconto; senão, valor cheio. Comparação por string ISO (YYYY-MM-DD).
+export function amountForPayment(
+  amount: number,
+  earlyPayAmount: number | null,
+  dueDate: string,
+  paidOn: string,
+): number {
+  if (earlyPayAmount != null && paidOn <= dueDate) return earlyPayAmount
+  return amount
+}
