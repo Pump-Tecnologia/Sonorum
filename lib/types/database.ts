@@ -711,6 +711,65 @@ export type Database = {
           },
         ]
       }
+      saas_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          external_reference: string | null
+          id: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          plan_type: string
+          provider: string
+          provider_payment_id: string | null
+          provider_preference_id: string | null
+          school_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          external_reference?: string | null
+          id?: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_type: string
+          provider?: string
+          provider_payment_id?: string | null
+          provider_preference_id?: string | null
+          school_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          external_reference?: string | null
+          id?: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_type?: string
+          provider?: string
+          provider_payment_id?: string | null
+          provider_preference_id?: string | null
+          school_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_payments_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schools: {
         Row: {
           active_plan: string
