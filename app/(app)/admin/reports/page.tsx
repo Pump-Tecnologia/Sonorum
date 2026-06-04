@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
@@ -33,9 +35,9 @@ export default async function ReportsPage() {
   type LessonRow = { status: string; student_id: string; users: { name: string } | null }
   const lessons = (lessonsRaw ?? []) as unknown as LessonRow[]
 
-  const attendanceMap = new Map<string, { name: string; attended: number; missed: number }>()
+  const attendanceMap = new Map<string, { id: string; name: string; attended: number; missed: number }>()
   for (const l of lessons) {
-    const existing = attendanceMap.get(l.student_id) ?? { name: l.users?.name ?? '—', attended: 0, missed: 0 }
+    const existing = attendanceMap.get(l.student_id) ?? { id: l.student_id, name: l.users?.name ?? '—', attended: 0, missed: 0 }
     if (l.status === 'completed' || l.status === 'late') existing.attended++
     else existing.missed++
     attendanceMap.set(l.student_id, existing)
@@ -49,12 +51,12 @@ export default async function ReportsPage() {
   if (features.financial) {
     const { data: charges } = await supabase
       .from('charges')
-      .select('status, amount, due_date')
+      .select('status, amount, paid_amount, due_date')
       .gte('due_date', month.start)
       .lte('due_date', month.end)
     for (const c of charges ?? []) {
       const eff = effectiveChargeStatus(c.status, c.due_date, now)
-      if (eff === 'paid') paid += Number(c.amount)
+      if (eff === 'paid') paid += c.paid_amount != null ? Number(c.paid_amount) : Number(c.amount)
       else if (eff === 'overdue') overdue += Number(c.amount)
       else if (eff === 'pending') pending += Number(c.amount)
     }
@@ -112,9 +114,11 @@ export default async function ReportsPage() {
           </Thead>
           <tbody>
             {attendance.length === 0 && <EmptyRow colSpan={4}>Sem dados de frequência.</EmptyRow>}
-            {attendance.map((a, i) => (
-              <Tr key={i}>
-                <Td className="font-medium">{a.name}</Td>
+            {attendance.map((a) => (
+              <Tr key={a.id}>
+                <Td className="font-medium">
+                  <Link href={`/admin/students/${a.id}`} className="text-brand-700 hover:underline">{a.name}</Link>
+                </Td>
                 <Td>{a.attended}</Td>
                 <Td>{a.missed}</Td>
                 <Td>

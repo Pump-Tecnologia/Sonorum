@@ -233,6 +233,19 @@
   font-weight: 700;
   color: var(--ds-ink);
 }
+/* Título do aluno como link (admin) — leva ao perfil. */
+.modalTitleLink {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--ds-ink);
+  text-decoration: none;
+}
+.modalTitleLink:hover {
+  color: var(--ds-green-deep);
+  text-decoration: underline;
+}
 .modalSubtitle {
   margin: 0.125rem 0 0;
   font-size: 0.75rem;

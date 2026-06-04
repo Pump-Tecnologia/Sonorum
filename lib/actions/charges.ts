@@ -6,6 +6,10 @@ import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 import { getPlanContext } from '@/lib/auth/plan'
 import { notify } from '@/lib/notifications/notify'
+import { amountForPayment } from '@/lib/finance'
+
+// Status de aula que contam como "aula dada" para planos por-aula.
+const ATTENDED_STATUSES = ['completed', 'late']
 
 export async function updateChargeStatus(formData: FormData) {
   const me = await getCurrentUser()
@@ -17,30 +21,55 @@ export async function updateChargeStatus(formData: FormData) {
   const status = String(formData.get('status') ?? '')
   const paymentMethod = String(formData.get('paymentMethod') ?? '') || null
 
-  type ChargeUpdate = { status: string; paid_at?: string | null; payment_method?: string | null }
+  const supabase = await createClient()
+
+  // Lê a cobrança antes de baixar — precisamos do valor cheio, do desconto e do
+  // vencimento para decidir quanto foi efetivamente pago.
+  const { data: charge } = await supabase
+    .from('charges')
+    .select('status, amount, early_pay_amount, due_date, enrollment:enrollments(student_id)')
+    .eq('id', chargeId)
+    .eq('school_id', me.schoolId)
+    .maybeSingle()
+  if (!charge) return
+
+  type ChargeUpdate = {
+    status: string
+    paid_at?: string | null
+    payment_method?: string | null
+    paid_amount?: number | null
+  }
+  // Não reabre cobrança cancelada por engano (cancelled → paid/pending).
+  if (charge.status === 'cancelled' && status !== 'cancelled') return
+
   const update: ChargeUpdate = { status }
+  let paidAmount: number | null = null
+
   if (status === 'paid') {
+    const paidOn = new Date().toISOString().slice(0, 10)
+    paidAmount = amountForPayment(
+      Number(charge.amount),
+      charge.early_pay_amount != null ? Number(charge.early_pay_amount) : null,
+      charge.due_date,
+      paidOn,
+    )
     update.paid_at = new Date().toISOString()
     update.payment_method = paymentMethod
+    update.paid_amount = paidAmount
   } else if (status === 'pending') {
     update.paid_at = null
     update.payment_method = null
+    update.paid_amount = null
   }
 
-  const supabase = await createClient()
   await supabase.from('charges').update(update).eq('id', chargeId).eq('school_id', me.schoolId)
 
-  // Pagamento confirmado → notifica o aluno (e/ou responsável).
+  // Pagamento confirmado → notifica o aluno com o valor realmente recebido.
   if (status === 'paid') {
-    const { data: charge } = await supabase
-      .from('charges')
-      .select('amount, enrollment:enrollments(student_id)')
-      .eq('id', chargeId)
-      .maybeSingle()
-    const enr = charge?.enrollment as { student_id: string } | null
-    if (charge && enr) {
+    const enr = charge.enrollment as { student_id: string } | null
+    if (enr) {
       await notify('charge.paid', enr.student_id, {
-        amount: Number(charge.amount),
+        amount: paidAmount ?? Number(charge.amount),
         paymentMethod,
       }, { relatedId: chargeId })
     }
@@ -49,7 +78,9 @@ export async function updateChargeStatus(formData: FormData) {
   revalidatePath('/financial')
 }
 
-// Gera cobranças mensais para todas as matrículas ativas da escola
+// Gera cobranças do mês para todas as matrículas ativas da escola.
+// Mensal → valor cheio do plano/custom + snapshot do desconto de pontualidade.
+// Por aula → preço por aula × nº de aulas realizadas (completed/late) no mês.
 export async function generateMonthlyCharges(formData: FormData) {
   const me = await getCurrentUser()
   if (me?.role !== 'admin' || !me.schoolId) return
@@ -57,39 +88,89 @@ export async function generateMonthlyCharges(formData: FormData) {
   if (!features.financial) return
 
   const monthStr = String(formData.get('month') ?? '') // YYYY-MM
-  if (!monthStr) return
+  if (!/^\d{4}-\d{2}$/.test(monthStr)) return
 
   const [year, month] = monthStr.split('-').map(Number)
   const supabase = await createClient()
 
   const { data: enrollments } = await supabase
     .from('enrollments')
-    .select('id, due_day, custom_amount, plan:plans(amount)')
+    .select('id, student_id, due_day, custom_amount, plan:plans(amount, billing_type, early_pay_amount)')
     .eq('school_id', me.schoolId)
     .eq('status', 'active')
 
   if (!enrollments?.length) return
 
-  const charges = enrollments.map((e) => {
-    const plan = e.plan as { amount: number } | null
-    const dueDate = new Date(year, month - 1, e.due_day)
-    return {
-      school_id: me.schoolId,
-      enrollment_id: e.id,
-      amount: e.custom_amount ?? plan?.amount ?? 0,
-      due_date: dueDate.toISOString().slice(0, 10),
-      status: 'pending',
-    }
-  })
+  // Conta aulas realizadas no mês por aluno (necessário só p/ planos por-aula).
+  const monthStart = new Date(year, month - 1, 1)
+  const monthEnd = new Date(year, month, 1) // exclusivo
+  const { data: lessons } = await supabase
+    .from('lessons')
+    .select('student_id, status')
+    .eq('school_id', me.schoolId)
+    .gte('start_datetime', monthStart.toISOString())
+    .lt('start_datetime', monthEnd.toISOString())
+    .in('status', ATTENDED_STATUSES)
 
-  // Insert RETURNING — só as recém-criadas viram notificação (upsert ignoreDuplicates
-  // não retorna as duplicadas, então só pegamos as novas mesmo).
+  const attendedByStudent = new Map<string, number>()
+  for (const l of lessons ?? []) {
+    attendedByStudent.set(l.student_id, (attendedByStudent.get(l.student_id) ?? 0) + 1)
+  }
+
+  type ChargeInsert = {
+    school_id: string
+    enrollment_id: string
+    amount: number
+    early_pay_amount: number | null
+    due_date: string
+    status: string
+  }
+  const charges: ChargeInsert[] = []
+
+  // Último dia do mês alvo — evita que due_day 29–31 role pro mês seguinte.
+  const lastDayOfMonth = new Date(year, month, 0).getDate()
+
+  for (const e of enrollments) {
+    const plan = e.plan as { amount: number; billing_type: string; early_pay_amount: number | null } | null
+    const dueDay = Math.min(e.due_day, lastDayOfMonth)
+    const dueDate = new Date(year, month - 1, dueDay).toISOString().slice(0, 10)
+    const unit = e.custom_amount != null ? Number(e.custom_amount) : Number(plan?.amount ?? 0)
+
+    if (plan?.billing_type === 'per_class') {
+      const count = attendedByStudent.get(e.student_id) ?? 0
+      if (count === 0) continue // sem aulas dadas → sem cobrança no mês
+      charges.push({
+        school_id: me.schoolId,
+        enrollment_id: e.id,
+        amount: unit * count,
+        early_pay_amount: null,
+        due_date: dueDate,
+        status: 'pending',
+      })
+    } else {
+      // Mensal: desconto só vale se o valor não foi sobrescrito por um custom.
+      const earlyPay = e.custom_amount == null && plan?.early_pay_amount != null
+        ? Number(plan.early_pay_amount)
+        : null
+      charges.push({
+        school_id: me.schoolId,
+        enrollment_id: e.id,
+        amount: unit,
+        early_pay_amount: earlyPay,
+        due_date: dueDate,
+        status: 'pending',
+      })
+    }
+  }
+
+  if (!charges.length) return
+
+  // upsert ignoreDuplicates → só as recém-criadas retornam (não duplica o mês).
   const { data: inserted } = await supabase
     .from('charges')
     .upsert(charges, { onConflict: 'enrollment_id,due_date', ignoreDuplicates: true })
     .select('id, amount, due_date, enrollment:enrollments(student_id, plan:plans(name))')
 
-  // Notifica cada cobrança nova (charge.created). Em paralelo p/ não bloquear.
   if (inserted?.length) {
     await Promise.all(inserted.map((c) => {
       const enr = c.enrollment as { student_id: string; plan: { name: string } | null } | null

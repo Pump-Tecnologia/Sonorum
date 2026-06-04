@@ -51,6 +51,7 @@ export async function enrollStudent(
   await supabase
     .from('enrollments')
     .update({ status: 'cancelled' })
+    .eq('school_id', me.schoolId)
     .eq('student_id', d.studentId)
     .eq('status', 'active')
 
