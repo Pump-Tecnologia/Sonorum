@@ -49,12 +49,12 @@ export default async function ReportsPage() {
   if (features.financial) {
     const { data: charges } = await supabase
       .from('charges')
-      .select('status, amount, due_date')
+      .select('status, amount, paid_amount, due_date')
       .gte('due_date', month.start)
       .lte('due_date', month.end)
     for (const c of charges ?? []) {
       const eff = effectiveChargeStatus(c.status, c.due_date, now)
-      if (eff === 'paid') paid += Number(c.amount)
+      if (eff === 'paid') paid += c.paid_amount != null ? Number(c.paid_amount) : Number(c.amount)
       else if (eff === 'overdue') overdue += Number(c.amount)
       else if (eff === 'pending') pending += Number(c.amount)
     }

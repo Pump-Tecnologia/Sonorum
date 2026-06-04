@@ -19,12 +19,13 @@ export default async function StudentChargesPage() {
   const supabase = await createClient()
   const { data } = await supabase
     .from('charges')
-    .select('id, amount, due_date, status, paid_at, payment_method, enrollment:enrollments!inner(student_id, plan:plans(name))')
+    .select('id, amount, early_pay_amount, paid_amount, due_date, status, paid_at, payment_method, enrollment:enrollments!inner(student_id, plan:plans(name))')
     .eq('enrollment.student_id', me.id)
     .order('due_date', { ascending: false })
 
   type ChargeRow = {
-    id: string; amount: number; due_date: string; status: string; paid_at: string | null
+    id: string; amount: number; early_pay_amount: number | null; paid_amount: number | null
+    due_date: string; status: string; paid_at: string | null
     payment_method: string | null
     enrollment: { plan: { name: string } | null } | null
   }
@@ -64,7 +65,20 @@ export default async function StudentChargesPage() {
                 <Td className="text-ink-muted">
                   {new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR')}
                 </Td>
-                <Td className="font-semibold"><MoneyValue value={Number(c.amount)} /></Td>
+                <Td className="font-semibold">
+                  {c.status === 'paid' && c.paid_amount != null ? (
+                    <MoneyValue value={Number(c.paid_amount)} />
+                  ) : (
+                    <>
+                      <MoneyValue value={Number(c.amount)} />
+                      {c.early_pay_amount != null && (
+                        <span className="block text-xs font-normal text-accent-700">
+                          <MoneyValue value={Number(c.early_pay_amount)} /> até o venc.
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Td>
                 <Td><Badge tone={meta.tone}>{meta.label}</Badge></Td>
               </Tr>
             )

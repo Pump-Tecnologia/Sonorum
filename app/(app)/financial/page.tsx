@@ -33,24 +33,26 @@ export default async function FinancialPage({
   const supabase = await createClient()
 
   type ChargeRow = {
-    id: string; amount: number; due_date: string; status: string; paid_at: string | null
+    id: string; amount: number; early_pay_amount: number | null; paid_amount: number | null
+    due_date: string; status: string; paid_at: string | null
     enrollment: { student: { name: string } | null; plan: { name: string } | null } | null
   }
 
   const { data } = await supabase
     .from('charges')
-    .select('id, amount, due_date, status, paid_at, enrollment:enrollments(student:users(name), plan:plans(name))')
+    .select('id, amount, early_pay_amount, paid_amount, due_date, status, paid_at, enrollment:enrollments(student:users(name), plan:plans(name))')
     .gte('due_date', range.start)
     .lte('due_date', range.end)
     .order('due_date')
 
   const charges = (data ?? []) as unknown as ChargeRow[]
   // Status efetivo: pendente vencida conta como atrasada (sem write).
+  // "Pago" usa o valor realmente recebido (paid_amount); aberto usa o valor cheio.
   let paid = 0, pending = 0, overdue = 0
   for (const c of charges) {
     const amt = Number(c.amount)
     const eff = effectiveChargeStatus(c.status, c.due_date, today)
-    if (eff === 'paid') paid += amt
+    if (eff === 'paid') paid += c.paid_amount != null ? Number(c.paid_amount) : amt
     else if (eff === 'overdue') overdue += amt
     else if (eff === 'pending') pending += amt
   }
@@ -106,7 +108,20 @@ export default async function FinancialPage({
               <Td className="text-ink-muted">
                 {new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR')}
               </Td>
-              <Td className="font-semibold"><MoneyValue value={Number(c.amount)} /></Td>
+              <Td className="font-semibold">
+                {c.status === 'paid' && c.paid_amount != null ? (
+                  <MoneyValue value={Number(c.paid_amount)} />
+                ) : (
+                  <>
+                    <MoneyValue value={Number(c.amount)} />
+                    {c.early_pay_amount != null && (
+                      <span className="ml-1 block text-xs font-normal text-accent-700">
+                        <MoneyValue value={Number(c.early_pay_amount)} /> até o venc.
+                      </span>
+                    )}
+                  </>
+                )}
+              </Td>
               <Td>
                 <div className="flex items-center gap-2">
                   <ChargeStatusForm chargeId={c.id} currentStatus={c.status} />
