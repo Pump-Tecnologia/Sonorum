@@ -16,8 +16,6 @@ interface StudentData {
   parent_contact: string | null
   instrument_category: string | null
   instrument: unknown
-  monthly_fee: number | null
-  due_day: number | null
   status: string
   notify_to: string | null
   permanent_notes: string | null
@@ -65,13 +63,12 @@ export function EditStudentForm({ student }: { student: StudentData }) {
             categoryError={fe.instrumentCategory}
             instrumentError={fe.instrument}
           />
-          <Field label="Mensalidade (R$)" htmlFor="monthlyFee" error={fe.monthlyFee}>
-            <Input id="monthlyFee" name="monthlyFee" type="number" min="0" step="0.01" defaultValue={student.monthly_fee ?? ''} />
-          </Field>
-          <Field label="Dia de vencimento" htmlFor="dueDay" error={fe.dueDay}>
-            <Input id="dueDay" name="dueDay" type="number" min="1" max="31" defaultValue={student.due_day ?? ''} />
-          </Field>
         </div>
+
+        <p className="rounded-xl bg-surface-muted px-4 py-3 text-xs text-ink-muted">
+          A mensalidade do aluno é definida pela <strong className="text-ink">matrícula em um plano</strong>, no
+          perfil do aluno — não mais aqui.
+        </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Status" htmlFor="status" error={fe.status}>

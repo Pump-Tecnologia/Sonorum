@@ -13,7 +13,6 @@ import { Card } from '@/components/ui/Card'
 import { deleteStudent } from '@/lib/actions/students'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getStudentProgress } from '@/lib/data/progress'
-import { formatBRL } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 
 const STATUS: Record<string, { label: string; tone: 'success' | 'warning' | 'neutral' }> = {
@@ -39,7 +38,7 @@ export default async function StudentDetailPage({
 
   const { data: student } = await supabase
     .from('users')
-    .select('id, name, email, phone, parent_contact, address, instrument, instrument_category, status, monthly_fee, due_day')
+    .select('id, name, email, phone, parent_contact, address, instrument, instrument_category, status')
     .eq('id', id)
     .eq('role', 'student')
     .maybeSingle()
@@ -105,8 +104,6 @@ export default async function StudentDetailPage({
               <Row label="Responsável" value={student.parent_contact} />
               <Row label="Categoria" value={student.instrument_category} />
               <Row label="Instrumento" value={instrumentLabel(student.instrument)} />
-              <Row label="Mensalidade" value={student.monthly_fee ? formatBRL(Number(student.monthly_fee)) : null} />
-              <Row label="Vencimento" value={student.due_day ? `Dia ${student.due_day}` : null} />
             </dl>
           </Card>
 

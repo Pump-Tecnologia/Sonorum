@@ -11,7 +11,7 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
   const { data: student } = await supabase
     .from('users')
-    .select('id, name, email, phone, parent_contact, instrument_category, instrument, monthly_fee, due_day, status, notify_to, permanent_notes')
+    .select('id, name, email, phone, parent_contact, instrument_category, instrument, status, notify_to, permanent_notes')
     .eq('id', id)
     .eq('role', 'student')
     .maybeSingle()

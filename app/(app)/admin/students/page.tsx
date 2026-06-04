@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
+import { StudentSearch } from '@/components/admin/StudentSearch'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
@@ -22,21 +23,50 @@ function instrumentLabel(instrument: unknown): string {
   return '—'
 }
 
-export default async function StudentsPage() {
+export default async function StudentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
+  const { q } = await searchParams
+  const term = (q ?? '').trim()
   const supabase = await createClient()
-  const { data } = await supabase
+
+  let query = supabase
     .from('users')
-    .select('id, name, email, instrument, status, monthly_fee')
+    .select('id, name, email, instrument, status')
     .eq('role', 'student')
     .order('created_at', { ascending: false })
 
+  if (term) query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%`)
+
+  const { data } = await query
   const students = data ?? []
+
+  // Plano da matrícula ativa de cada aluno (valor personalizado sobrescreve o plano).
+  const ids = students.map((s) => s.id)
+  const planByStudent = new Map<string, { name: string; amount: number }>()
+  if (ids.length) {
+    const { data: enrollments } = await supabase
+      .from('enrollments')
+      .select('student_id, custom_amount, plan:plans(name, amount)')
+      .eq('status', 'active')
+      .in('student_id', ids)
+    for (const e of enrollments ?? []) {
+      const plan = e.plan as { name: string; amount: number } | null
+      if (!plan) continue
+      planByStudent.set(e.student_id, {
+        name: plan.name,
+        amount: e.custom_amount != null ? Number(e.custom_amount) : Number(plan.amount),
+      })
+    }
+  }
 
   return (
     <>
       <PageHeader
         title="Alunos"
-        subtitle={`${students.length} aluno(s)`}
+        subtitle={`${students.length} aluno(s)${term ? ` · busca: "${term}"` : ''}`}
         action={
           <Link href="/admin/students/new">
             <Button>Novo aluno</Button>
@@ -44,20 +74,27 @@ export default async function StudentsPage() {
         }
       />
 
+      <div className="mb-4 max-w-sm">
+        <StudentSearch defaultValue={term} />
+      </div>
+
       <Table>
         <Thead>
           <Tr>
             <Th>Nome</Th>
             <Th>Instrumento</Th>
-            <Th>Mensalidade</Th>
+            <Th>Plano</Th>
             <Th>Status</Th>
             <Th className="text-right"></Th>
           </Tr>
         </Thead>
         <tbody>
-          {students.length === 0 && <EmptyRow colSpan={5}>Nenhum aluno cadastrado.</EmptyRow>}
+          {students.length === 0 && (
+            <EmptyRow colSpan={5}>{term ? 'Nenhum aluno encontrado.' : 'Nenhum aluno cadastrado.'}</EmptyRow>
+          )}
           {students.map((s) => {
             const st = STATUS[s.status] ?? { label: s.status, tone: 'neutral' as const }
+            const plan = planByStudent.get(s.id)
             return (
               <Tr key={s.id}>
                 <Td>
@@ -67,7 +104,16 @@ export default async function StudentsPage() {
                   <span className="block text-xs text-ink-muted">{s.email}</span>
                 </Td>
                 <Td className="text-ink-muted">{instrumentLabel(s.instrument)}</Td>
-                <Td className="text-ink-muted">{s.monthly_fee ? formatBRL(Number(s.monthly_fee)) : '—'}</Td>
+                <Td className="text-ink-muted">
+                  {plan ? (
+                    <>
+                      <span className="text-ink">{plan.name}</span>
+                      <span className="block text-xs">{formatBRL(plan.amount)}</span>
+                    </>
+                  ) : (
+                    '—'
+                  )}
+                </Td>
                 <Td>
                   <Badge tone={st.tone}>{st.label}</Badge>
                 </Td>
