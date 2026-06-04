@@ -63,6 +63,7 @@ interface SelectedEvent {
   status: string
   notes: string
   student_name: string
+  student_id: string
   room: string
 }
 
@@ -109,6 +110,7 @@ export function ScheduleCalendar({
       status: ep.status,
       notes: ep.notes ?? '',
       student_name: ep.student_name,
+      student_id: ep.student_id ?? '',
       room: ep.room ?? '',
     })
   }
@@ -310,7 +312,13 @@ export function ScheduleCalendar({
           >
             <div className={styles.modalHeader}>
               <div>
-                <h2 className={styles.modalTitle}>{eventModal.student_name}</h2>
+                {role === 'admin' && eventModal.student_id ? (
+                  <a href={`/admin/students/${eventModal.student_id}`} className={styles.modalTitleLink}>
+                    {eventModal.student_name}
+                  </a>
+                ) : (
+                  <h2 className={styles.modalTitle}>{eventModal.student_name}</h2>
+                )}
                 <p className={styles.modalSubtitle}>
                   {new Date(eventModal.start).toLocaleString('pt-BR', {
                     weekday: 'short',

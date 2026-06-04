@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
@@ -58,7 +59,7 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, series_id, users!lessons_student_id_fkey(name, instrument)')
+    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, series_id, student_id, users!lessons_student_id_fkey(name, instrument)')
     .eq('id', id)
     .maybeSingle()
 
@@ -356,6 +357,16 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
         subtitle={new Date(lesson.start_datetime).toLocaleString('pt-BR', {
           weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
         })}
+        action={
+          me?.role === 'admin' ? (
+            <Link
+              href={`/admin/students/${lesson.student_id}`}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-hairline bg-surface px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted"
+            >
+              Ver perfil do aluno →
+            </Link>
+          ) : undefined
+        }
       />
       <PlannerTabs tabs={tabs} defaultTab={defaultTab} />
     </>

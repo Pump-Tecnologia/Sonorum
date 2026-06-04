@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
@@ -33,9 +35,9 @@ export default async function ReportsPage() {
   type LessonRow = { status: string; student_id: string; users: { name: string } | null }
   const lessons = (lessonsRaw ?? []) as unknown as LessonRow[]
 
-  const attendanceMap = new Map<string, { name: string; attended: number; missed: number }>()
+  const attendanceMap = new Map<string, { id: string; name: string; attended: number; missed: number }>()
   for (const l of lessons) {
-    const existing = attendanceMap.get(l.student_id) ?? { name: l.users?.name ?? '—', attended: 0, missed: 0 }
+    const existing = attendanceMap.get(l.student_id) ?? { id: l.student_id, name: l.users?.name ?? '—', attended: 0, missed: 0 }
     if (l.status === 'completed' || l.status === 'late') existing.attended++
     else existing.missed++
     attendanceMap.set(l.student_id, existing)
@@ -112,9 +114,11 @@ export default async function ReportsPage() {
           </Thead>
           <tbody>
             {attendance.length === 0 && <EmptyRow colSpan={4}>Sem dados de frequência.</EmptyRow>}
-            {attendance.map((a, i) => (
-              <Tr key={i}>
-                <Td className="font-medium">{a.name}</Td>
+            {attendance.map((a) => (
+              <Tr key={a.id}>
+                <Td className="font-medium">
+                  <Link href={`/admin/students/${a.id}`} className="text-brand-700 hover:underline">{a.name}</Link>
+                </Td>
                 <Td>{a.attended}</Td>
                 <Td>{a.missed}</Td>
                 <Td>
