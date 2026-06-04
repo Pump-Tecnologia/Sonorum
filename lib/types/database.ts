@@ -19,8 +19,10 @@ export type Database = {
           amount: number
           created_at: string
           due_date: string
+          early_pay_amount: number | null
           enrollment_id: string
           id: string
+          paid_amount: number | null
           paid_at: string | null
           payment_method: string | null
           school_id: string | null
@@ -31,8 +33,10 @@ export type Database = {
           amount: number
           created_at?: string
           due_date: string
+          early_pay_amount?: number | null
           enrollment_id: string
           id?: string
+          paid_amount?: number | null
           paid_at?: string | null
           payment_method?: string | null
           school_id?: string | null
@@ -43,8 +47,10 @@ export type Database = {
           amount?: number
           created_at?: string
           due_date?: string
+          early_pay_amount?: number | null
           enrollment_id?: string
           id?: string
+          paid_amount?: number | null
           paid_at?: string | null
           payment_method?: string | null
           school_id?: string | null
@@ -560,116 +566,45 @@ export type Database = {
           },
         ]
       }
-      transcription_jobs: {
-        Row: {
-          audio_path: string
-          body: string | null
-          created_at: string
-          created_by: string | null
-          error: string | null
-          external_id: string | null
-          id: string
-          instrument: string | null
-          provider: string | null
-          result: Json | null
-          resource_id: string | null
-          reviewed_by: string | null
-          school_id: string | null
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          audio_path: string
-          body?: string | null
-          created_at?: string
-          created_by?: string | null
-          error?: string | null
-          external_id?: string | null
-          id?: string
-          instrument?: string | null
-          provider?: string | null
-          result?: Json | null
-          resource_id?: string | null
-          reviewed_by?: string | null
-          school_id?: string | null
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          audio_path?: string
-          body?: string | null
-          created_at?: string
-          created_by?: string | null
-          error?: string | null
-          external_id?: string | null
-          id?: string
-          instrument?: string | null
-          provider?: string | null
-          result?: Json | null
-          resource_id?: string | null
-          reviewed_by?: string | null
-          school_id?: string | null
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "transcription_jobs_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transcription_jobs_resource_id_fkey"
-            columns: ["resource_id"]
-            isOneToOne: false
-            referencedRelation: "pedagogical_resources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transcription_jobs_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transcription_jobs_school_id_fkey"
-            columns: ["school_id"]
-            isOneToOne: false
-            referencedRelation: "schools"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       plans: {
         Row: {
+          active: boolean
           amount: number
+          billing_type: string
           created_at: string
           description: string | null
+          early_pay_amount: number | null
           id: string
+          max_age: number | null
+          min_age: number | null
           name: string
           school_id: string
           updated_at: string
         }
         Insert: {
+          active?: boolean
           amount: number
+          billing_type?: string
           created_at?: string
           description?: string | null
+          early_pay_amount?: number | null
           id?: string
+          max_age?: number | null
+          min_age?: number | null
           name: string
           school_id: string
           updated_at?: string
         }
         Update: {
+          active?: boolean
           amount?: number
+          billing_type?: string
           created_at?: string
           description?: string | null
+          early_pay_amount?: number | null
           id?: string
+          max_age?: number | null
+          min_age?: number | null
           name?: string
           school_id?: string
           updated_at?: string
@@ -958,6 +893,92 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transcription_jobs: {
+        Row: {
+          audio_path: string
+          body: string | null
+          created_at: string
+          created_by: string | null
+          error: string | null
+          external_id: string | null
+          id: string
+          instrument: string | null
+          provider: string | null
+          resource_id: string | null
+          result: Json | null
+          reviewed_by: string | null
+          school_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audio_path: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          instrument?: string | null
+          provider?: string | null
+          resource_id?: string | null
+          result?: Json | null
+          reviewed_by?: string | null
+          school_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audio_path?: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          instrument?: string | null
+          provider?: string | null
+          resource_id?: string | null
+          result?: Json | null
+          reviewed_by?: string | null
+          school_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcription_jobs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcription_jobs_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "pedagogical_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcription_jobs_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcription_jobs_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]
