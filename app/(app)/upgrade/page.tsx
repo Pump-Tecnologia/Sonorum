@@ -2,7 +2,7 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { CheckoutButton } from '@/components/billing/CheckoutButton'
-import { startSaasCheckout, startSaasSubscriptionCheckout } from '@/lib/actions/billing'
+import { startSaasSubscriptionCheckout } from '@/lib/actions/billing'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
 import { PLAN_FEATURES, SELLABLE_PLANS, planPrice } from '@/lib/constants/plans'
@@ -62,13 +62,7 @@ export default async function UpgradePage() {
                 <CheckoutButton
                   action={startSaasSubscriptionCheckout}
                   planType={plan}
-                  label={isCurrent ? 'Renovar no cartão' : 'Assinar no cartão (cobra sozinho)'}
-                />
-                <CheckoutButton
-                  action={startSaasCheckout}
-                  planType={plan}
-                  label="Pagar 1 mês (Pix/boleto)"
-                  variant="outline"
+                  label={isCurrent ? 'Renovar assinatura' : 'Assinar agora'}
                 />
               </div>
             </Card>
