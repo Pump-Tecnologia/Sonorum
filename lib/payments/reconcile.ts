@@ -74,3 +74,45 @@ export async function reconcilePayment(paymentId: string): Promise<ReconcileResu
 
   return { handled: true, status: 'approved', schoolId: row.school_id }
 }
+
+// Sincroniza uma ASSINATURA recorrente pelo preapproval id. Enquanto autorizada,
+// a validade da escola acompanha o next_payment_date do gateway (rolling).
+export async function reconcileSubscription(preapprovalId: string): Promise<ReconcileResult> {
+  const provider = getPaymentProvider()
+  const sub = await provider.getSubscription(preapprovalId)
+  if (!sub) return { handled: false }
+
+  const admin = await createAdminClient()
+  const { data: row } = await admin
+    .from('saas_subscriptions')
+    .select('id, school_id, status')
+    .eq('provider_subscription_id', preapprovalId)
+    .maybeSingle()
+  if (!row) return { handled: false, status: sub.status }
+
+  await admin.from('saas_subscriptions').update({
+    status: sub.status === 'unknown' ? row.status : sub.status,
+    next_charge_at: sub.nextChargeDate,
+    cancelled_at: sub.status === 'cancelled' ? new Date().toISOString() : null,
+    updated_at: new Date().toISOString(),
+  }).eq('id', row.id)
+
+  // Autorizada com próxima cobrança → escola válida até lá.
+  if (sub.status === 'authorized' && sub.nextChargeDate) {
+    await admin.from('schools').update({
+      expiration_date: sub.nextChargeDate,
+      updated_at: new Date().toISOString(),
+    }).eq('id', row.school_id)
+  }
+
+  return { handled: true, status: sub.status, schoolId: row.school_id }
+}
+
+// Cobrança recorrente individual (authorized_payment) → resolve a assinatura e
+// sincroniza (a validade acompanha o next_payment_date).
+export async function reconcileSubscriptionCharge(chargeId: string): Promise<ReconcileResult> {
+  const provider = getPaymentProvider()
+  const preapprovalId = await provider.subscriptionIdFromCharge(chargeId)
+  if (!preapprovalId) return { handled: false }
+  return reconcileSubscription(preapprovalId)
+}

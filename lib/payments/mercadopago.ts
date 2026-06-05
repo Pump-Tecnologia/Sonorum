@@ -1,10 +1,26 @@
 import type {
   CheckoutRequest, CheckoutResult, PaymentProvider, PaymentStatus, ProviderPayment,
+  ProviderSubscription, SubscriptionRequest, SubscriptionResult, SubscriptionStatus,
 } from '@/lib/payments/types'
 
 // Adapter Mercado Pago (Checkout Pro). Usa o Access Token (teste ou produção)
 // via MP_ACCESS_TOKEN. Sem SDK — só fetch na API REST.
 const MP_API = 'https://api.mercadopago.com'
+
+function mapSubStatus(s: string): SubscriptionStatus {
+  switch (s) {
+    case 'authorized':
+      return 'authorized'
+    case 'pending':
+      return 'pending'
+    case 'paused':
+      return 'paused'
+    case 'cancelled':
+      return 'cancelled'
+    default:
+      return 'unknown'
+  }
+}
 
 function mapStatus(s: string): PaymentStatus {
   switch (s) {
@@ -73,6 +89,56 @@ export function mercadoPagoProvider(token: string): PaymentProvider {
         externalReference: p.external_reference,
         amount: p.transaction_amount,
       }
+    },
+
+    async createSubscription(req: SubscriptionRequest): Promise<SubscriptionResult> {
+      const body = {
+        reason: req.reason,
+        external_reference: req.externalReference,
+        payer_email: req.payerEmail,
+        card_token_id: req.cardTokenId,
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          transaction_amount: Number(req.amount),
+          currency_id: 'BRL',
+        },
+        back_url: req.backUrl,
+        status: 'authorized',
+      }
+      const res = await fetch(`${MP_API}/preapproval`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const detail = await res.text()
+        throw new Error(`Mercado Pago createSubscription falhou (${res.status}): ${detail.slice(0, 300)}`)
+      }
+      const data = (await res.json()) as { id: string; status: string }
+      return { subscriptionId: data.id, status: mapSubStatus(data.status) }
+    },
+
+    async getSubscription(subscriptionId: string): Promise<ProviderSubscription | null> {
+      const res = await fetch(`${MP_API}/preapproval/${subscriptionId}`, { headers })
+      if (!res.ok) return null
+      const s = (await res.json()) as {
+        id: string; status: string; external_reference: string | null
+        next_payment_date?: string | null
+      }
+      return {
+        subscriptionId: s.id,
+        status: mapSubStatus(s.status),
+        externalReference: s.external_reference,
+        nextChargeDate: s.next_payment_date ? s.next_payment_date.slice(0, 10) : null,
+      }
+    },
+
+    async subscriptionIdFromCharge(chargeId: string): Promise<string | null> {
+      const res = await fetch(`${MP_API}/authorized_payments/${chargeId}`, { headers })
+      if (!res.ok) return null
+      const d = (await res.json()) as { preapproval_id?: string | null }
+      return d.preapproval_id ?? null
     },
   }
 }

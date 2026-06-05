@@ -726,6 +726,7 @@ export type Database = {
           provider_preference_id: string | null
           school_id: string
           status: string
+          subscription_id: string | null
           updated_at: string
         }
         Insert: {
@@ -742,6 +743,7 @@ export type Database = {
           provider_preference_id?: string | null
           school_id: string
           status?: string
+          subscription_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -758,11 +760,62 @@ export type Database = {
           provider_preference_id?: string | null
           school_id?: string
           status?: string
+          subscription_id?: string | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "saas_payments_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saas_subscriptions: {
+        Row: {
+          amount: number
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          next_charge_at: string | null
+          plan_type: string
+          provider: string
+          provider_subscription_id: string | null
+          school_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          next_charge_at?: string | null
+          plan_type: string
+          provider?: string
+          provider_subscription_id?: string | null
+          school_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          next_charge_at?: string | null
+          plan_type?: string
+          provider?: string
+          provider_subscription_id?: string | null
+          school_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_subscriptions_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"

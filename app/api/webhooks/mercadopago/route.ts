@@ -1,34 +1,38 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-import { reconcilePayment } from '@/lib/payments/reconcile'
+import { reconcilePayment, reconcileSubscription, reconcileSubscriptionCharge } from '@/lib/payments/reconcile'
 
-// Webhook do Mercado Pago. O MP avisa via query (?type=payment&data.id=) ou body
-// ({ type, data: { id } }). Não confiamos no corpo: extraímos só a id e
-// RE-CONSULTAMOS o pagamento na API (fonte da verdade) dentro do reconcile.
+// Webhook do Mercado Pago. O MP avisa via query (?type=...&data.id=) ou body
+// ({ type, data: { id } }). Não confiamos no corpo: extraímos a id + o tipo e
+// RE-CONSULTAMOS o recurso na API (fonte da verdade) dentro do reconcile.
+//   payment                        → cobrança avulsa (Pix/boleto/cartão único)
+//   subscription_preapproval       → mudança de status da assinatura
+//   subscription_authorized_payment→ cobrança recorrente mensal
 export async function POST(request: NextRequest) {
   const { searchParams } = request.nextUrl
-  let paymentId = searchParams.get('data.id') ?? searchParams.get('id')
-  const type = searchParams.get('type') ?? searchParams.get('topic')
+  let id = searchParams.get('data.id') ?? searchParams.get('id')
+  let type = searchParams.get('type') ?? searchParams.get('topic')
 
-  if (!paymentId) {
+  if (!id || !type) {
     try {
       const body = (await request.json()) as { type?: string; data?: { id?: string } }
-      if (!type && body.type && body.type !== 'payment') return NextResponse.json({ ignored: true })
-      paymentId = body.data?.id ?? null
+      type = type ?? body.type ?? null
+      id = id ?? body.data?.id ?? null
     } catch {
-      // sem corpo JSON — segue com o que veio na query
+      // sem corpo JSON — segue com a query
     }
   }
 
-  // Só tratamos eventos de pagamento.
-  if (type && type !== 'payment') return NextResponse.json({ ignored: true })
-  if (!paymentId) return NextResponse.json({ ignored: true })
+  if (!id) return NextResponse.json({ ignored: true })
 
   try {
-    await reconcilePayment(paymentId)
+    if (type === 'subscription_preapproval') await reconcileSubscription(id)
+    else if (type === 'subscription_authorized_payment') await reconcileSubscriptionCharge(id)
+    else if (type === 'payment' || !type) await reconcilePayment(id)
+    else return NextResponse.json({ ignored: true })
   } catch {
-    // 200 mesmo em erro interno evita retentativa infinita do MP por bug nosso;
-    // o reconcile é idempotente e pode ser reprocessado manualmente.
+    // 200 mesmo em erro evita retentativa infinita do MP por bug nosso;
+    // o reconcile é idempotente e pode ser reprocessado.
     return NextResponse.json({ received: true })
   }
   return NextResponse.json({ received: true })

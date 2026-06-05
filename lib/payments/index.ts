@@ -2,7 +2,10 @@ import { mercadoPagoProvider } from '@/lib/payments/mercadopago'
 import { mockPaymentProvider } from '@/lib/payments/mock'
 import type { PaymentProvider } from '@/lib/payments/types'
 
-export type { CheckoutRequest, CheckoutResult, PaymentProvider, ProviderPayment, PaymentStatus } from '@/lib/payments/types'
+export type {
+  CheckoutRequest, CheckoutResult, PaymentProvider, ProviderPayment, PaymentStatus,
+  SubscriptionRequest, SubscriptionResult, ProviderSubscription, SubscriptionStatus,
+} from '@/lib/payments/types'
 
 // Escolhe o provider: se há MP_ACCESS_TOKEN (e o provider não foi forçado pra
 // mock), usa Mercado Pago real; senão cai no mock (dev sem credencial).

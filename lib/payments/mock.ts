@@ -1,4 +1,7 @@
-import type { CheckoutRequest, CheckoutResult, PaymentProvider, ProviderPayment } from '@/lib/payments/types'
+import type {
+  CheckoutRequest, CheckoutResult, PaymentProvider, ProviderPayment,
+  ProviderSubscription, SubscriptionRequest, SubscriptionResult,
+} from '@/lib/payments/types'
 
 // Provider de desenvolvimento: não chama gateway externo. O "checkout" é uma
 // página interna que simula a aprovação. Permite construir/validar o fluxo
@@ -15,6 +18,15 @@ export function mockPaymentProvider(): PaymentProvider {
     },
     async getPayment(paymentId: string): Promise<ProviderPayment> {
       return { paymentId, status: 'approved', externalReference: paymentId.replace(/^mock_/, ''), amount: null }
+    },
+    async createSubscription(req: SubscriptionRequest): Promise<SubscriptionResult> {
+      return { subscriptionId: `mocksub_${req.externalReference}`, status: 'authorized' }
+    },
+    async getSubscription(subscriptionId: string): Promise<ProviderSubscription> {
+      return { subscriptionId, status: 'authorized', externalReference: subscriptionId.replace(/^mocksub_/, ''), nextChargeDate: null }
+    },
+    async subscriptionIdFromCharge(chargeId: string): Promise<string | null> {
+      return chargeId
     },
   }
 }
