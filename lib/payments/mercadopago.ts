@@ -92,11 +92,12 @@ export function mercadoPagoProvider(token: string): PaymentProvider {
     },
 
     async createSubscription(req: SubscriptionRequest): Promise<SubscriptionResult> {
-      const body = {
+      // Base comum. Com card token → transparente (autoriza na hora). Sem token →
+      // hospedado (MP devolve init_point pra cadastrar o cartão).
+      const body: Record<string, unknown> = {
         reason: req.reason,
         external_reference: req.externalReference,
         payer_email: req.payerEmail,
-        card_token_id: req.cardTokenId,
         auto_recurring: {
           frequency: 1,
           frequency_type: 'months',
@@ -104,7 +105,10 @@ export function mercadoPagoProvider(token: string): PaymentProvider {
           currency_id: 'BRL',
         },
         back_url: req.backUrl,
-        status: 'authorized',
+      }
+      if (req.cardTokenId) {
+        body.card_token_id = req.cardTokenId
+        body.status = 'authorized'
       }
       const res = await fetch(`${MP_API}/preapproval`, {
         method: 'POST',
@@ -115,8 +119,8 @@ export function mercadoPagoProvider(token: string): PaymentProvider {
         const detail = await res.text()
         throw new Error(`Mercado Pago createSubscription falhou (${res.status}): ${detail.slice(0, 300)}`)
       }
-      const data = (await res.json()) as { id: string; status: string }
-      return { subscriptionId: data.id, status: mapSubStatus(data.status) }
+      const data = (await res.json()) as { id: string; status: string; init_point?: string }
+      return { subscriptionId: data.id, status: mapSubStatus(data.status), initPoint: data.init_point ?? null }
     },
 
     async getSubscription(subscriptionId: string): Promise<ProviderSubscription | null> {

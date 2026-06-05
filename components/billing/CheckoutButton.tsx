@@ -3,13 +3,23 @@
 import { useActionState, useEffect, useRef } from 'react'
 
 import { Button } from '@/components/ui/Button'
-import { startSaasCheckout, type CheckoutActionState } from '@/lib/actions/billing'
+import type { CheckoutActionState } from '@/lib/actions/billing'
 
 const initial: CheckoutActionState = { ok: false }
 
-// Inicia o checkout e redireciona o navegador pra URL do gateway.
-export function CheckoutButton({ label = 'Pagar assinatura' }: { label?: string }) {
-  const [state, action, pending] = useActionState(startSaasCheckout, initial)
+type CheckoutAction = (prev: CheckoutActionState, formData: FormData) => Promise<CheckoutActionState>
+
+// Dispara uma action de checkout e redireciona pra URL do gateway.
+export function CheckoutButton({
+  action,
+  label = 'Pagar',
+  variant = 'primary',
+}: {
+  action: CheckoutAction
+  label?: string
+  variant?: 'primary' | 'outline'
+}) {
+  const [state, run, pending] = useActionState(action, initial)
   const handled = useRef<CheckoutActionState | null>(null)
 
   useEffect(() => {
@@ -19,8 +29,8 @@ export function CheckoutButton({ label = 'Pagar assinatura' }: { label?: string 
   }, [state])
 
   return (
-    <form action={action}>
-      <Button type="submit" disabled={pending}>
+    <form action={run}>
+      <Button type="submit" disabled={pending} variant={variant === 'outline' ? 'ghost' : undefined}>
         {pending ? 'Redirecionando…' : label}
       </Button>
       {state.error && <p className="mt-2 text-sm font-medium text-red-600">{state.error}</p>}

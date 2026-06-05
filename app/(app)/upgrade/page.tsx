@@ -2,6 +2,7 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { CheckoutButton } from '@/components/billing/CheckoutButton'
+import { startSaasCheckout, startSaasSubscriptionCheckout } from '@/lib/actions/billing'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
 import { PLAN_FEATURES } from '@/lib/constants/plans'
@@ -64,13 +65,8 @@ export default async function UpgradePage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <a
-                href="/billing/assinar"
-                className="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
-              >
-                Assinar no cartão (cobra sozinho)
-              </a>
-              <CheckoutButton label={expired ? 'Pagar avulso' : 'Pagar 1 mês (Pix/boleto)'} />
+              <CheckoutButton action={startSaasSubscriptionCheckout} label="Assinar no cartão (cobra sozinho)" />
+              <CheckoutButton action={startSaasCheckout} label={expired ? 'Pagar avulso' : 'Pagar 1 mês (Pix/boleto)'} variant="outline" />
             </div>
           </div>
         </Card>

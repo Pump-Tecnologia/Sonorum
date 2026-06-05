@@ -90,6 +90,55 @@ export async function startSaasCheckout(
   }
 }
 
+// Assinatura recorrente HOSPEDADA: cria a preapproval sem cartão e devolve a URL
+// do MP onde a escola cadastra o cartão uma vez. Depois cobra sozinho todo mês.
+// Funciona sem homologação (diferente do cartão transparente via Bricks).
+export async function startSaasSubscriptionCheckout(
+  _prev: CheckoutActionState,
+  _formData: FormData,
+): Promise<CheckoutActionState> {
+  const me = await getCurrentUser()
+  if (me?.role !== 'admin' || !me.schoolId) return { ok: false, error: 'Acesso negado.' }
+
+  const admin = await createAdminClient()
+  const { data: school } = await admin
+    .from('schools')
+    .select('id, name, plan_type, monthly_price')
+    .eq('id', me.schoolId)
+    .maybeSingle()
+  if (!school) return { ok: false, error: 'Escola não encontrada.' }
+  const amount = Number(school.monthly_price ?? 0)
+  if (amount <= 0) return { ok: false, error: 'Nenhum valor de assinatura configurado. Fale com o suporte.' }
+
+  const { data: sub, error: subErr } = await admin
+    .from('saas_subscriptions')
+    .insert({ school_id: school.id, provider: getPaymentProvider().name, plan_type: school.plan_type, amount, status: 'pending' })
+    .select('id')
+    .single()
+  if (subErr || !sub) return { ok: false, error: 'Não foi possível iniciar a assinatura.' }
+
+  try {
+    const result = await getPaymentProvider().createSubscription({
+      schoolId: school.id,
+      planType: school.plan_type,
+      amount,
+      reason: `Sonorum — assinatura ${school.plan_type} (${school.name})`,
+      payerEmail: me.email ?? '',
+      externalReference: `${school.id}:${school.plan_type}:sub`,
+      backUrl: `${appBaseUrl()}/billing/retorno?status=sucesso`,
+    })
+    await admin
+      .from('saas_subscriptions')
+      .update({ provider_subscription_id: result.subscriptionId, updated_at: new Date().toISOString() })
+      .eq('id', sub.id)
+    if (!result.initPoint) return { ok: false, error: 'Não foi possível abrir o cadastro do cartão.' }
+    return { ok: true, url: result.initPoint }
+  } catch {
+    await admin.from('saas_subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', sub.id)
+    return { ok: false, error: 'Falha ao iniciar a assinatura. Tente novamente.' }
+  }
+}
+
 // Cria a ASSINATURA recorrente no cartão (preapproval), a partir do token gerado
 // pelo Bricks no cliente — sem redirect. Pagamento recorre sozinho todo mês.
 export async function createSaasSubscription(input: {

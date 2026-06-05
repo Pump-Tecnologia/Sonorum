@@ -20,7 +20,9 @@ export function mockPaymentProvider(): PaymentProvider {
       return { paymentId, status: 'approved', externalReference: paymentId.replace(/^mock_/, ''), amount: null }
     },
     async createSubscription(req: SubscriptionRequest): Promise<SubscriptionResult> {
-      return { subscriptionId: `mocksub_${req.externalReference}`, status: 'authorized' }
+      // Sem token (hospedado) devolve um init_point que cai na tela de retorno.
+      const initPoint = req.cardTokenId ? null : `${req.backUrl}${req.backUrl.includes('?') ? '&' : '?'}status=sucesso`
+      return { subscriptionId: `mocksub_${req.externalReference}`, status: 'authorized', initPoint }
     },
     async getSubscription(subscriptionId: string): Promise<ProviderSubscription> {
       return { subscriptionId, status: 'authorized', externalReference: subscriptionId.replace(/^mocksub_/, ''), nextChargeDate: null }

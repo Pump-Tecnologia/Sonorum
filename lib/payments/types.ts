@@ -36,7 +36,9 @@ export interface SubscriptionRequest {
   amount: number
   reason: string
   payerEmail: string
-  cardTokenId: string // token do cartão gerado pelo Bricks no cliente
+  // Com token (Bricks, transparente, sem redirect) OU vazio (hospedado: o MP
+  // devolve init_point pra cadastrar o cartão).
+  cardTokenId?: string
   externalReference: string
   backUrl: string
 }
@@ -44,6 +46,8 @@ export interface SubscriptionRequest {
 export interface SubscriptionResult {
   subscriptionId: string
   status: SubscriptionStatus
+  // Preenchido no fluxo HOSPEDADO (sem card token): URL pra cadastrar o cartão.
+  initPoint?: string | null
 }
 
 export interface ProviderSubscription {
