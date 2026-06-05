@@ -38,16 +38,16 @@ const DEFAULT_CHANNELS: Array<'email' | 'whatsapp'> = ['email', 'whatsapp']
 async function resolveRecipients(
   studentId: string,
   override?: NotifyTo,
-): Promise<{ recipients: Recipient[]; schoolId: string | null; studentName: string; schoolName: string | null; brandPrimary: string | null; logoUrl: string | null; whatsappOfficial: boolean }> {
+): Promise<{ recipients: Recipient[]; schoolId: string | null; studentName: string; schoolName: string | null; brandPrimary: string | null; logoUrl: string | null; whatsappOfficial: boolean; emailEnabled: boolean }> {
   const admin = await createAdminClient()
   const { data: student } = await admin
     .from('users')
-    .select('id, name, email, phone, parent_contact, notify_to, school_id, schools(name, custom_name, brand_primary, logo_path, plan_type)')
+    .select('id, name, email, phone, parent_contact, notify_to, notify_email, school_id, schools(name, custom_name, brand_primary, logo_path, plan_type)')
     .eq('id', studentId)
     .maybeSingle()
 
   if (!student) {
-    return { recipients: [], schoolId: null, studentName: '', schoolName: null, brandPrimary: null, logoUrl: null, whatsappOfficial: false }
+    return { recipients: [], schoolId: null, studentName: '', schoolName: null, brandPrimary: null, logoUrl: null, whatsappOfficial: false, emailEnabled: false }
   }
 
   const target = (override ?? (student.notify_to as NotifyTo | null) ?? 'both')
@@ -81,6 +81,8 @@ async function resolveRecipients(
     logoUrl: school?.logo_path ?? null,
     // Envio automático pelo WhatsApp oficial só vale no Premium.
     whatsappOfficial: planFeatures(school?.plan_type).whatsappOfficial,
+    // E-mail é opt-in por aluno (mesmos templates do WhatsApp chegam por e-mail).
+    emailEnabled: Boolean(student.notify_email),
   }
 }
 
@@ -93,7 +95,7 @@ export async function notify(
   options: NotifyOptions = {},
 ): Promise<NotifyResult> {
   const admin = await createAdminClient()
-  const { recipients, schoolId, studentName, schoolName, brandPrimary, logoUrl, whatsappOfficial } = await resolveRecipients(studentId, options.notifyTo)
+  const { recipients, schoolId, studentName, schoolName, brandPrimary, logoUrl, whatsappOfficial, emailEnabled } = await resolveRecipients(studentId, options.notifyTo)
 
   // Enriquecimento do payload (template usa essas chaves).
   const fullPayload: NotificationPayload = {
@@ -138,7 +140,11 @@ export async function notify(
     const recipientPayload: NotificationPayload = { ...fullPayload, recipientName: r.name ?? studentName }
 
     if (channels.includes('email')) {
-      if (!r.email) {
+      if (!emailEnabled) {
+        // E-mail é opt-in por aluno — não envia se a opção está desligada.
+        result.email.skipped++
+        logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: null, recipient_email: r.email, channel: 'email', status: 'skipped', payload: recipientPayload, related_id: options.relatedId ?? null, error: 'e-mail desativado pelo aluno', sent_at: null })
+      } else if (!r.email) {
         result.email.skipped++
         logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: null, recipient_email: null, channel: 'email', status: 'skipped', payload: recipientPayload, related_id: options.relatedId ?? null, error: 'sem email', sent_at: null })
       } else {

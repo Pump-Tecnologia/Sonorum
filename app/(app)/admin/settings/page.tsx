@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
+import { NotificationChannelCard } from '@/components/admin/NotificationChannelCard'
 import { RoomsManager } from '@/components/admin/RoomsManager'
 import { SchoolSettingsForm } from '@/components/admin/SchoolSettingsForm'
 import { getCurrentUser } from '@/lib/auth/session'
 import { planFeatures } from '@/lib/constants/plans'
+import { isWhatsAppCloudEnabled } from '@/lib/notifications/whatsapp-cloud'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Configurações' }
@@ -43,6 +45,10 @@ export default async function SettingsPage() {
             pixCity: school.pix_city,
           }}
           canBrand={planFeatures(school.plan_type).branding}
+        />
+        <NotificationChannelCard
+          whatsappOfficial={planFeatures(school.plan_type).whatsappOfficial}
+          whatsappActive={isWhatsAppCloudEnabled()}
         />
         <RoomsManager rooms={(rooms ?? []) as { id: string; name: string }[]} />
       </div>

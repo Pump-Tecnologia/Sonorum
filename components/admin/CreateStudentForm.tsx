@@ -73,6 +73,14 @@ export function CreateStudentForm() {
           </Field>
         </div>
 
+        <label className="flex items-start gap-2.5 rounded-xl border border-hairline bg-surface-muted/30 p-3 text-sm">
+          <input type="checkbox" name="notifyEmail" className="mt-0.5 h-4 w-4 accent-brand-600" />
+          <span>
+            <span className="font-medium text-ink">Receber notificações por e-mail</span>
+            <span className="block text-xs text-ink-muted">Aulas, cobranças e relatórios chegam no e-mail do aluno. (No Premium, as mensagens vão pelo WhatsApp oficial.)</span>
+          </span>
+        </label>
+
         <Field
           label="Objetivos"
           htmlFor="objectives"

@@ -22,6 +22,7 @@ const updateStudentSchema = z.object({
   instrument: z.string().optional(),
   status: z.enum(['active', 'paused', 'inactive']).default('active'),
   notifyTo: z.enum(['student', 'parent', 'both']).default('both'),
+  notifyEmail: z.boolean().default(false),
   permanentNotes: z.string().optional(),
 })
 
@@ -72,6 +73,7 @@ export async function updateStudent(
     instrument: formData.get('instrument') || undefined,
     status: formData.get('status') || 'active',
     notifyTo: formData.get('notifyTo') || 'both',
+    notifyEmail: formData.get('notifyEmail') === 'on',
     permanentNotes: formData.get('permanentNotes') || undefined,
   })
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) }
@@ -109,6 +111,7 @@ export async function updateStudent(
     instrument: instrumentList.length ? instrumentList : null,
     status: d.status,
     notify_to: d.notifyTo,
+    notify_email: d.notifyEmail,
     permanent_notes: d.permanentNotes ?? null,
   }).eq('id', studentId)
 

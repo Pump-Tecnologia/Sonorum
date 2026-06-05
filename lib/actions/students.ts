@@ -18,6 +18,7 @@ const createStudentSchema = z.object({
   instrument: z.string().optional(),
   status: z.enum(['active', 'paused', 'inactive']).default('active'),
   notifyTo: z.enum(['student', 'parent', 'both']).default('both'),
+  notifyEmail: z.boolean().default(false),
   objectives: z.string().optional(),
 })
 
@@ -69,6 +70,7 @@ export async function createStudent(
     instrument: formData.get('instrument') || undefined,
     status: formData.get('status') || 'active',
     notifyTo: formData.get('notifyTo') || 'both',
+    notifyEmail: formData.get('notifyEmail') === 'on',
     objectives: formData.get('objectives') || undefined,
   })
   if (!parsed.success) {
@@ -101,6 +103,7 @@ export async function createStudent(
       instrument: instrumentList.length ? instrumentList : null,
       status: d.status,
       notify_to: d.notifyTo,
+      notify_email: d.notifyEmail,
     },
   })
 

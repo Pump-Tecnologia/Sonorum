@@ -18,6 +18,7 @@ interface StudentData {
   instrument: unknown
   status: string
   notify_to: string | null
+  notify_email: boolean | null
   permanent_notes: string | null
 }
 
@@ -86,6 +87,14 @@ export function EditStudentForm({ student }: { student: StudentData }) {
             </Select>
           </Field>
         </div>
+
+        <label className="flex items-start gap-2.5 rounded-xl border border-hairline bg-surface-muted/30 p-3 text-sm">
+          <input type="checkbox" name="notifyEmail" defaultChecked={Boolean(student.notify_email)} className="mt-0.5 h-4 w-4 accent-brand-600" />
+          <span>
+            <span className="font-medium text-ink">Receber notificações por e-mail</span>
+            <span className="block text-xs text-ink-muted">Aulas, cobranças e relatórios chegam no e-mail do aluno. (No Premium, as mensagens vão pelo WhatsApp oficial.)</span>
+          </span>
+        </label>
 
         <Field label="Notas permanentes" htmlFor="permanentNotes" error={fe.permanentNotes}>
           <Textarea id="permanentNotes" name="permanentNotes" defaultValue={student.permanent_notes ?? ''} />

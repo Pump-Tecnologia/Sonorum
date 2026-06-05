@@ -1125,6 +1125,7 @@ export type Database = {
           instrument_category: string | null
           monthly_fee: number | null
           name: string
+          notify_email: boolean
           notify_to: string
           objectives: string | null
           parent_contact: string | null
@@ -1146,6 +1147,7 @@ export type Database = {
           instrument_category?: string | null
           monthly_fee?: number | null
           name: string
+          notify_email?: boolean
           notify_to?: string
           objectives?: string | null
           parent_contact?: string | null
@@ -1167,6 +1169,7 @@ export type Database = {
           instrument_category?: string | null
           monthly_fee?: number | null
           name?: string
+          notify_email?: boolean
           notify_to?: string
           objectives?: string | null
           parent_contact?: string | null
