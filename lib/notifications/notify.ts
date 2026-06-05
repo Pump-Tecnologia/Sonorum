@@ -1,10 +1,13 @@
 import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { planFeatures } from '@/lib/constants/plans'
 import { sendEmail } from '@/lib/notifications/email'
 import { TEMPLATES } from '@/lib/notifications/templates'
 import type { NotificationEvent, NotificationPayload, NotifyTo } from '@/lib/notifications/types'
 import { waLink } from '@/lib/notifications/whatsapp'
+import { getWhatsAppProvider, isWhatsAppCloudEnabled } from '@/lib/notifications/whatsapp-cloud'
+import { WHATSAPP_TEMPLATES } from '@/lib/notifications/whatsapp-templates'
 
 interface Recipient {
   userId: string | null
@@ -16,7 +19,8 @@ interface Recipient {
 
 export interface NotifyResult {
   email: { sent: number; failed: number; skipped: number }
-  whatsapp: { links: Array<{ to: Recipient['label']; name: string | null; url: string }>; skipped: number }
+  // links = wa.me manual (clique humano). sent/failed = envio automático Cloud API.
+  whatsapp: { links: Array<{ to: Recipient['label']; name: string | null; url: string }>; sent: number; failed: number; skipped: number }
 }
 
 interface NotifyOptions {
@@ -34,20 +38,20 @@ const DEFAULT_CHANNELS: Array<'email' | 'whatsapp'> = ['email', 'whatsapp']
 async function resolveRecipients(
   studentId: string,
   override?: NotifyTo,
-): Promise<{ recipients: Recipient[]; schoolId: string | null; studentName: string; schoolName: string | null; brandPrimary: string | null; logoUrl: string | null }> {
+): Promise<{ recipients: Recipient[]; schoolId: string | null; studentName: string; schoolName: string | null; brandPrimary: string | null; logoUrl: string | null; whatsappOfficial: boolean }> {
   const admin = await createAdminClient()
   const { data: student } = await admin
     .from('users')
-    .select('id, name, email, phone, parent_contact, notify_to, school_id, schools(name, custom_name, brand_primary, logo_path)')
+    .select('id, name, email, phone, parent_contact, notify_to, school_id, schools(name, custom_name, brand_primary, logo_path, plan_type)')
     .eq('id', studentId)
     .maybeSingle()
 
   if (!student) {
-    return { recipients: [], schoolId: null, studentName: '', schoolName: null, brandPrimary: null, logoUrl: null }
+    return { recipients: [], schoolId: null, studentName: '', schoolName: null, brandPrimary: null, logoUrl: null, whatsappOfficial: false }
   }
 
   const target = (override ?? (student.notify_to as NotifyTo | null) ?? 'both')
-  const school = (student.schools ?? null) as { name: string; custom_name: string | null; brand_primary: string | null; logo_path: string | null } | null
+  const school = (student.schools ?? null) as { name: string; custom_name: string | null; brand_primary: string | null; logo_path: string | null; plan_type: string | null } | null
 
   const recipients: Recipient[] = []
   if (target === 'student' || target === 'both') {
@@ -75,6 +79,8 @@ async function resolveRecipients(
     schoolName: school?.custom_name || school?.name || null,
     brandPrimary: school?.brand_primary ?? null,
     logoUrl: school?.logo_path ?? null,
+    // Envio automático pelo WhatsApp oficial só vale no Premium.
+    whatsappOfficial: planFeatures(school?.plan_type).whatsappOfficial,
   }
 }
 
@@ -87,7 +93,7 @@ export async function notify(
   options: NotifyOptions = {},
 ): Promise<NotifyResult> {
   const admin = await createAdminClient()
-  const { recipients, schoolId, studentName, schoolName, brandPrimary, logoUrl } = await resolveRecipients(studentId, options.notifyTo)
+  const { recipients, schoolId, studentName, schoolName, brandPrimary, logoUrl, whatsappOfficial } = await resolveRecipients(studentId, options.notifyTo)
 
   // Enriquecimento do payload (template usa essas chaves).
   const fullPayload: NotificationPayload = {
@@ -102,8 +108,14 @@ export async function notify(
   const channels = options.channels ?? DEFAULT_CHANNELS
   const result: NotifyResult = {
     email: { sent: 0, failed: 0, skipped: 0 },
-    whatsapp: { links: [], skipped: 0 },
+    whatsapp: { links: [], sent: 0, failed: 0, skipped: 0 },
   }
+
+  // Envio automático pelo WhatsApp oficial: só Premium + credenciais Cloud
+  // configuradas + template aprovado pro evento. Senão, cai no wa.me manual.
+  const cloudTemplate = WHATSAPP_TEMPLATES[event]
+  const useCloud = whatsappOfficial && isWhatsAppCloudEnabled() && Boolean(cloudTemplate)
+  const whatsappProvider = useCloud ? getWhatsAppProvider() : null
 
   type LogRow = {
     school_id: string | null
@@ -144,15 +156,36 @@ export async function notify(
     }
 
     if (channels.includes('whatsapp')) {
-      const msg = tpl.whatsapp(recipientPayload)
-      const url = waLink(r.phone, msg)
-      if (!url) {
-        result.whatsapp.skipped++
-        logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: null, recipient_email: null, channel: 'whatsapp', status: 'skipped', payload: recipientPayload, related_id: options.relatedId ?? null, error: 'sem telefone', sent_at: null })
+      if (useCloud && whatsappProvider && cloudTemplate) {
+        // Premium + Cloud API: envia o template automaticamente (sem clique humano).
+        if (!r.phone) {
+          result.whatsapp.skipped++
+          logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: null, recipient_email: null, channel: 'whatsapp', status: 'skipped', payload: recipientPayload, related_id: options.relatedId ?? null, error: 'sem telefone', sent_at: null })
+        } else {
+          const send = await whatsappProvider.sendTemplate({
+            to: r.phone,
+            template: cloudTemplate,
+            variables: cloudTemplate.variables(recipientPayload),
+          })
+          if (send.ok) {
+            result.whatsapp.sent++
+            logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: r.phone, recipient_email: null, channel: 'whatsapp', status: 'sent', payload: recipientPayload, related_id: options.relatedId ?? null, error: null, sent_at: now() })
+          } else {
+            result.whatsapp.failed++
+            logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: r.phone, recipient_email: null, channel: 'whatsapp', status: 'failed', payload: recipientPayload, related_id: options.relatedId ?? null, error: send.error ?? 'falha no envio', sent_at: null })
+          }
+        }
       } else {
-        // wa.me não confirma entrega — fica 'queued' até alguém clicar.
-        result.whatsapp.links.push({ to: r.label, name: r.name, url })
-        logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: r.phone, recipient_email: null, channel: 'whatsapp', status: 'queued', payload: recipientPayload, related_id: options.relatedId ?? null, error: null, sent_at: null })
+        // Fallback: link wa.me (clique humano). Não confirma entrega → 'queued'.
+        const msg = tpl.whatsapp(recipientPayload)
+        const url = waLink(r.phone, msg)
+        if (!url) {
+          result.whatsapp.skipped++
+          logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: null, recipient_email: null, channel: 'whatsapp', status: 'skipped', payload: recipientPayload, related_id: options.relatedId ?? null, error: 'sem telefone', sent_at: null })
+        } else {
+          result.whatsapp.links.push({ to: r.label, name: r.name, url })
+          logs.push({ school_id: schoolId, event, recipient_user_id: r.userId, recipient_phone: r.phone, recipient_email: null, channel: 'whatsapp', status: 'queued', payload: recipientPayload, related_id: options.relatedId ?? null, error: null, sent_at: null })
+        }
       }
     }
   }

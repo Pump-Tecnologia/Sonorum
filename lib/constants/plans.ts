@@ -11,6 +11,7 @@ export interface PlanFeatures {
   reports: boolean // módulo de relatórios
   transcription: boolean // transcrição de cifra por IA (exclusivo Premium)
   branding: boolean // logo e cores da marca personalizados (exclusivo Premium)
+  whatsappOfficial: boolean // envio automático pelo WhatsApp oficial (exclusivo Premium)
 }
 
 export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
@@ -23,6 +24,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     reports: false,
     transcription: false,
     branding: false,
+    whatsappOfficial: false,
   },
   basic: {
     label: 'Básico',
@@ -33,6 +35,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     reports: false,
     transcription: false,
     branding: false,
+    whatsappOfficial: false,
   },
   professional: {
     label: 'Profissional',
@@ -43,6 +46,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     reports: true,
     transcription: false,
     branding: false,
+    whatsappOfficial: false,
   },
   premium: {
     label: 'Premium',
@@ -53,6 +57,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     reports: true,
     transcription: true,
     branding: true,
+    whatsappOfficial: true,
   },
 }
 
