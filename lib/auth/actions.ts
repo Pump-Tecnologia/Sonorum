@@ -117,7 +117,10 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
   if (signInError) redirect('/login')
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  // Destino pós-cadastro: respeita ?next (ex.: vir da landing escolhendo um plano
+  // pago → cai no checkout). Só caminhos internos.
+  const next = String(formData.get('next') || '/dashboard')
+  redirect(next.startsWith('/') ? next : '/dashboard')
 }
 
 // ── Logout ──────────────────────────────────────────────────────────────────

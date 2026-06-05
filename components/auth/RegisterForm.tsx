@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useActionState } from 'react'
 
 import { AuthField, AuthInput } from '@/components/auth/AuthField'
@@ -14,9 +15,14 @@ const initial: ActionState = { ok: false }
 export function RegisterForm() {
   const [state, action] = useActionState(signUp, initial)
   const fe = state.fieldErrors ?? {}
+  // Preserva o destino pós-cadastro (ex.: checkout do plano escolhido na landing).
+  const nextParam = useSearchParams().get('next')
+  const next = nextParam && nextParam.startsWith('/') ? nextParam : null
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : '/login'
 
   return (
     <form action={action} className={styles.form}>
+      {next && <input type="hidden" name="next" value={next} />}
       {state.error && <p className={styles.alert}>{state.error}</p>}
 
       <AuthField label="Nome da escola" htmlFor="schoolName" error={fe.schoolName}>
@@ -68,7 +74,7 @@ export function RegisterForm() {
       <AuthSubmit pendingLabel="Criando…">Criar conta grátis</AuthSubmit>
 
       <p className={styles.footerLine}>
-        Já tem conta? <Link href="/login">Entrar</Link>
+        Já tem conta? <Link href={loginHref}>Entrar</Link>
       </p>
     </form>
   )

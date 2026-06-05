@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import styles from '@/components/auth/auth.module.css'
@@ -12,7 +13,9 @@ export default function RegisterPage() {
       <p className={styles.subtitle}>
         Crie sua conta no plano Essencial e comece hoje, sem cartão.
       </p>
-      <RegisterForm />
+      <Suspense fallback={null}>
+        <RegisterForm />
+      </Suspense>
     </>
   )
 }
