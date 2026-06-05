@@ -42,18 +42,21 @@ export async function startSaasCheckout(
   if ('error' in r) return { ok: false, error: r.error }
   const { me, admin, school, planType, amount } = r
 
+  let provider
+  try { provider = getPaymentProvider() } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Pagamento indisponível.' } }
+
   const periodStart = new Date().toISOString().slice(0, 10)
   const externalReference = `${school.id}:${planType}:${periodStart}`
   const { data: payment, error: insErr } = await admin
     .from('saas_payments')
-    .insert({ school_id: school.id, plan_type: planType, amount, provider: getPaymentProvider().name, external_reference: externalReference, status: 'pending', period_start: periodStart })
+    .insert({ school_id: school.id, plan_type: planType, amount, provider: provider.name, external_reference: externalReference, status: 'pending', period_start: periodStart })
     .select('id')
     .single()
   if (insErr || !payment) return { ok: false, error: 'Não foi possível iniciar o pagamento.' }
 
   const base = appBaseUrl()
   try {
-    const checkout = await getPaymentProvider().createCheckout({
+    const checkout = await provider.createCheckout({
       schoolId: school.id, planType, amount,
       title: `Sonorum — plano ${planType} (${school.name})`,
       payerEmail: me.email ?? null,
@@ -78,15 +81,18 @@ export async function subscriptionCheckout(planTypeRaw: string): Promise<Checkou
   if ('error' in r) return { ok: false, error: r.error }
   const { me, admin, school, planType, amount } = r
 
+  let provider
+  try { provider = getPaymentProvider() } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Pagamento indisponível.' } }
+
   const { data: sub, error: subErr } = await admin
     .from('saas_subscriptions')
-    .insert({ school_id: school.id, provider: getPaymentProvider().name, plan_type: planType, amount, status: 'pending' })
+    .insert({ school_id: school.id, provider: provider.name, plan_type: planType, amount, status: 'pending' })
     .select('id')
     .single()
   if (subErr || !sub) return { ok: false, error: 'Não foi possível iniciar a assinatura.' }
 
   try {
-    const result = await getPaymentProvider().createSubscription({
+    const result = await provider.createSubscription({
       schoolId: school.id, planType, amount,
       reason: `Sonorum — plano ${planType} (${school.name})`,
       payerEmail: me.email ?? '',
@@ -123,15 +129,18 @@ export async function createSaasSubscription(input: {
   if ('error' in r) return { ok: false, error: r.error }
   const { me, admin, school, planType, amount } = r
 
+  let provider
+  try { provider = getPaymentProvider() } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Pagamento indisponível.' } }
+
   const { data: sub, error: subErr } = await admin
     .from('saas_subscriptions')
-    .insert({ school_id: school.id, provider: getPaymentProvider().name, plan_type: planType, amount, status: 'pending' })
+    .insert({ school_id: school.id, provider: provider.name, plan_type: planType, amount, status: 'pending' })
     .select('id')
     .single()
   if (subErr || !sub) return { ok: false, error: 'Não foi possível iniciar a assinatura.' }
 
   try {
-    const result = await getPaymentProvider().createSubscription({
+    const result = await provider.createSubscription({
       schoolId: school.id, planType, amount,
       reason: `Sonorum — plano ${planType} (${school.name})`,
       payerEmail: input.payerEmail || me.email || '',
