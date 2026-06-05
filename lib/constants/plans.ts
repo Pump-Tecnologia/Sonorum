@@ -4,6 +4,7 @@ import type { SchoolPlanType } from '@/lib/types/app'
 // Espelha o check_school_plan do código Laravel antigo.
 export interface PlanFeatures {
   label: string
+  price: number // preço de tabela mensal (R$). 0 = não vendido por auto-serviço.
   studentLimit: number // Infinity = ilimitado
   teacherLimit: number
   financial: boolean // planos, matrículas, cobranças
@@ -15,6 +16,7 @@ export interface PlanFeatures {
 export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
   free: {
     label: 'Essencial',
+    price: 0,
     studentLimit: 5,
     teacherLimit: 1, // o admin já pode lecionar; ajuste aqui se quiser outro teto
     financial: false,
@@ -24,6 +26,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
   },
   basic: {
     label: 'Básico',
+    price: 0,
     studentLimit: Infinity,
     teacherLimit: Infinity,
     financial: true,
@@ -33,6 +36,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
   },
   professional: {
     label: 'Profissional',
+    price: 99,
     studentLimit: Infinity,
     teacherLimit: Infinity,
     financial: true,
@@ -42,6 +46,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
   },
   premium: {
     label: 'Premium',
+    price: 199,
     studentLimit: Infinity,
     teacherLimit: Infinity,
     financial: true,
@@ -49,6 +54,17 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     transcription: true,
     branding: true,
   },
+}
+
+// Planos vendáveis por auto-serviço (na ordem exibida).
+export const SELLABLE_PLANS: SchoolPlanType[] = ['professional', 'premium']
+
+// Preço efetivo: override negociado da escola (monthly_price>0) tem prioridade
+// sobre o preço de tabela do plano.
+export function planPrice(planType: string, schoolMonthlyPrice?: number | null): number {
+  const custom = Number(schoolMonthlyPrice ?? 0)
+  if (custom > 0) return custom
+  return PLAN_FEATURES[(planType as SchoolPlanType)]?.price ?? 0
 }
 
 export function planFeatures(planType: string | null | undefined): PlanFeatures {

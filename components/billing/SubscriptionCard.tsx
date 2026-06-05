@@ -45,10 +45,12 @@ export function SubscriptionCard({
   publicKey,
   amount,
   payerEmail,
+  planType,
 }: {
   publicKey: string
   amount: number
   payerEmail: string
+  planType: string
 }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
@@ -76,6 +78,7 @@ export function SubscriptionCard({
               const res = await createSaasSubscription({
                 cardTokenId: cardFormData.token,
                 payerEmail: cardFormData.payer?.email ?? payerEmail,
+                planType,
               })
               if (res.ok) {
                 setDone(true)
@@ -93,7 +96,7 @@ export function SubscriptionCard({
     return () => {
       cancelled = true
     }
-  }, [publicKey, amount, payerEmail, router])
+  }, [publicKey, amount, payerEmail, planType, router])
 
   if (done) return <p className="text-sm font-medium text-accent-800">Assinatura ativada! Redirecionando…</p>
 

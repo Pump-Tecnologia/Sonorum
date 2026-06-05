@@ -5,23 +5,31 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { SubscriptionCard } from '@/components/billing/SubscriptionCard'
 import { Card } from '@/components/ui/Card'
 import { getCurrentUser } from '@/lib/auth/session'
+import { PLAN_FEATURES, SELLABLE_PLANS, planPrice } from '@/lib/constants/plans'
 import { formatBRL } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Assinar' }
 
-export default async function SubscribePage() {
+export default async function SubscribePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ plan?: string }>
+}) {
   const me = await getCurrentUser()
   if (me?.role !== 'admin' || !me.schoolId) redirect('/admin')
+
+  const { plan } = await searchParams
+  const planType = SELLABLE_PLANS.includes(plan as (typeof SELLABLE_PLANS)[number]) ? plan! : 'professional'
 
   const supabase = await createClient()
   const { data: school } = await supabase
     .from('schools')
-    .select('plan_type, monthly_price')
+    .select('monthly_price')
     .eq('id', me.schoolId)
     .maybeSingle()
 
-  const amount = Number(school?.monthly_price ?? 0)
+  const amount = planPrice(planType, school?.monthly_price)
   const publicKey = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY ?? ''
 
   return (
@@ -39,10 +47,10 @@ export default async function SubscribePage() {
         ) : (
           <>
             <p className="mb-4 text-sm text-ink-muted">
-              Plano <strong className="text-ink">{school?.plan_type}</strong> ·{' '}
+              Plano <strong className="text-ink">{PLAN_FEATURES[planType as keyof typeof PLAN_FEATURES]?.label ?? planType}</strong> ·{' '}
               <strong className="text-ink">{formatBRL(amount)}</strong>/mês, no cartão.
             </p>
-            <SubscriptionCard publicKey={publicKey} amount={amount} payerEmail={me.email ?? ''} />
+            <SubscriptionCard publicKey={publicKey} amount={amount} payerEmail={me.email ?? ''} planType={planType} />
           </>
         )}
         <Link href="/upgrade" className="mt-4 inline-block text-sm text-ink-muted hover:text-ink">

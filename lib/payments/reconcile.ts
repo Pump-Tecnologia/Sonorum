@@ -30,7 +30,7 @@ export async function reconcilePayment(paymentId: string): Promise<ReconcileResu
   // Localiza nosso registro pela external_reference (ou pelo payment_id já gravado).
   const { data: row } = await admin
     .from('saas_payments')
-    .select('id, school_id, status, period_end')
+    .select('id, school_id, status, period_end, plan_type')
     .or(`external_reference.eq.${payment.externalReference},provider_payment_id.eq.${payment.paymentId}`)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -68,6 +68,7 @@ export async function reconcilePayment(paymentId: string): Promise<ReconcileResu
   }).eq('id', row.id)
 
   await admin.from('schools').update({
+    plan_type: row.plan_type,
     expiration_date: newExpiration,
     updated_at: new Date().toISOString(),
   }).eq('id', row.school_id)
@@ -85,7 +86,7 @@ export async function reconcileSubscription(preapprovalId: string): Promise<Reco
   const admin = await createAdminClient()
   const { data: row } = await admin
     .from('saas_subscriptions')
-    .select('id, school_id, status')
+    .select('id, school_id, status, plan_type')
     .eq('provider_subscription_id', preapprovalId)
     .maybeSingle()
   if (!row) return { handled: false, status: sub.status }
@@ -97,10 +98,14 @@ export async function reconcileSubscription(preapprovalId: string): Promise<Reco
     updated_at: new Date().toISOString(),
   }).eq('id', row.id)
 
-  // Autorizada com próxima cobrança → escola válida até lá.
-  if (sub.status === 'authorized' && sub.nextChargeDate) {
+  // Autorizada → troca o plano e valida a escola (até a próxima cobrança, ou +1
+  // mês se o gateway ainda não informou a data).
+  if (sub.status === 'authorized') {
+    const today = new Date().toISOString().slice(0, 10)
+    const until = sub.nextChargeDate ?? addOneMonth(today)
     await admin.from('schools').update({
-      expiration_date: sub.nextChargeDate,
+      plan_type: row.plan_type,
+      expiration_date: until,
       updated_at: new Date().toISOString(),
     }).eq('id', row.school_id)
   }

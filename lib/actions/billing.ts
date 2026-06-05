@@ -1,72 +1,61 @@
 'use server'
 
 import { getCurrentUser } from '@/lib/auth/session'
+import { SELLABLE_PLANS, planPrice } from '@/lib/constants/plans'
 import { appBaseUrl, getPaymentProvider } from '@/lib/payments'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export type CheckoutActionState = { ok: boolean; error?: string; url?: string }
 export type SubscribeResult = { ok: boolean; error?: string; status?: string }
 
-// Soma 1 mês a uma data YYYY-MM-DD (clamp no fim do mês).
 function addOneMonth(ymd: string): string {
   const [y, m, d] = ymd.split('-').map(Number)
   const targetLast = new Date(y, m + 1, 0).getDate()
   return new Date(y, m, Math.min(d ?? 1, targetLast)).toISOString().slice(0, 10)
 }
 
-// Inicia o checkout da assinatura do SaaS (Escola → Sonorum). Cobra o
-// schools.monthly_price (preço negociado, definido pelo superadmin) e devolve a
-// URL do gateway pra UI redirecionar. O webhook é quem estende a validade.
-export async function startSaasCheckout(
-  _prev: CheckoutActionState,
-  _formData: FormData,
-): Promise<CheckoutActionState> {
+// Valida o plano escolhido (Profissional/Premium) e carrega escola + preço.
+async function resolvePlan(planTypeRaw: string) {
   const me = await getCurrentUser()
-  if (me?.role !== 'admin' || !me.schoolId) return { ok: false, error: 'Acesso negado.' }
-
+  if (me?.role !== 'admin' || !me.schoolId) return { error: 'Acesso negado.' as const }
+  if (!SELLABLE_PLANS.includes(planTypeRaw as (typeof SELLABLE_PLANS)[number])) {
+    return { error: 'Plano inválido.' as const }
+  }
   const admin = await createAdminClient()
   const { data: school } = await admin
     .from('schools')
-    .select('id, name, plan_type, monthly_price')
+    .select('id, name, monthly_price, expiration_date')
     .eq('id', me.schoolId)
     .maybeSingle()
+  if (!school) return { error: 'Escola não encontrada.' as const }
+  const amount = planPrice(planTypeRaw, school.monthly_price)
+  if (amount <= 0) return { error: 'Plano sem preço configurado.' as const }
+  return { me, admin, school, planType: planTypeRaw, amount }
+}
 
-  if (!school) return { ok: false, error: 'Escola não encontrada.' }
-  const amount = Number(school.monthly_price ?? 0)
-  if (amount <= 0) {
-    return { ok: false, error: 'Nenhum valor de assinatura configurado. Fale com o suporte para definir seu plano.' }
-  }
+// Checkout AVULSO (Pix/boleto/cartão único) do plano escolhido.
+export async function startSaasCheckout(
+  _prev: CheckoutActionState,
+  formData: FormData,
+): Promise<CheckoutActionState> {
+  const r = await resolvePlan(String(formData.get('planType') ?? ''))
+  if ('error' in r) return { ok: false, error: r.error }
+  const { me, admin, school, planType, amount } = r
 
-  const now = new Date()
-  const periodStart = now.toISOString().slice(0, 10)
-  const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()).toISOString().slice(0, 10)
-  const externalReference = `${school.id}:${school.plan_type}:${periodStart}`
-
-  // Registra a tentativa (pending) antes de ir pro gateway.
+  const periodStart = new Date().toISOString().slice(0, 10)
+  const externalReference = `${school.id}:${planType}:${periodStart}`
   const { data: payment, error: insErr } = await admin
     .from('saas_payments')
-    .insert({
-      school_id: school.id,
-      plan_type: school.plan_type,
-      amount,
-      provider: getPaymentProvider().name,
-      external_reference: externalReference,
-      status: 'pending',
-      period_start: periodStart,
-      period_end: periodEnd,
-    })
+    .insert({ school_id: school.id, plan_type: planType, amount, provider: getPaymentProvider().name, external_reference: externalReference, status: 'pending', period_start: periodStart })
     .select('id')
     .single()
   if (insErr || !payment) return { ok: false, error: 'Não foi possível iniciar o pagamento.' }
 
   const base = appBaseUrl()
   try {
-    const provider = getPaymentProvider()
-    const checkout = await provider.createCheckout({
-      schoolId: school.id,
-      planType: school.plan_type,
-      amount,
-      title: `Sonorum — assinatura ${school.plan_type} (${school.name})`,
+    const checkout = await getPaymentProvider().createCheckout({
+      schoolId: school.id, planType, amount,
+      title: `Sonorum — plano ${planType} (${school.name})`,
       payerEmail: me.email ?? null,
       externalReference,
       successUrl: `${base}/billing/retorno?status=sucesso`,
@@ -74,63 +63,40 @@ export async function startSaasCheckout(
       pendingUrl: `${base}/billing/retorno?status=pendente`,
       notificationUrl: `${base}/api/webhooks/mercadopago`,
     })
-
-    await admin
-      .from('saas_payments')
-      .update({ provider_preference_id: checkout.preferenceId, updated_at: new Date().toISOString() })
-      .eq('id', payment.id)
-
+    await admin.from('saas_payments').update({ provider_preference_id: checkout.preferenceId, updated_at: new Date().toISOString() }).eq('id', payment.id)
     return { ok: true, url: checkout.checkoutUrl }
   } catch {
-    await admin
-      .from('saas_payments')
-      .update({ status: 'rejected', updated_at: new Date().toISOString() })
-      .eq('id', payment.id)
+    await admin.from('saas_payments').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', payment.id)
     return { ok: false, error: 'Falha ao criar o checkout. Tente novamente.' }
   }
 }
 
-// Assinatura recorrente HOSPEDADA: cria a preapproval sem cartão e devolve a URL
-// do MP onde a escola cadastra o cartão uma vez. Depois cobra sozinho todo mês.
-// Funciona sem homologação (diferente do cartão transparente via Bricks).
+// Assinatura recorrente HOSPEDADA do plano escolhido (preapproval sem cartão →
+// init_point → escola cadastra o cartão 1x → cobra sozinho). Sem homologação.
 export async function startSaasSubscriptionCheckout(
   _prev: CheckoutActionState,
-  _formData: FormData,
+  formData: FormData,
 ): Promise<CheckoutActionState> {
-  const me = await getCurrentUser()
-  if (me?.role !== 'admin' || !me.schoolId) return { ok: false, error: 'Acesso negado.' }
-
-  const admin = await createAdminClient()
-  const { data: school } = await admin
-    .from('schools')
-    .select('id, name, plan_type, monthly_price')
-    .eq('id', me.schoolId)
-    .maybeSingle()
-  if (!school) return { ok: false, error: 'Escola não encontrada.' }
-  const amount = Number(school.monthly_price ?? 0)
-  if (amount <= 0) return { ok: false, error: 'Nenhum valor de assinatura configurado. Fale com o suporte.' }
+  const r = await resolvePlan(String(formData.get('planType') ?? ''))
+  if ('error' in r) return { ok: false, error: r.error }
+  const { me, admin, school, planType, amount } = r
 
   const { data: sub, error: subErr } = await admin
     .from('saas_subscriptions')
-    .insert({ school_id: school.id, provider: getPaymentProvider().name, plan_type: school.plan_type, amount, status: 'pending' })
+    .insert({ school_id: school.id, provider: getPaymentProvider().name, plan_type: planType, amount, status: 'pending' })
     .select('id')
     .single()
   if (subErr || !sub) return { ok: false, error: 'Não foi possível iniciar a assinatura.' }
 
   try {
     const result = await getPaymentProvider().createSubscription({
-      schoolId: school.id,
-      planType: school.plan_type,
-      amount,
-      reason: `Sonorum — assinatura ${school.plan_type} (${school.name})`,
+      schoolId: school.id, planType, amount,
+      reason: `Sonorum — plano ${planType} (${school.name})`,
       payerEmail: me.email ?? '',
-      externalReference: `${school.id}:${school.plan_type}:sub`,
+      externalReference: `${school.id}:${planType}:sub`,
       backUrl: `${appBaseUrl()}/billing/retorno?status=sucesso`,
     })
-    await admin
-      .from('saas_subscriptions')
-      .update({ provider_subscription_id: result.subscriptionId, updated_at: new Date().toISOString() })
-      .eq('id', sub.id)
+    await admin.from('saas_subscriptions').update({ provider_subscription_id: result.subscriptionId, updated_at: new Date().toISOString() }).eq('id', sub.id)
     if (!result.initPoint) return { ok: false, error: 'Não foi possível abrir o cadastro do cartão.' }
     return { ok: true, url: result.initPoint }
   } catch {
@@ -139,55 +105,34 @@ export async function startSaasSubscriptionCheckout(
   }
 }
 
-// Cria a ASSINATURA recorrente no cartão (preapproval), a partir do token gerado
-// pelo Bricks no cliente — sem redirect. Pagamento recorre sozinho todo mês.
+// Assinatura recorrente TRANSPARENTE (Bricks): token do cartão vem do cliente,
+// sem redirect. Ativa na hora, troca o plano da escola e estende a validade.
 export async function createSaasSubscription(input: {
   cardTokenId: string
   payerEmail: string
+  planType: string
 }): Promise<SubscribeResult> {
-  const me = await getCurrentUser()
-  if (me?.role !== 'admin' || !me.schoolId) return { ok: false, error: 'Acesso negado.' }
   if (!input.cardTokenId) return { ok: false, error: 'Cartão inválido.' }
+  const r = await resolvePlan(input.planType)
+  if ('error' in r) return { ok: false, error: r.error }
+  const { me, admin, school, planType, amount } = r
 
-  const admin = await createAdminClient()
-  const { data: school } = await admin
-    .from('schools')
-    .select('id, name, plan_type, monthly_price, expiration_date')
-    .eq('id', me.schoolId)
-    .maybeSingle()
-  if (!school) return { ok: false, error: 'Escola não encontrada.' }
-  const amount = Number(school.monthly_price ?? 0)
-  if (amount <= 0) return { ok: false, error: 'Nenhum valor de assinatura configurado. Fale com o suporte.' }
-
-  const externalReference = `${school.id}:${school.plan_type}:sub`
-
-  // Registro local da assinatura (pending → authorized).
   const { data: sub, error: subErr } = await admin
     .from('saas_subscriptions')
-    .insert({
-      school_id: school.id,
-      provider: getPaymentProvider().name,
-      plan_type: school.plan_type,
-      amount,
-      status: 'pending',
-    })
+    .insert({ school_id: school.id, provider: getPaymentProvider().name, plan_type: planType, amount, status: 'pending' })
     .select('id')
     .single()
   if (subErr || !sub) return { ok: false, error: 'Não foi possível iniciar a assinatura.' }
 
   try {
-    const provider = getPaymentProvider()
-    const result = await provider.createSubscription({
-      schoolId: school.id,
-      planType: school.plan_type,
-      amount,
-      reason: `Sonorum — assinatura ${school.plan_type} (${school.name})`,
+    const result = await getPaymentProvider().createSubscription({
+      schoolId: school.id, planType, amount,
+      reason: `Sonorum — plano ${planType} (${school.name})`,
       payerEmail: input.payerEmail || me.email || '',
       cardTokenId: input.cardTokenId,
-      externalReference,
+      externalReference: `${school.id}:${planType}:sub`,
       backUrl: `${appBaseUrl()}/billing/retorno?status=sucesso`,
     })
-
     await admin.from('saas_subscriptions').update({
       provider_subscription_id: result.subscriptionId,
       status: result.status === 'authorized' ? 'authorized' : 'pending',
@@ -198,11 +143,11 @@ export async function createSaasSubscription(input: {
       return { ok: false, error: 'A assinatura não foi autorizada. Verifique os dados do cartão.', status: result.status }
     }
 
-    // Autorizada → estende a validade da escola já no 1º ciclo.
     const today = new Date().toISOString().slice(0, 10)
     const current = school.expiration_date as string | null
     const base = current && current > today ? current : today
     await admin.from('schools').update({
+      plan_type: planType,
       expiration_date: addOneMonth(base),
       updated_at: new Date().toISOString(),
     }).eq('id', school.id)

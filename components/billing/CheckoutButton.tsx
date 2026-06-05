@@ -12,10 +12,12 @@ type CheckoutAction = (prev: CheckoutActionState, formData: FormData) => Promise
 // Dispara uma action de checkout e redireciona pra URL do gateway.
 export function CheckoutButton({
   action,
+  planType,
   label = 'Pagar',
   variant = 'primary',
 }: {
   action: CheckoutAction
+  planType: string
   label?: string
   variant?: 'primary' | 'outline'
 }) {
@@ -30,6 +32,7 @@ export function CheckoutButton({
 
   return (
     <form action={run}>
+      <input type="hidden" name="planType" value={planType} />
       <Button type="submit" disabled={pending} variant={variant === 'outline' ? 'ghost' : undefined}>
         {pending ? 'Redirecionando…' : label}
       </Button>
