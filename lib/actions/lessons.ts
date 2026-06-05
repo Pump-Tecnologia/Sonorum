@@ -76,6 +76,10 @@ export async function createLesson(
   }
 
   const d = parsed.data
+  // Professor: teacher cria → vincula a si; admin → seleção obrigatória.
+  if (me.role === 'admin' && !d.teacherId) {
+    return { ok: false, fieldErrors: { teacherId: 'Selecione o professor da aula.' } }
+  }
   const teacherId = me.role === 'teacher' ? me.id : (d.teacherId || null)
   const roomId = d.roomId || null
   const supabase = await createClient()

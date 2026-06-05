@@ -221,14 +221,17 @@ export function ScheduleCalendar({
                 </AppSelect>
               </AppField>
 
-              {role === 'admin' && teachers.length > 0 && (
-                <AppField label="Professor (opcional)" htmlFor="teacherId">
-                  <AppSelect id="teacherId" name="teacherId" defaultValue="">
-                    <option value="">Nenhum</option>
+              {role === 'admin' && (
+                <AppField label="Professor" htmlFor="teacherId" error={state.fieldErrors?.teacherId}>
+                  <AppSelect id="teacherId" name="teacherId" required defaultValue="">
+                    <option value="" disabled>Selecione…</option>
                     {teachers.map((t) => (
                       <option key={t.id} value={t.id}>{t.name}</option>
                     ))}
                   </AppSelect>
+                  {teachers.length === 0 && (
+                    <p className="mt-1 text-xs text-amber-700">Cadastre um professor antes de criar aulas.</p>
+                  )}
                 </AppField>
               )}
               {role === 'teacher' && <input type="hidden" name="teacherId" value={userId} />}
