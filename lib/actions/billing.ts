@@ -65,9 +65,9 @@ export async function startSaasCheckout(
     })
     await admin.from('saas_payments').update({ provider_preference_id: checkout.preferenceId, updated_at: new Date().toISOString() }).eq('id', payment.id)
     return { ok: true, url: checkout.checkoutUrl }
-  } catch {
+  } catch (e) {
     await admin.from('saas_payments').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', payment.id)
-    return { ok: false, error: 'Falha ao criar o checkout. Tente novamente.' }
+    return { ok: false, error: e instanceof Error ? e.message : 'Falha ao criar o checkout.' }
   }
 }
 
@@ -99,9 +99,10 @@ export async function startSaasSubscriptionCheckout(
     await admin.from('saas_subscriptions').update({ provider_subscription_id: result.subscriptionId, updated_at: new Date().toISOString() }).eq('id', sub.id)
     if (!result.initPoint) return { ok: false, error: 'Não foi possível abrir o cadastro do cartão.' }
     return { ok: true, url: result.initPoint }
-  } catch {
+  } catch (e) {
     await admin.from('saas_subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', sub.id)
-    return { ok: false, error: 'Falha ao iniciar a assinatura. Tente novamente.' }
+    // Surfaça a causa real (admin-only) — ajuda a ver erros do gateway (ex.: back_url inválida no localhost).
+    return { ok: false, error: e instanceof Error ? e.message : 'Falha ao iniciar a assinatura.' }
   }
 }
 
@@ -153,8 +154,8 @@ export async function createSaasSubscription(input: {
     }).eq('id', school.id)
 
     return { ok: true, status: 'authorized' }
-  } catch {
+  } catch (e) {
     await admin.from('saas_subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', sub.id)
-    return { ok: false, error: 'Falha ao criar a assinatura. Tente novamente.' }
+    return { ok: false, error: e instanceof Error ? e.message : 'Falha ao criar a assinatura.' }
   }
 }
