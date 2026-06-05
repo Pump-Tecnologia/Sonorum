@@ -20,6 +20,10 @@ const settingsSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida (use #rrggbb)')
     .optional()
     .or(z.literal('')),
+  // Chave PIX da escola (recebedora) — disponível em TODOS os planos.
+  pixKey: z.string().max(77, 'Chave PIX muito longa').optional().or(z.literal('')),
+  pixKeyType: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).optional().or(z.literal('')),
+  pixCity: z.string().max(30, 'Cidade muito longa').optional().or(z.literal('')),
 })
 
 export type SettingsActionState = {
@@ -39,6 +43,9 @@ export async function updateSchoolSettings(
     customName: formData.get('customName') || undefined,
     brandPrimary: formData.get('brandPrimary') || '',
     brandSecondary: formData.get('brandSecondary') || '',
+    pixKey: formData.get('pixKey') || '',
+    pixKeyType: formData.get('pixKeyType') || '',
+    pixCity: formData.get('pixCity') || '',
   })
   if (!parsed.success) {
     const flat = parsed.error.flatten().fieldErrors
@@ -52,13 +59,22 @@ export async function updateSchoolSettings(
   const supabase = await createClient()
 
   // Nome exibido é livre; logo e cores são exclusivos do Premium (branding).
+  // Chave PIX é livre (todos os planos) — habilita a cobrança avulsa no PIX.
   type SchoolUpdate = {
     custom_name: string | null
+    pix_key: string | null
+    pix_key_type: string | null
+    pix_city: string | null
     brand_primary?: string | null
     brand_secondary?: string | null
     logo_path?: string | null
   }
-  const update: SchoolUpdate = { custom_name: d.customName || null }
+  const update: SchoolUpdate = {
+    custom_name: d.customName || null,
+    pix_key: d.pixKey || null,
+    pix_key_type: d.pixKey ? d.pixKeyType || null : null,
+    pix_city: d.pixCity || null,
+  }
 
   const { features } = await getPlanContext()
   if (features.branding) {
@@ -82,6 +98,7 @@ export async function updateSchoolSettings(
   if (error) return { ok: false, error: 'Não foi possível salvar as configurações.' }
 
   revalidatePath('/admin/settings')
+  revalidatePath('/cobrancas')
   revalidatePath('/', 'layout')
   return { ok: true }
 }

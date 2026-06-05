@@ -17,7 +17,7 @@ export default async function SettingsPage() {
   const [{ data: school }, { data: rooms }] = await Promise.all([
     supabase
       .from('schools')
-      .select('name, custom_name, brand_primary, brand_secondary, logo_path, plan_type, student_limit')
+      .select('name, custom_name, brand_primary, brand_secondary, logo_path, plan_type, student_limit, pix_key, pix_key_type, pix_city')
       .eq('id', user.schoolId)
       .single(),
     supabase.from('rooms').select('id, name').eq('school_id', user.schoolId).order('name'),
@@ -38,6 +38,9 @@ export default async function SettingsPage() {
             logoUrl: school.logo_path,
             planType: school.plan_type,
             studentLimit: school.student_limit,
+            pixKey: school.pix_key,
+            pixKeyType: school.pix_key_type,
+            pixCity: school.pix_city,
           }}
           canBrand={planFeatures(school.plan_type).branding}
         />

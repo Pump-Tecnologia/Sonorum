@@ -18,43 +18,49 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          description: string | null
           due_date: string
           early_pay_amount: number | null
-          enrollment_id: string
+          enrollment_id: string | null
           id: string
           paid_amount: number | null
           paid_at: string | null
           payment_method: string | null
           school_id: string | null
           status: string
+          student_id: string | null
           updated_at: string
         }
         Insert: {
           amount: number
           created_at?: string
+          description?: string | null
           due_date: string
           early_pay_amount?: number | null
-          enrollment_id: string
+          enrollment_id?: string | null
           id?: string
           paid_amount?: number | null
           paid_at?: string | null
           payment_method?: string | null
           school_id?: string | null
           status?: string
+          student_id?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
           created_at?: string
+          description?: string | null
           due_date?: string
           early_pay_amount?: number | null
-          enrollment_id?: string
+          enrollment_id?: string | null
           id?: string
           paid_amount?: number | null
           paid_at?: string | null
           payment_method?: string | null
           school_id?: string | null
           status?: string
+          student_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -836,6 +842,9 @@ export type Database = {
           logo_path: string | null
           monthly_price: number
           name: string
+          pix_city: string | null
+          pix_key: string | null
+          pix_key_type: string | null
           plan_type: string
           slug: string
           student_limit: number
@@ -853,6 +862,9 @@ export type Database = {
           logo_path?: string | null
           monthly_price?: number
           name: string
+          pix_city?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
           plan_type?: string
           slug: string
           student_limit?: number
@@ -870,6 +882,9 @@ export type Database = {
           logo_path?: string | null
           monthly_price?: number
           name?: string
+          pix_city?: string | null
+          pix_key?: string | null
+          pix_key_type?: string | null
           plan_type?: string
           slug?: string
           student_limit?: number

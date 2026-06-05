@@ -18,7 +18,18 @@ interface SchoolData {
   logoUrl: string | null
   planType: string
   studentLimit: number
+  pixKey: string | null
+  pixKeyType: string | null
+  pixCity: string | null
 }
+
+const PIX_KEY_TYPES = [
+  { value: 'cpf', label: 'CPF' },
+  { value: 'cnpj', label: 'CNPJ' },
+  { value: 'email', label: 'E-mail' },
+  { value: 'phone', label: 'Celular' },
+  { value: 'random', label: 'Chave aleatória' },
+]
 
 const initial: SettingsActionState = { ok: false }
 
@@ -146,6 +157,46 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
               </p>
             </div>
           )}
+
+          {/* Chave PIX — disponível em todos os planos (cobrança avulsa) */}
+          <div className="space-y-4 rounded-xl border border-hairline bg-surface-muted/30 p-4">
+            <div>
+              <p className="text-sm font-semibold text-ink">Recebimento PIX</p>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                Sua chave PIX é usada para gerar a cobrança dos alunos. O pagamento cai direto na sua conta — o Sonorum não intermedia.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
+              <Field label="Chave PIX" htmlFor="pixKey" error={fe.pixKey}>
+                <Input
+                  id="pixKey"
+                  name="pixKey"
+                  defaultValue={school.pixKey ?? ''}
+                  placeholder="email, CPF/CNPJ, celular ou chave aleatória"
+                />
+              </Field>
+              <Field label="Tipo da chave" htmlFor="pixKeyType" error={fe.pixKeyType}>
+                <select
+                  id="pixKeyType"
+                  name="pixKeyType"
+                  defaultValue={school.pixKeyType ?? ''}
+                  className="w-full rounded-lg border border-hairline bg-surface px-3 py-2 text-sm"
+                >
+                  <option value="">—</option>
+                  {PIX_KEY_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+            <Field
+              label="Cidade do recebedor (aparece no comprovante PIX)"
+              htmlFor="pixCity"
+              error={fe.pixCity}
+            >
+              <Input id="pixCity" name="pixCity" defaultValue={school.pixCity ?? ''} placeholder="Ex.: São Paulo" />
+            </Field>
+          </div>
 
           <SubmitButton pendingLabel="Salvando…">Salvar configurações</SubmitButton>
         </form>
