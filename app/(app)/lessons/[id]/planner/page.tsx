@@ -9,8 +9,11 @@ import { ResourcePicker } from '@/components/schedule/ResourcePicker'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
+import { WhatsAppNotifyButton } from '@/components/notifications/WhatsAppNotifyButton'
 import { cancelLessonSeries, detachResource, markAttendance, updateLesson, upsertLessonPlan } from '@/lib/actions/lessons'
+import { sendLessonReport } from '@/lib/actions/notifications'
 import { lessonStatus } from '@/lib/constants/lessons'
+import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
@@ -56,6 +59,7 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const supabase = await createClient()
   const me = await getCurrentUser()
+  const { features } = await getPlanContext()
 
   const { data: lesson } = await supabase
     .from('lessons')
@@ -326,6 +330,24 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
 
           <button type="submit" className={PRIMARY_BTN}>Salvar relatório</button>
         </form>
+
+        {/* Envio do relatório ao aluno (Relatórios — planos pagos) */}
+        {features.reports && (
+          <div className="mt-4 border-t border-hairline pt-4">
+            {report ? (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-ink-muted">Enviar este relatório ao aluno por e-mail/WhatsApp.</p>
+                <WhatsAppNotifyButton
+                  action={sendLessonReport}
+                  hidden={{ lessonId: lesson.id }}
+                  label="Enviar ao aluno"
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-ink-muted">Salve o relatório acima para poder enviá-lo ao aluno.</p>
+            )}
+          </div>
+        )}
       </Card>
 
       <Card>

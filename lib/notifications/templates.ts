@@ -111,6 +111,17 @@ export const TEMPLATES: Record<NotificationEvent, Template> = {
     whatsapp: (p) => `${greeting(p)}\n\n🔄 Aula remarcada:\nDe: ${v(p.oldWhen)}\nPara: *${v(p.when)}*${p.room ? `\nSala: ${v(p.room)}` : ''}`,
   },
 
+  'lesson.report': {
+    subject: (p) => `Relatório da aula${p.lessonDate ? ` · ${v(p.lessonDate)}` : ''}`,
+    email: (p) => {
+      const skills = `Técnica ${v(p.technique, '–')}/5 · Teoria ${v(p.theory, '–')}/5 · Repertório ${v(p.repertoire, '–')}/5 · Prática ${v(p.practice, '–')}/5`
+      const text = `${greeting(p)}\n\nRelatório da aula${p.lessonTitle ? ` "${v(p.lessonTitle)}"` : ''}${p.lessonDate ? ` de ${v(p.lessonDate)}` : ''}:\n• Avaliação: ${skills}${p.currentSong ? `\n• Música: ${v(p.currentSong)}` : ''}${p.bpm ? `\n• BPM: ${v(p.bpm)}` : ''}${p.notes ? `\n\nObservações: ${v(p.notes)}` : ''}\n\n${sig(p)}`
+      const html = htmlWrap(p, `<p>${greeting(p)}</p><p>Segue o relatório da sua aula${p.lessonTitle ? ` <strong>${v(p.lessonTitle)}</strong>` : ''}${p.lessonDate ? ` de <strong>${v(p.lessonDate)}</strong>` : ''}:</p><ul><li>Técnica: <strong>${v(p.technique, '–')}/5</strong></li><li>Teoria: <strong>${v(p.theory, '–')}/5</strong></li><li>Repertório: <strong>${v(p.repertoire, '–')}/5</strong></li><li>Prática: <strong>${v(p.practice, '–')}/5</strong></li>${p.currentSong ? `<li>Música atual: ${v(p.currentSong)}</li>` : ''}${p.bpm ? `<li>BPM: ${v(p.bpm)}</li>` : ''}</ul>${p.notes ? `<p style="margin-top:12px"><strong>Observações:</strong> ${v(p.notes)}</p>` : ''}`)
+      return { html, text }
+    },
+    whatsapp: (p) => `${greeting(p)} 🎵\n\n*Relatório da aula*${p.lessonDate ? ` (${v(p.lessonDate)})` : ''}:\n• Técnica ${v(p.technique, '–')}/5 · Teoria ${v(p.theory, '–')}/5\n• Repertório ${v(p.repertoire, '–')}/5 · Prática ${v(p.practice, '–')}/5${p.currentSong ? `\n• Música: ${v(p.currentSong)}` : ''}${p.bpm ? `\n• BPM: ${v(p.bpm)}` : ''}${p.notes ? `\n\n${v(p.notes)}` : ''}\n\n${sig(p)}`,
+  },
+
   'progress.monthly_report': {
     subject: (p) => `Seu progresso em ${v(p.monthLabel)}`,
     email: (p) => ({

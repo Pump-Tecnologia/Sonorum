@@ -111,6 +111,55 @@ export async function notifyCharge(
   return { ok: true, whatsappLinks: result.whatsapp.links }
 }
 
+// Envia ao aluno o RELATÓRIO DA AULA (notas por habilidade, música, BPM,
+// observações). Recurso de Relatórios — exclusivo dos planos com a feature.
+export async function sendLessonReport(
+  _prev: NotifyActionState,
+  formData: FormData,
+): Promise<NotifyActionState> {
+  const me = await requireStaff()
+  if (!me) return { ok: false, error: 'Acesso negado.' }
+
+  const { getPlanContext } = await import('@/lib/auth/plan')
+  const { features } = await getPlanContext()
+  if (!features.reports) return { ok: false, error: 'Envio de relatórios disponível em planos pagos.' }
+
+  const lessonId = String(formData.get('lessonId') ?? '')
+  if (!lessonId) return { ok: false, error: 'Aula inválida.' }
+
+  const admin = await createAdminClient()
+  const { data: lesson } = await admin
+    .from('lessons')
+    .select('id, title, start_datetime, notes, student_id, school_id, report:lesson_reports(technique_score, theory_score, repertoire_score, practice_score, current_song, initial_bpm, reached_bpm)')
+    .eq('id', lessonId)
+    .maybeSingle()
+
+  if (!lesson || lesson.school_id !== me.schoolId) return { ok: false, error: 'Aula não encontrada.' }
+  const report = (Array.isArray(lesson.report) ? lesson.report[0] : lesson.report) as
+    | { technique_score: number; theory_score: number; repertoire_score: number; practice_score: number; current_song: string | null; initial_bpm: number | null; reached_bpm: number | null }
+    | null
+  if (!report) return { ok: false, error: 'Preencha o relatório da aula antes de enviar.' }
+
+  const lessonDate = new Date(lesson.start_datetime).toLocaleDateString('pt-BR')
+  const bpm = report.initial_bpm && report.reached_bpm ? `${report.initial_bpm} → ${report.reached_bpm}` : null
+
+  const result = await notify('lesson.report', lesson.student_id, {
+    lessonTitle: lesson.title,
+    lessonDate,
+    technique: report.technique_score,
+    theory: report.theory_score,
+    repertoire: report.repertoire_score,
+    practice: report.practice_score,
+    currentSong: report.current_song,
+    bpm,
+    notes: lesson.notes ?? null,
+  }, { relatedId: lessonId })
+
+  revalidatePath(`/lessons/${lessonId}/planner`)
+  revalidatePath('/admin/reports')
+  return { ok: true, whatsappLinks: result.whatsapp.links }
+}
+
 const LESSON_EVENTS = new Set<NotificationEvent>(['lesson.scheduled', 'lesson.tomorrow', 'lesson.canceled', 'lesson.rescheduled'])
 
 // Manda lembrete/aviso de uma aula específica.

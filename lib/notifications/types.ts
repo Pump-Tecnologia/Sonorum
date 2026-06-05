@@ -8,6 +8,7 @@ export const NOTIFICATION_EVENTS = [
   'lesson.tomorrow',
   'lesson.canceled',
   'lesson.rescheduled',
+  'lesson.report',
   'progress.monthly_report',
 ] as const
 

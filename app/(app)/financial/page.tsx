@@ -41,7 +41,7 @@ export default async function FinancialPage({
 
   const supabase = await createClient()
 
-  const [{ data: school }, { data: studentRows }, { data: enrollRows }, { data: chargeRows }] = await Promise.all([
+  const [{ data: school }, { data: studentRows }, { data: enrollRows }, { data: chargeRows }, { data: openRows }] = await Promise.all([
     supabase.from('schools').select('pix_key').eq('id', schoolId).maybeSingle(),
     supabase.from('users').select('id, name, phone').eq('school_id', schoolId).eq('role', 'student').order('name'),
     supabase
@@ -55,6 +55,12 @@ export default async function FinancialPage({
       .gte('due_date', range.start)
       .lte('due_date', range.end)
       .order('due_date'),
+    // Inadimplência GLOBAL: tudo em aberto (não pago), sem filtro de período.
+    supabase
+      .from('charges')
+      .select('amount, due_date, status, student_id, enrollment:enrollments(student_id)')
+      .eq('school_id', schoolId)
+      .in('status', ['pending', 'overdue']),
   ])
 
   const hasPix = Boolean(school?.pix_key)
@@ -92,6 +98,24 @@ export default async function FinancialPage({
     else if (eff === 'overdue') overdue += amt
     else if (eff === 'pending') pending += amt
   }
+
+  // Inadimplência global: agrupa cobranças vencidas (todos os meses) por aluno.
+  type OpenRow = { amount: number; due_date: string; status: string; student_id: string | null; enrollment: { student_id: string | null } | null }
+  type Debtor = { id: string; name: string; total: number; count: number; oldest: string }
+  const debtorsMap = new Map<string, Debtor>()
+  let overdueTotal = 0
+  for (const c of (openRows ?? []) as unknown as OpenRow[]) {
+    if (effectiveChargeStatus(c.status, c.due_date, today) !== 'overdue') continue
+    const sid = c.student_id ?? c.enrollment?.student_id ?? null
+    if (!sid) continue
+    overdueTotal += Number(c.amount)
+    const d = debtorsMap.get(sid) ?? { id: sid, name: studentName.get(sid) ?? '—', total: 0, count: 0, oldest: c.due_date }
+    d.total += Number(c.amount)
+    d.count++
+    if (c.due_date < d.oldest) d.oldest = c.due_date
+    debtorsMap.set(sid, d)
+  }
+  const debtors = [...debtorsMap.values()].sort((a, b) => b.total - a.total)
 
   const dueDefault = `${month}-${String(Math.min(10, new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate())).padStart(2, '0')}`
 
@@ -222,6 +246,38 @@ export default async function FinancialPage({
           })}
         </tbody>
       </Table>
+
+      <section className="mt-10">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-base font-semibold text-ink">
+            Inadimplência <span className="text-sm font-normal text-ink-muted">(em aberto, todos os meses)</span>
+          </h2>
+          <span className="text-sm font-bold text-red-600"><MoneyValue value={overdueTotal} /></span>
+        </div>
+        <Table>
+          <Thead>
+            <Tr>
+              <Th>Aluno</Th>
+              <Th>Cobranças vencidas</Th>
+              <Th>Mais antiga</Th>
+              <Th className="text-right">Total devido</Th>
+            </Tr>
+          </Thead>
+          <tbody>
+            {debtors.length === 0 && <EmptyRow colSpan={4}>Nenhum aluno em atraso. 🎉</EmptyRow>}
+            {debtors.map((d) => (
+              <Tr key={d.id}>
+                <Td className="font-medium">
+                  <Link href={`/admin/students/${d.id}`} className="text-brand-700 hover:underline">{d.name}</Link>
+                </Td>
+                <Td>{d.count}</Td>
+                <Td className="text-ink-muted">{new Date(d.oldest + 'T12:00:00').toLocaleDateString('pt-BR')}</Td>
+                <Td className="text-right font-semibold text-red-600"><MoneyValue value={d.total} /></Td>
+              </Tr>
+            ))}
+          </tbody>
+        </Table>
+      </section>
     </>
   )
 }
