@@ -15,13 +15,21 @@ const initial: ActionState = { ok: false }
 export function RegisterForm() {
   const [state, action] = useActionState(signUp, initial)
   const fe = state.fieldErrors ?? {}
-  // Preserva o destino pós-cadastro (ex.: checkout do plano escolhido na landing).
-  const nextParam = useSearchParams().get('next')
+  const params = useSearchParams()
+  // Plano escolhido na landing → após o cadastro, cai no checkout dele.
+  const plan = params.get('plan')
+  // Destino interno alternativo (quando não há plano).
+  const nextParam = params.get('next')
   const next = nextParam && nextParam.startsWith('/') ? nextParam : null
-  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : '/login'
+  const loginHref = next
+    ? `/login?next=${encodeURIComponent(next)}`
+    : plan
+      ? `/login?next=${encodeURIComponent(`/upgrade?plan=${plan}`)}`
+      : '/login'
 
   return (
     <form action={action} className={styles.form}>
+      {plan && <input type="hidden" name="plan" value={plan} />}
       {next && <input type="hidden" name="next" value={next} />}
       {state.error && <p className={styles.alert}>{state.error}</p>}
 
@@ -71,7 +79,9 @@ export function RegisterForm() {
         />
       </AuthField>
 
-      <AuthSubmit pendingLabel="Criando…">Criar conta grátis</AuthSubmit>
+      <AuthSubmit pendingLabel={plan ? 'Indo para o pagamento…' : 'Criando…'}>
+        {plan ? 'Criar conta e ir ao pagamento' : 'Criar conta grátis'}
+      </AuthSubmit>
 
       <p className={styles.footerLine}>
         Já tem conta? <Link href={loginHref}>Entrar</Link>

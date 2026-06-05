@@ -3,10 +3,10 @@ import Link from 'next/link'
 import { IconArrow, IconCheck } from '@/components/marketing/icons'
 import styles from '@/components/marketing/marketing.module.css'
 
-// Leva o visitante ao cadastro já com o plano escolhido; após criar a conta,
-// cai direto no checkout do plano (/upgrade?plan=...).
+// Leva ao cadastro já com o plano escolhido; ao criar a conta, vai direto pro
+// pagamento (checkout do plano), sem passar por tela de planos de novo.
 function subscribeLink(plan: 'professional' | 'premium'): string {
-  return `/register?next=${encodeURIComponent(`/upgrade?plan=${plan}`)}`
+  return `/register?plan=${plan}`
 }
 
 export function Pricing() {

@@ -71,13 +71,10 @@ export async function startSaasCheckout(
   }
 }
 
-// Assinatura recorrente HOSPEDADA do plano escolhido (preapproval sem cartão →
-// init_point → escola cadastra o cartão 1x → cobra sozinho). Sem homologação.
-export async function startSaasSubscriptionCheckout(
-  _prev: CheckoutActionState,
-  formData: FormData,
-): Promise<CheckoutActionState> {
-  const r = await resolvePlan(String(formData.get('planType') ?? ''))
+// Núcleo do checkout de assinatura hospedada para o admin logado + plano dado.
+// Reusado pela action do /upgrade E pelo cadastro com plano (funil da landing).
+export async function subscriptionCheckout(planTypeRaw: string): Promise<CheckoutActionState> {
+  const r = await resolvePlan(planTypeRaw)
   if ('error' in r) return { ok: false, error: r.error }
   const { me, admin, school, planType, amount } = r
 
@@ -104,6 +101,14 @@ export async function startSaasSubscriptionCheckout(
     // Surfaça a causa real (admin-only) — ajuda a ver erros do gateway (ex.: back_url inválida no localhost).
     return { ok: false, error: e instanceof Error ? e.message : 'Falha ao iniciar a assinatura.' }
   }
+}
+
+// Action do /upgrade (form) — delega ao núcleo.
+export async function startSaasSubscriptionCheckout(
+  _prev: CheckoutActionState,
+  formData: FormData,
+): Promise<CheckoutActionState> {
+  return subscriptionCheckout(String(formData.get('planType') ?? ''))
 }
 
 // Assinatura recorrente TRANSPARENTE (Bricks): token do cartão vem do cliente,
