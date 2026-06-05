@@ -7,13 +7,18 @@ export type {
   SubscriptionRequest, SubscriptionResult, ProviderSubscription, SubscriptionStatus,
 } from '@/lib/payments/types'
 
-// Escolhe o provider: se há MP_ACCESS_TOKEN (e o provider não foi forçado pra
-// mock), usa Mercado Pago real; senão cai no mock (dev sem credencial).
+// Escolhe o provider: com MP_ACCESS_TOKEN → Mercado Pago real; sem token → mock,
+// MAS o mock é PROIBIDO em produção (senão "pagamento" fake ativaria planos de
+// graça). Em produção sem token, lança erro — o checkout falha de forma segura.
 export function getPaymentProvider(): PaymentProvider {
   const forced = process.env.PAYMENTS_PROVIDER
   const token = process.env.MP_ACCESS_TOKEN
-  if (forced === 'mock') return mockPaymentProvider()
-  if (token) return mercadoPagoProvider(token)
+  if (token && forced !== 'mock') return mercadoPagoProvider(token)
+
+  const isProd = process.env.VERCEL_ENV === 'production'
+  if (isProd && forced !== 'mock') {
+    throw new Error('Pagamento indisponível: gateway não configurado em produção.')
+  }
   return mockPaymentProvider()
 }
 
