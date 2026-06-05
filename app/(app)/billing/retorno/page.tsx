@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { Card } from '@/components/ui/Card'
-import { reconcilePayment } from '@/lib/payments/reconcile'
+import { reconcilePayment, reconcileSubscription } from '@/lib/payments/reconcile'
 
 export const metadata = { title: 'Pagamento' }
 
@@ -15,14 +15,14 @@ const MESSAGES: Record<string, { title: string; body: string; tone: string }> = 
 export default async function BillingReturnPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; mock_payment_id?: string }>
+  searchParams: Promise<{ status?: string; mock_payment_id?: string; preapproval_id?: string }>
 }) {
   const sp = await searchParams
-  // Fluxo de DEV (provider mock): não há webhook, então conciliamos aqui.
-  if (sp.mock_payment_id) {
-    await reconcilePayment(sp.mock_payment_id)
-  }
-  const status = sp.status ?? (sp.mock_payment_id ? 'sucesso' : 'pendente')
+  // Concilia ao retornar — útil em DEV (webhook não alcança localhost) e como
+  // reforço ao webhook. Idempotente.
+  if (sp.mock_payment_id) await reconcilePayment(sp.mock_payment_id)
+  if (sp.preapproval_id) await reconcileSubscription(sp.preapproval_id)
+  const status = sp.status ?? (sp.mock_payment_id || sp.preapproval_id ? 'sucesso' : 'pendente')
   const m = MESSAGES[status] ?? MESSAGES.pendente!
 
   return (
