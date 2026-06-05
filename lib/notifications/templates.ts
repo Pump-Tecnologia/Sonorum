@@ -14,6 +14,14 @@ const money = (x: unknown): string => `R$ ${Number(x ?? 0).toFixed(2).replace('.
 const greeting = (p: NotificationPayload) => `Olá, ${v(p.recipientName ?? p.studentName, 'tudo bem?')}`
 const sig = (p: NotificationPayload) => `${v(p.schoolName, 'Sua escola')}\n(esta mensagem foi enviada pelo Sonorum)`
 
+// CTA de pagamento PIX — renderizado só quando a cobrança tem link (payUrl).
+const payButton = (p: NotificationPayload): string =>
+  p.payUrl
+    ? `<div style="margin:20px 0"><a href="${v(p.payUrl)}" style="display:inline-block;background:#63C08F;color:#fff;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:10px">Pagar com PIX</a></div>`
+    : ''
+const payLineText = (p: NotificationPayload): string => (p.payUrl ? `\n💳 Pague com PIX: ${v(p.payUrl)}\n` : '')
+const payLineWa = (p: NotificationPayload): string => (p.payUrl ? `\n\n💳 *Pague com PIX:*\n${v(p.payUrl)}` : '')
+
 // Wrapper HTML mínimo (logo da escola entra se Premium → branding nativo).
 function htmlWrap(p: NotificationPayload, inner: string): string {
   const brand = v(p.brandPrimary, '#2B4C79')
@@ -31,31 +39,31 @@ function htmlWrap(p: NotificationPayload, inner: string): string {
 
 export const TEMPLATES: Record<NotificationEvent, Template> = {
   'charge.created': {
-    subject: (p) => `Nova mensalidade ${money(p.amount)} · vence ${v(p.dueDate)}`,
+    subject: (p) => `Nova cobrança ${money(p.amount)} · vence ${v(p.dueDate)}`,
     email: (p) => {
-      const text = `${greeting(p)}\n\nUma nova mensalidade foi gerada:\n• Valor: ${money(p.amount)}\n• Vencimento: ${v(p.dueDate)}\n• Plano: ${v(p.planName)}\n\n${sig(p)}`
-      const html = htmlWrap(p, `<p>${greeting(p)}</p><p>Uma nova mensalidade foi gerada na <strong>${v(p.schoolName)}</strong>:</p><ul><li>Valor: <strong>${money(p.amount)}</strong></li><li>Vencimento: <strong>${v(p.dueDate)}</strong></li>${p.planName ? `<li>Plano: ${v(p.planName)}</li>` : ''}</ul>`)
+      const text = `${greeting(p)}\n\nUma nova cobrança foi gerada:\n• Valor: ${money(p.amount)}\n• Vencimento: ${v(p.dueDate)}${p.planName ? `\n• Referente a: ${v(p.planName)}` : ''}\n${payLineText(p)}\n${sig(p)}`
+      const html = htmlWrap(p, `<p>${greeting(p)}</p><p>Uma nova cobrança foi gerada na <strong>${v(p.schoolName)}</strong>:</p><ul><li>Valor: <strong>${money(p.amount)}</strong></li><li>Vencimento: <strong>${v(p.dueDate)}</strong></li>${p.planName ? `<li>Referente a: ${v(p.planName)}</li>` : ''}</ul>${payButton(p)}`)
       return { html, text }
     },
-    whatsapp: (p) => `${greeting(p)}\n\n*Nova mensalidade* da ${v(p.schoolName)}:\n💰 Valor: ${money(p.amount)}\n📅 Vencimento: ${v(p.dueDate)}\n\n${sig(p)}`,
+    whatsapp: (p) => `${greeting(p)}\n\n*Nova cobrança* da ${v(p.schoolName)}:\n💰 Valor: ${money(p.amount)}\n📅 Vencimento: ${v(p.dueDate)}${payLineWa(p)}\n\n${sig(p)}`,
   },
 
   'charge.due_soon': {
-    subject: (p) => `Lembrete: mensalidade ${money(p.amount)} vence em ${v(p.daysLeft)} dia(s)`,
+    subject: (p) => `Lembrete: cobrança ${money(p.amount)} vence em ${v(p.daysLeft)} dia(s)`,
     email: (p) => {
-      const text = `${greeting(p)}\n\nSua mensalidade vence em ${v(p.daysLeft)} dia(s):\n• Valor: ${money(p.amount)}\n• Vencimento: ${v(p.dueDate)}\n\n${sig(p)}`
-      return { text, html: htmlWrap(p, `<p>${greeting(p)}</p><p>Lembrete amigável: sua mensalidade vence em <strong>${v(p.daysLeft)} dia(s)</strong>.</p><ul><li>Valor: <strong>${money(p.amount)}</strong></li><li>Vencimento: <strong>${v(p.dueDate)}</strong></li></ul>`) }
+      const text = `${greeting(p)}\n\nSua cobrança vence em ${v(p.daysLeft)} dia(s):\n• Valor: ${money(p.amount)}\n• Vencimento: ${v(p.dueDate)}${payLineText(p)}\n${sig(p)}`
+      return { text, html: htmlWrap(p, `<p>${greeting(p)}</p><p>Lembrete amigável: sua cobrança vence em <strong>${v(p.daysLeft)} dia(s)</strong>.</p><ul><li>Valor: <strong>${money(p.amount)}</strong></li><li>Vencimento: <strong>${v(p.dueDate)}</strong></li></ul>${payButton(p)}`) }
     },
-    whatsapp: (p) => `${greeting(p)} 👋\n\nLembrete: sua mensalidade na ${v(p.schoolName)} vence em *${v(p.daysLeft)} dia(s)*.\n💰 ${money(p.amount)}\n📅 ${v(p.dueDate)}`,
+    whatsapp: (p) => `${greeting(p)} 👋\n\nLembrete: sua cobrança na ${v(p.schoolName)} vence em *${v(p.daysLeft)} dia(s)*.\n💰 ${money(p.amount)}\n📅 ${v(p.dueDate)}${payLineWa(p)}`,
   },
 
   'charge.overdue': {
-    subject: (p) => `Mensalidade vencida · ${money(p.amount)}`,
+    subject: (p) => `Cobrança vencida · ${money(p.amount)}`,
     email: (p) => {
-      const text = `${greeting(p)}\n\nIdentificamos que a mensalidade abaixo está vencida:\n• Valor: ${money(p.amount)}\n• Vencimento: ${v(p.dueDate)}\n\nPor favor entre em contato com a ${v(p.schoolName)} para regularizar.\n\n${sig(p)}`
-      return { text, html: htmlWrap(p, `<p>${greeting(p)}</p><p>Identificamos que a mensalidade abaixo está <strong style="color:#DC2626">vencida</strong>:</p><ul><li>Valor: <strong>${money(p.amount)}</strong></li><li>Vencimento: <strong>${v(p.dueDate)}</strong></li></ul><p>Por favor entre em contato com a ${v(p.schoolName)} para regularizar.</p>`) }
+      const text = `${greeting(p)}\n\nIdentificamos que a cobrança abaixo está vencida:\n• Valor: ${money(p.amount)}\n• Vencimento: ${v(p.dueDate)}${payLineText(p)}\nSe já pagou, desconsidere. Em caso de dúvida, fale com a ${v(p.schoolName)}.\n\n${sig(p)}`
+      return { text, html: htmlWrap(p, `<p>${greeting(p)}</p><p>Identificamos que a cobrança abaixo está <strong style="color:#DC2626">vencida</strong>:</p><ul><li>Valor: <strong>${money(p.amount)}</strong></li><li>Vencimento: <strong>${v(p.dueDate)}</strong></li></ul>${payButton(p)}<p style="color:#6B7480">Se já pagou, desconsidere. Em caso de dúvida, fale com a ${v(p.schoolName)}.</p>`) }
     },
-    whatsapp: (p) => `${greeting(p)}\n\n⚠️ Sua mensalidade na ${v(p.schoolName)} está *vencida*:\n💰 ${money(p.amount)} · 📅 ${v(p.dueDate)}\n\nEntre em contato pra regularizar.`,
+    whatsapp: (p) => `${greeting(p)}\n\n⚠️ Sua cobrança na ${v(p.schoolName)} está *vencida*:\n💰 ${money(p.amount)} · 📅 ${v(p.dueDate)}${payLineWa(p)}`,
   },
 
   'charge.paid': {

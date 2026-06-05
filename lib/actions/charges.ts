@@ -8,6 +8,7 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { getPlanContext } from '@/lib/auth/plan'
 import { notify } from '@/lib/notifications/notify'
 import { amountForPayment } from '@/lib/finance'
+import { appBaseUrl } from '@/lib/payments'
 
 // Status de aula que contam como "aula dada" para planos por-aula.
 const ATTENDED_STATUSES = ['completed', 'late']
@@ -87,6 +88,7 @@ export async function createAdHocCharge(
     amount,
     dueDate: new Date(dueDate + 'T12:00:00').toLocaleDateString('pt-BR'),
     planName: description || null,
+    payUrl: `${appBaseUrl()}/pagar/${inserted.id}`,
   }, { relatedId: inserted.id }).catch(() => {})
 
   revalidatePath('/cobrancas')
@@ -269,6 +271,7 @@ export async function generateMonthlyCharges(formData: FormData) {
         amount: Number(c.amount),
         dueDate: new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR'),
         planName: enr.plan?.name ?? null,
+        payUrl: `${appBaseUrl()}/pagar/${c.id}`,
       }, { relatedId: c.id })
     }))
   }

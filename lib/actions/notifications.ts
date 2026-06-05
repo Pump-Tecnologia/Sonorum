@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { notify } from '@/lib/notifications/notify'
 import type { NotificationEvent } from '@/lib/notifications/types'
 import { getStudentProgress } from '@/lib/data/progress'
+import { appBaseUrl } from '@/lib/payments'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export type NotifyActionState = {
@@ -84,24 +85,29 @@ export async function notifyCharge(
   const admin = await createAdminClient()
   const { data: charge } = await admin
     .from('charges')
-    .select('id, amount, due_date, payment_method, enrollment:enrollments(student_id, plan:plans(name))')
+    .select('id, amount, due_date, payment_method, description, student_id, enrollment:enrollments(student_id, plan:plans(name))')
     .eq('id', chargeId)
     .maybeSingle()
 
   const enr = charge?.enrollment as { student_id: string; plan: { name: string } | null } | null
-  if (!charge || !enr) return { ok: false, error: 'Cobrança não encontrada.' }
+  // Resolve o aluno via matrícula (plano) ou direto (cobrança avulsa).
+  const studentId = enr?.student_id ?? charge?.student_id ?? null
+  if (!charge || !studentId) return { ok: false, error: 'Cobrança não encontrada.' }
 
   const dueDate = new Date(charge.due_date + 'T12:00:00')
   const today = new Date()
   const daysLeft = Math.ceil((dueDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000))
 
-  const result = await notify(kind, enr.student_id, {
+  const result = await notify(kind, studentId, {
     amount: Number(charge.amount),
     dueDate: dueDate.toLocaleDateString('pt-BR'),
     daysLeft,
-    planName: enr.plan?.name ?? null,
+    planName: enr?.plan?.name ?? charge.description ?? null,
     paymentMethod: charge.payment_method,
+    payUrl: `${appBaseUrl()}/pagar/${chargeId}`,
   }, { relatedId: chargeId })
+
+  revalidatePath('/cobrancas')
 
   revalidatePath('/financial')
   return { ok: true, whatsappLinks: result.whatsapp.links }
