@@ -67,6 +67,8 @@ export async function enrollStudent(
   if (error) return { ok: false, error: 'Não foi possível criar a matrícula.' }
 
   revalidatePath(`/admin/students/${d.studentId}`)
+  revalidatePath('/plans')
+  revalidatePath('/financial')
   return { ok: true }
 }
 

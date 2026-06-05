@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
@@ -15,34 +14,51 @@ export default async function PlansPage() {
   await requireFeature('financial')
   const user = await getCurrentUser()
   if (!user?.schoolId) redirect('/admin')
+  const schoolId = user.schoolId
 
   const supabase = await createClient()
-  const { data: plans } = await supabase
-    .from('plans')
-    .select('id, name, description, amount, billing_type, early_pay_amount, min_age, max_age, active')
-    .order('active', { ascending: false })
-    .order('amount')
+  const [{ data: plans }, { data: students }, { data: enrolls }] = await Promise.all([
+    supabase
+      .from('plans')
+      .select('id, name, description, amount, billing_type, early_pay_amount, min_age, max_age, active')
+      .order('active', { ascending: false })
+      .order('amount'),
+    supabase.from('users').select('id, name').eq('school_id', schoolId).eq('role', 'student').order('name'),
+    supabase.from('enrollments').select('plan_id').eq('school_id', schoolId).eq('status', 'active'),
+  ])
+
+  // Quantos alunos ativos em cada plano (conecta plano → matrícula).
+  const counts: Record<string, number> = {}
+  for (const e of (enrolls ?? []) as { plan_id: string }[]) {
+    counts[e.plan_id] = (counts[e.plan_id] ?? 0) + 1
+  }
 
   return (
     <>
-      <PageHeader title="Planos de mensalidade" />
+      <PageHeader
+        title="Planos de mensalidade"
+        subtitle="Crie planos, matricule alunos e cobre no Financeiro"
+      />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
         <div>
           <h2 className="mb-4 text-base font-semibold text-ink">Planos cadastrados</h2>
-          <PlansList plans={(plans ?? []) as Plan[]} />
+          <PlansList
+            plans={(plans ?? []) as Plan[]}
+            counts={counts}
+            students={(students ?? []) as { id: string; name: string }[]}
+          />
         </div>
 
         <Card className="h-fit">
-          <h2 className="mb-4 text-base font-semibold text-ink">Novo plano</h2>
+          <h2 className="mb-1 text-base font-semibold text-ink">Novo plano</h2>
+          <p className="mb-4 text-xs text-ink-muted">
+            Mensalidade = valor fixo no mês. Por aula = preço × aulas realizadas. O desconto de
+            pontualidade vale se o aluno paga até o vencimento.
+          </p>
           <CreatePlanForm />
         </Card>
       </div>
-
-      <p className="mt-6 text-sm text-ink-muted">
-        Para matricular um aluno em um plano, acesse o{' '}
-        <Link href="/admin/students" className="font-medium text-brand-600 hover:underline">perfil do aluno</Link>.
-      </p>
     </>
   )
 }
