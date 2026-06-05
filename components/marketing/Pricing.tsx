@@ -3,10 +3,10 @@ import Link from 'next/link'
 import { IconArrow, IconCheck } from '@/components/marketing/icons'
 import styles from '@/components/marketing/marketing.module.css'
 
-function waLink(plan: string): string {
-  const number = process.env.NEXT_PUBLIC_WHATSAPP_SALES_NUMBER ?? ''
-  const message = encodeURIComponent(`Olá! Gostaria de contratar o plano ${plan} do Sonorum.`)
-  return `https://wa.me/${number}?text=${message}`
+// Leva ao cadastro já com o plano escolhido; ao criar a conta, vai direto pro
+// pagamento (checkout do plano), sem passar por tela de planos de novo.
+function subscribeLink(plan: 'professional' | 'premium'): string {
+  return `/register?plan=${plan}`
 }
 
 export function Pricing() {
@@ -65,10 +65,10 @@ export function Pricing() {
               <li><IconCheck /> Relatórios de desempenho</li>
               <li><IconCheck /> Repasse de professores</li>
             </ul>
-            <a href={waLink('Profissional')} target="_blank" rel="noopener noreferrer" className={`${styles.planCta} ${styles.planCtaPrimary}`}>
-              Falar no WhatsApp
+            <Link href={subscribeLink('professional')} className={`${styles.planCta} ${styles.planCtaPrimary}`}>
+              Assinar Profissional
               <IconArrow />
-            </a>
+            </Link>
           </div>
 
           {/* Premium */}
@@ -87,10 +87,10 @@ export function Pricing() {
               <li><IconCheck /> Suporte prioritário</li>
               <li><IconCheck /> Onboarding dedicado</li>
             </ul>
-            <a href={waLink('Premium')} target="_blank" rel="noopener noreferrer" className={`${styles.planCta} ${styles.planCtaGhost}`}>
-              Falar no WhatsApp
+            <Link href={subscribeLink('premium')} className={`${styles.planCta} ${styles.planCtaGhost}`}>
+              Assinar Premium
               <IconArrow />
-            </a>
+            </Link>
           </div>
         </div>
       </div>

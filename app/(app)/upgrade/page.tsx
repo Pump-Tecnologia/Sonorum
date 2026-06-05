@@ -1,53 +1,85 @@
 import { PageHeader } from '@/components/app/PageHeader'
-import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
+import { CheckoutButton } from '@/components/billing/CheckoutButton'
+import { startSaasCheckout, startSaasSubscriptionCheckout } from '@/lib/actions/billing'
 import { getPlanContext } from '@/lib/auth/plan'
-import { PLAN_FEATURES } from '@/lib/constants/plans'
+import { getCurrentUser } from '@/lib/auth/session'
+import { PLAN_FEATURES, SELLABLE_PLANS, planPrice } from '@/lib/constants/plans'
+import { formatBRL } from '@/lib/format'
+import { createClient } from '@/lib/supabase/server'
 
-export const metadata = { title: 'Fazer upgrade' }
+export const metadata = { title: 'Planos' }
 
-const PRO = PLAN_FEATURES.professional
+const FEATURE_LINES: Record<string, string[]> = {
+  professional: ['Alunos e professores ilimitados', 'Financeiro completo', 'Relatórios completos'],
+  premium: ['Tudo do Profissional', 'Transcrição de cifra por IA', 'Marca personalizada (logo e cores)'],
+}
 
 export default async function UpgradePage() {
-  const { planType } = await getPlanContext()
-  const number = process.env.NEXT_PUBLIC_WHATSAPP_SALES_NUMBER ?? ''
-  const message = encodeURIComponent(
-    'Olá! Quero fazer upgrade do meu plano no Sonorum para liberar alunos ilimitados, financeiro e relatórios.',
-  )
-  const waLink = number ? `https://wa.me/${number}?text=${message}` : '#'
+  const { planType, expirationDate } = await getPlanContext()
+  const me = await getCurrentUser()
+
+  let monthlyPrice = 0
+  if (me?.schoolId) {
+    const supabase = await createClient()
+    const { data: school } = await supabase.from('schools').select('monthly_price').eq('id', me.schoolId).maybeSingle()
+    monthlyPrice = Number(school?.monthly_price ?? 0)
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const active = expirationDate != null && expirationDate >= today
 
   return (
     <>
       <PageHeader
-        title="Desbloqueie todo o Sonorum"
-        subtitle={`Você está no plano ${planType === 'free' ? 'Essencial (grátis)' : planType}`}
+        title="Escolha seu plano"
+        subtitle={
+          planType === 'free'
+            ? 'Você está no plano Essencial (grátis)'
+            : `Plano atual: ${PLAN_FEATURES[planType as keyof typeof PLAN_FEATURES]?.label ?? planType}${expirationDate ? ` · ${active ? 'válido até' : 'venceu em'} ${new Date(expirationDate + 'T12:00:00').toLocaleDateString('pt-BR')}` : ''}`
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-brand-200 bg-brand-50/40">
-          <h2 className="text-lg font-semibold text-ink">Plano {PRO.label}</h2>
-          <ul className="mt-4 space-y-2 text-sm text-ink-muted">
-            <li>✓ Alunos ilimitados</li>
-            <li>✓ Professores ilimitados</li>
-            <li>✓ Financeiro (planos, matrículas e cobranças)</li>
-            <li>✓ Relatórios completos</li>
-          </ul>
-          <a href={waLink} target="_blank" rel="noopener noreferrer" className="mt-6 inline-block">
-            <Button>Falar com vendas no WhatsApp</Button>
-          </a>
-        </Card>
-
-        <Card>
-          <h2 className="text-lg font-semibold text-ink">Plano Essencial (atual)</h2>
-          <ul className="mt-4 space-y-2 text-sm text-ink-muted">
-            <li>• Até {PLAN_FEATURES.free.studentLimit} alunos</li>
-            <li>• Até {PLAN_FEATURES.free.teacherLimit} professor</li>
-            <li>• Agenda e materiais</li>
-            <li className="text-ink-muted/70">— Financeiro indisponível</li>
-            <li className="text-ink-muted/70">— Relatórios indisponíveis</li>
-          </ul>
-        </Card>
+        {SELLABLE_PLANS.map((plan) => {
+          const f = PLAN_FEATURES[plan]
+          const price = planPrice(plan, monthlyPrice)
+          const isCurrent = planType === plan && active
+          return (
+            <Card key={plan} className={isCurrent ? 'border-brand-300 bg-brand-50/40' : ''}>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold text-ink">{f.label}</h2>
+                {isCurrent && <Badge tone="success">Plano atual</Badge>}
+              </div>
+              <p className="mt-1 text-2xl font-bold text-brand-700">
+                {formatBRL(price)}<span className="text-sm font-normal text-ink-muted">/mês</span>
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-ink-muted">
+                {FEATURE_LINES[plan]?.map((line) => <li key={line}>✓ {line}</li>)}
+              </ul>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <CheckoutButton
+                  action={startSaasSubscriptionCheckout}
+                  planType={plan}
+                  label={isCurrent ? 'Renovar no cartão' : 'Assinar no cartão (cobra sozinho)'}
+                />
+                <CheckoutButton
+                  action={startSaasCheckout}
+                  planType={plan}
+                  label="Pagar 1 mês (Pix/boleto)"
+                  variant="outline"
+                />
+              </div>
+            </Card>
+          )
+        })}
       </div>
+
+      <p className="mt-6 text-sm text-ink-muted">
+        Assinando no cartão, a cobrança é mensal e automática — você cadastra o cartão uma vez no ambiente seguro do
+        Mercado Pago e o plano renova sozinho. Pode cancelar quando quiser.
+      </p>
     </>
   )
 }

@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
+import { subscriptionCheckout } from '@/lib/actions/billing'
+import { SELLABLE_PLANS } from '@/lib/constants/plans'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 import {
@@ -117,7 +119,18 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
   if (signInError) redirect('/login')
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+
+  // Veio da landing escolhendo um plano pago → dispara o checkout da assinatura
+  // (já logado) e manda direto pro pagamento no MP. Se falhar, cai no /upgrade.
+  const plan = String(formData.get('plan') || '')
+  if (SELLABLE_PLANS.includes(plan as (typeof SELLABLE_PLANS)[number])) {
+    const checkout = await subscriptionCheckout(plan)
+    redirect(checkout.ok && checkout.url ? checkout.url : `/upgrade?plan=${plan}`)
+  }
+
+  // Senão, respeita ?next (caminho interno) ou vai pro dashboard.
+  const next = String(formData.get('next') || '/dashboard')
+  redirect(next.startsWith('/') ? next : '/dashboard')
 }
 
 // ── Logout ──────────────────────────────────────────────────────────────────
