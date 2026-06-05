@@ -84,7 +84,11 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
           )}
 
           <Field
-            label="Nome exibido (deixe em branco para usar o nome do cadastro)"
+            label={
+              canBrand
+                ? 'Nome da marca (até 10 caracteres — aparece ao lado da logo)'
+                : 'Nome exibido (deixe em branco para usar o nome do cadastro)'
+            }
             htmlFor="customName"
             error={fe.customName}
           >
@@ -93,6 +97,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
               name="customName"
               defaultValue={school.customName ?? ''}
               placeholder={school.name}
+              maxLength={canBrand ? 10 : undefined}
             />
           </Field>
 

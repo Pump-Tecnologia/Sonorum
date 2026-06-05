@@ -65,7 +65,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Sidebar
             role={user.role}
             name={user.name}
-            schoolName={branding?.name ?? null}
+            // Nome da escola sob a logo só no Premium (marca personalizada).
+            // Essencial/Profissional exibem apenas a marca Sonorum.
+            schoolName={branding?.branded ? branding.name : null}
             logoUrl={branding?.logoUrl ?? null}
             brandWord={branding?.branded ? (branding.name ?? 'Sonorum') : 'Sonorum'}
           />

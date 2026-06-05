@@ -58,30 +58,27 @@ export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum'
   return (
     <aside className={cn(styles.sidebar, collapsed && styles.sidebarCollapsed)}>
       <div className={styles.sidebarHeader}>
-        {logoUrl ? (
-          <>
-            <Link href="/dashboard" className={styles.sidebarBrandTile} aria-label={brandWord}>
-              <Image src={logoUrl} alt="" width={44} height={44} priority unoptimized className={styles.sidebarBrandMark} />
-            </Link>
-            {!collapsed && (
-              <div className={styles.sidebarBrandStack}>
-                <span className={styles.sidebarBrandWord}>{brandWord}</span>
-                {schoolName && schoolName !== brandWord && (
-                  <span className={styles.sidebarSchool}>{schoolName}</span>
-                )}
-              </div>
+        {/* Quadrado branco arredondado atrás da logo (padrão Sonorum ou
+            customizada do Premium) — garante contraste universal e evita
+            conflito de cores entre logos. */}
+        <Link href="/dashboard" className={styles.sidebarBrandTile} aria-label={brandWord}>
+          <Image
+            src={logoUrl ?? LOGO}
+            alt=""
+            width={44}
+            height={44}
+            priority
+            unoptimized={Boolean(logoUrl)}
+            className={styles.sidebarBrandMark}
+          />
+        </Link>
+        {!collapsed && (
+          <div className={styles.sidebarBrandStack}>
+            <span className={styles.sidebarBrandWord}>{brandWord}</span>
+            {schoolName && schoolName !== brandWord && (
+              <span className={styles.sidebarSchool}>{schoolName}</span>
             )}
-          </>
-        ) : (
-          <>
-            <Link href="/dashboard" className={styles.sidebarBrand} aria-label={brandWord}>
-              <Image src={LOGO} alt="" width={32} height={32} priority className={styles.sidebarBrandMark} />
-              {!collapsed && <span className={styles.sidebarBrandWord}>{brandWord}</span>}
-            </Link>
-            {!collapsed && schoolName && schoolName !== brandWord && (
-              <p className={styles.sidebarSchool}>{schoolName}</p>
-            )}
-          </>
+          </div>
         )}
       </div>
 

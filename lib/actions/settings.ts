@@ -83,12 +83,38 @@ export async function updateSchoolSettings(
 
     const { data: cur } = await supabase.from('schools').select('logo_path').eq('id', me.schoolId).maybeSingle()
     const file = formData.get('logo')
-    if (file instanceof File && file.size > 0) {
+    const hasNewFile = file instanceof File && file.size > 0
+    const removingLogo = formData.get('removeLogo') === 'on'
+    // Estado final da logo após esta submissão.
+    const willHaveLogo = hasNewFile || (!removingLogo && Boolean(cur?.logo_path))
+
+    const brandName = (d.customName ?? '').trim()
+    update.custom_name = brandName || null
+
+    // Nome da marca: máximo 10 caracteres (aparece ao lado da logo na sidebar).
+    if (brandName.length > 10) {
+      return { ok: false, fieldErrors: { customName: 'O nome da marca deve ter no máximo 10 caracteres.' } }
+    }
+
+    // Marca personalizada exige logo E nome JUNTOS — não salva só um dos dois.
+    const hasName = brandName.length > 0
+    if (hasName !== willHaveLogo) {
+      const fieldErrors: Record<string, string> = {}
+      if (!hasName) fieldErrors.customName = 'Informe o nome da marca (a logo precisa de um nome).'
+      if (!willHaveLogo) fieldErrors.logo = 'Envie a logo da marca (o nome precisa de uma logo).'
+      return {
+        ok: false,
+        fieldErrors,
+        error: 'Para a marca personalizada, informe a logo e o nome juntos (ou deixe os dois em branco).',
+      }
+    }
+
+    if (hasNewFile && file instanceof File) {
       const up = await uploadSchoolLogo(file, me.schoolId)
       if (!up.ok) return { ok: false, fieldErrors: { logo: up.error } }
       if (cur?.logo_path) await deleteSchoolLogo(cur.logo_path)
       update.logo_path = up.url
-    } else if (formData.get('removeLogo') === 'on' && cur?.logo_path) {
+    } else if (removingLogo && cur?.logo_path) {
       await deleteSchoolLogo(cur.logo_path)
       update.logo_path = null
     }
