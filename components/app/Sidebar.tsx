@@ -3,13 +3,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 import styles from '@/components/app/app.module.css'
+import { NavIcon } from '@/components/app/NavIcon'
 import { signOut } from '@/lib/auth/actions'
+import { cn } from '@/lib/cn'
 import { NAV_BY_ROLE, ROLE_LABEL } from '@/lib/constants/nav'
 import type { Role } from '@/lib/constants/roles'
 
 const LOGO = '/brand/logo-vazado.png'
+const STORAGE_KEY = 'sonorum:sidebar-collapsed'
 
 interface SidebarProps {
   role: Role
@@ -22,6 +26,21 @@ interface SidebarProps {
 export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum' }: SidebarProps) {
   const pathname = usePathname()
   const items = NAV_BY_ROLE[role]
+  const [collapsed, setCollapsed] = useState(false)
+
+  // Persiste o estado entre navegações/reloads (sem flash de hidratação: lê só
+  // depois de montar).
+  useEffect(() => {
+    setCollapsed(localStorage.getItem(STORAGE_KEY) === '1')
+  }, [])
+
+  function toggle() {
+    setCollapsed((prev) => {
+      const next = !prev
+      localStorage.setItem(STORAGE_KEY, next ? '1' : '0')
+      return next
+    })
+  }
 
   // Item ativo = o match MAIS específico, não qualquer prefixo. Sem isso, um
   // href "pai" (ex: Dashboard /admin) acende em toda subrota (/admin/teachers,
@@ -37,63 +56,99 @@ export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum'
   const isActive = (href: string) => href === activeHref
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={cn(styles.sidebar, collapsed && styles.sidebarCollapsed)}>
       <div className={styles.sidebarHeader}>
         {logoUrl ? (
-          // Logo customizado: tile branca arredondada (contraste universal) + nome.
           <>
             <Link href="/dashboard" className={styles.sidebarBrandTile} aria-label={brandWord}>
-              <Image
-                src={logoUrl}
-                alt=""
-                width={44}
-                height={44}
-                priority
-                unoptimized
-                className={styles.sidebarBrandMark}
-              />
+              <Image src={logoUrl} alt="" width={44} height={44} priority unoptimized className={styles.sidebarBrandMark} />
             </Link>
-            <div className={styles.sidebarBrandStack}>
-              <span className={styles.sidebarBrandWord}>{brandWord}</span>
-              {schoolName && schoolName !== brandWord && (
-                <span className={styles.sidebarSchool}>{schoolName}</span>
-              )}
-            </div>
+            {!collapsed && (
+              <div className={styles.sidebarBrandStack}>
+                <span className={styles.sidebarBrandWord}>{brandWord}</span>
+                {schoolName && schoolName !== brandWord && (
+                  <span className={styles.sidebarSchool}>{schoolName}</span>
+                )}
+              </div>
+            )}
           </>
         ) : (
-          // Padrão Sonorum: violão vazado já é feito p/ fundo escuro — sem tile.
           <>
             <Link href="/dashboard" className={styles.sidebarBrand} aria-label={brandWord}>
               <Image src={LOGO} alt="" width={32} height={32} priority className={styles.sidebarBrandMark} />
-              <span className={styles.sidebarBrandWord}>{brandWord}</span>
+              {!collapsed && <span className={styles.sidebarBrandWord}>{brandWord}</span>}
             </Link>
-            {schoolName && schoolName !== brandWord && (
+            {!collapsed && schoolName && schoolName !== brandWord && (
               <p className={styles.sidebarSchool}>{schoolName}</p>
             )}
           </>
         )}
       </div>
 
+      <button
+        type="button"
+        onClick={toggle}
+        className={styles.collapseBtn}
+        aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        aria-expanded={!collapsed}
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className={cn(styles.collapseChevron, collapsed && styles.collapseChevronFlipped)}
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        {!collapsed && <span>Recolher</span>}
+      </button>
+
       <nav className={styles.sidebarNav} aria-label="Navegação principal">
         {items.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={`${styles.sidebarLink} ${isActive(item.href) ? styles.sidebarLinkActive : ''}`.trim()}
+            title={item.label}
+            aria-label={item.label}
+            className={cn(styles.sidebarLink, isActive(item.href) && styles.sidebarLinkActive)}
           >
-            {item.label}
+            <NavIcon name={item.icon} size={20} className={styles.sidebarLinkIcon} />
+            {!collapsed && <span className={styles.sidebarLinkLabel}>{item.label}</span>}
           </Link>
         ))}
       </nav>
 
       <div className={styles.sidebarFooter}>
-        <Link href="/profile" className={styles.sidebarUserLink}>
-          {name}
-        </Link>
-        <p className={styles.sidebarRole}>{ROLE_LABEL[role]}</p>
+        {!collapsed && (
+          <>
+            <Link href="/profile" className={styles.sidebarUserLink}>
+              {name}
+            </Link>
+            <p className={styles.sidebarRole}>{ROLE_LABEL[role]}</p>
+          </>
+        )}
         <form action={signOut}>
-          <button type="submit" className={styles.sidebarSignOut}>
-            Sair
+          <button
+            type="submit"
+            className={styles.sidebarSignOut}
+            title="Sair"
+            aria-label="Sair"
+          >
+            {collapsed ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="m16 17 5-5-5-5M21 12H9" />
+              </svg>
+            ) : (
+              'Sair'
+            )}
           </button>
         </form>
       </div>
