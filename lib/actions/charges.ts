@@ -13,47 +13,84 @@ import { appBaseUrl } from '@/lib/payments'
 // Status de aula que contam como "aula dada" para planos por-aula.
 const ATTENDED_STATUSES = ['completed', 'late']
 
-// ── Cobrança avulsa no PIX (todos os planos, inclusive Essencial) ────────────
-// Cria uma cobrança pontual ligada direto ao aluno (sem matrícula). A baixa é
-// manual; o pagamento é via PIX da própria escola (custo zero, sem gateway).
-const adHocChargeSchema = z.object({
-  studentId: z.string().uuid('Selecione o aluno'),
-  amount: z.coerce.number().positive('Informe um valor maior que zero').max(1_000_000, 'Valor muito alto'),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
-  description: z.string().trim().max(120, 'Descrição muito longa').optional().or(z.literal('')),
-})
-
-export type AdHocChargeState = {
+// ── Cobrança de um aluno (plano-primeiro; avulsa só via checkbox) ────────────
+// Disponível em todos os planos (financeiro liberado no Essencial). A cobrança
+// padrão vem do PLANO/matrícula ativa do aluno; "avulsa" é uma exceção marcada.
+export type CreateChargeState = {
   ok: boolean
   error?: string
   fieldErrors?: Record<string, string>
   chargeId?: string
 }
 
-export async function createAdHocCharge(
-  _prev: AdHocChargeState,
-  formData: FormData,
-): Promise<AdHocChargeState> {
-  const me = await getCurrentUser()
-  if (me?.role !== 'admin' || !me.schoolId) return { ok: false, error: 'Acesso negado.' }
+type ChargeInsert = {
+  school_id: string
+  student_id: string | null
+  enrollment_id: string | null
+  amount: number
+  early_pay_amount: number | null
+  due_date: string
+  status: 'pending'
+  description: string | null
+}
 
-  const parsed = adHocChargeSchema.safeParse({
-    studentId: formData.get('studentId'),
-    amount: formData.get('amount'),
-    dueDate: formData.get('dueDate'),
-    description: formData.get('description') ?? '',
-  })
-  if (!parsed.success) {
-    const flat = parsed.error.flatten().fieldErrors
-    return {
-      ok: false,
-      fieldErrors: Object.fromEntries(
-        Object.entries(flat).map(([k, v]) => [k, (v as string[] | undefined)?.[0] ?? 'Inválido']),
-      ),
-    }
+// Deriva a cobrança a partir da matrícula ativa do aluno (mensalidade = valor
+// cheio + snapshot do desconto; por-aula = preço × aulas realizadas no mês).
+async function resolvePlanCharge(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  schoolId: string,
+  studentId: string,
+  dueDate: string,
+): Promise<{ enrollmentId: string; amount: number; earlyPay: number | null; planName: string | null } | { error: string }> {
+  const { data: enr } = await supabase
+    .from('enrollments')
+    .select('id, custom_amount, plan:plans(name, amount, billing_type, early_pay_amount)')
+    .eq('school_id', schoolId)
+    .eq('student_id', studentId)
+    .eq('status', 'active')
+    .maybeSingle()
+  if (!enr) {
+    return { error: 'Aluno sem matrícula ativa. Marque "Cobrança avulsa" ou matricule o aluno em um plano.' }
+  }
+  const plan = enr.plan as { name: string; amount: number; billing_type: string; early_pay_amount: number | null } | null
+  const unit = enr.custom_amount != null ? Number(enr.custom_amount) : Number(plan?.amount ?? 0)
+
+  if (plan?.billing_type === 'per_class') {
+    const [y, m] = dueDate.split('-').map(Number)
+    const monthStart = new Date(y, m - 1, 1)
+    const monthEnd = new Date(y, m, 1) // exclusivo
+    const { data: lessons } = await supabase
+      .from('lessons')
+      .select('id')
+      .eq('school_id', schoolId)
+      .eq('student_id', studentId)
+      .gte('start_datetime', monthStart.toISOString())
+      .lt('start_datetime', monthEnd.toISOString())
+      .in('status', ATTENDED_STATUSES)
+    const count = lessons?.length ?? 0
+    if (count === 0) return { error: 'Sem aulas realizadas no mês do vencimento para cobrar por aula.' }
+    return { enrollmentId: enr.id, amount: unit * count, earlyPay: null, planName: plan?.name ?? null }
   }
 
-  const { studentId, amount, dueDate, description } = parsed.data
+  const earlyPay = enr.custom_amount == null && plan?.early_pay_amount != null ? Number(plan.early_pay_amount) : null
+  return { enrollmentId: enr.id, amount: unit, earlyPay, planName: plan?.name ?? null }
+}
+
+export async function createCharge(
+  _prev: CreateChargeState,
+  formData: FormData,
+): Promise<CreateChargeState> {
+  const me = await getCurrentUser()
+  if (me?.role !== 'admin' || !me.schoolId) return { ok: false, error: 'Acesso negado.' }
+  const { features } = await getPlanContext()
+  if (!features.financial) return { ok: false, error: 'Financeiro indisponível no seu plano.' }
+
+  const avulsa = formData.get('avulsa') === 'on'
+  const studentId = String(formData.get('studentId') ?? '')
+  const dueDate = String(formData.get('dueDate') ?? '')
+  if (!/^[0-9a-f-]{32,36}$/i.test(studentId)) return { ok: false, fieldErrors: { studentId: 'Selecione o aluno.' } }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return { ok: false, fieldErrors: { dueDate: 'Data inválida.' } }
+
   const supabase = await createClient()
 
   // O aluno tem que ser da escola do admin (defesa em profundidade além da RLS).
@@ -66,32 +103,38 @@ export async function createAdHocCharge(
     .maybeSingle()
   if (!student) return { ok: false, fieldErrors: { studentId: 'Aluno não encontrado nesta escola.' } }
 
-  const { data: inserted, error } = await supabase
-    .from('charges')
-    .insert({
-      school_id: me.schoolId,
-      student_id: studentId,
-      enrollment_id: null,
-      amount,
-      early_pay_amount: null,
-      due_date: dueDate,
-      status: 'pending',
-      description: description || null,
-    })
-    .select('id')
-    .single()
+  let row: ChargeInsert
+  let planName: string | null = null
 
-  if (error || !inserted) return { ok: false, error: 'Não foi possível criar a cobrança.' }
+  if (avulsa) {
+    const amount = Number(formData.get('amount'))
+    const description = String(formData.get('description') ?? '').trim()
+    if (!(amount > 0)) return { ok: false, fieldErrors: { amount: 'Informe um valor maior que zero.' } }
+    if (amount > 1_000_000) return { ok: false, fieldErrors: { amount: 'Valor muito alto.' } }
+    row = { school_id: me.schoolId, student_id: studentId, enrollment_id: null, amount, early_pay_amount: null, due_date: dueDate, status: 'pending', description: description || null }
+    planName = description || null
+  } else {
+    const resolved = await resolvePlanCharge(supabase, me.schoolId, studentId, dueDate)
+    if ('error' in resolved) return { ok: false, fieldErrors: { studentId: resolved.error } }
+    row = { school_id: me.schoolId, student_id: null, enrollment_id: resolved.enrollmentId, amount: resolved.amount, early_pay_amount: resolved.earlyPay, due_date: dueDate, status: 'pending', description: null }
+    planName = resolved.planName
+  }
+
+  const { data: inserted, error } = await supabase.from('charges').insert(row).select('id').single()
+  if (error || !inserted) {
+    if (error?.code === '23505') return { ok: false, error: 'Já existe uma cobrança para esse aluno nesse vencimento.' }
+    return { ok: false, error: 'Não foi possível criar a cobrança.' }
+  }
 
   // Notifica o aluno com o link de pagamento (PIX). Não bloqueia a criação.
   await notify('charge.created', studentId, {
-    amount,
+    amount: row.amount,
     dueDate: new Date(dueDate + 'T12:00:00').toLocaleDateString('pt-BR'),
-    planName: description || null,
+    planName,
     payUrl: `${appBaseUrl()}/pagar/${inserted.id}`,
   }, { relatedId: inserted.id }).catch(() => {})
 
-  revalidatePath('/cobrancas')
+  revalidatePath('/financial')
   return { ok: true, chargeId: inserted.id }
 }
 
@@ -167,7 +210,6 @@ export async function updateChargeStatus(formData: FormData) {
   }
 
   revalidatePath('/financial')
-  revalidatePath('/cobrancas')
 }
 
 // Gera cobranças do mês para todas as matrículas ativas da escola.

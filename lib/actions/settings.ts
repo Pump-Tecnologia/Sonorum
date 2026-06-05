@@ -124,7 +124,7 @@ export async function updateSchoolSettings(
   if (error) return { ok: false, error: 'Não foi possível salvar as configurações.' }
 
   revalidatePath('/admin/settings')
-  revalidatePath('/cobrancas')
+  revalidatePath('/financial')
   revalidatePath('/', 'layout')
   return { ok: true }
 }

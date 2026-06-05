@@ -107,8 +107,6 @@ export async function notifyCharge(
     payUrl: `${appBaseUrl()}/pagar/${chargeId}`,
   }, { relatedId: chargeId })
 
-  revalidatePath('/cobrancas')
-
   revalidatePath('/financial')
   return { ok: true, whatsappLinks: result.whatsapp.links }
 }

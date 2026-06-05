@@ -20,8 +20,8 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     price: 0,
     studentLimit: 5,
     teacherLimit: 1, // o admin já pode lecionar; ajuste aqui se quiser outro teto
-    financial: false,
-    reports: false,
+    financial: true, // planos, matrículas e cobranças liberados no Essencial
+    reports: false, // relatórios seguem diferencial pago (Profissional+)
     transcription: false,
     branding: false,
     whatsappOfficial: false,
