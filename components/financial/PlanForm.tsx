@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Field, Input, Textarea } from '@/components/ui/Field'
@@ -115,14 +116,17 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
   )
 }
 
-export function CreatePlanForm({ onSuccess }: { onSuccess?: () => void }) {
-  const [state, action] = useActionState(async (prev: PlanActionState, fd: FormData) => {
-    const res = await createPlan(prev, fd)
-    if (res.ok) onSuccess?.()
-    return res
-  }, initial)
+export function CreatePlanForm({ redirectTo }: { redirectTo?: string }) {
+  const router = useRouter()
+  const [state, action] = useActionState(createPlan, initial)
   const fe = state.fieldErrors ?? {}
-  if (state.ok) return <p className="text-sm font-medium text-accent-800">Plano criado!</p>
+
+  // Após criar, volta pra lista (padrão de tela própria).
+  useEffect(() => {
+    if (state.ok && redirectTo) router.push(redirectTo)
+  }, [state.ok, redirectTo, router])
+
+  if (state.ok && !redirectTo) return <p className="text-sm font-medium text-accent-800">Plano criado!</p>
 
   return (
     <form action={action} className="space-y-4">

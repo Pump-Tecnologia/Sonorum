@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { type Plan } from '@/components/financial/PlanForm'
-import { PlansPanel } from '@/components/financial/PlansPanel'
+import { PlansList } from '@/components/financial/PlansList'
+import { LinkButton } from '@/components/ui/Button'
 import { requireFeature } from '@/lib/auth/plan'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -37,9 +38,10 @@ export default async function PlansPage() {
       <PageHeader
         title="Planos de mensalidade"
         subtitle="Crie planos, matricule alunos e cobre no Financeiro"
+        action={<LinkButton href="/plans/new">+ Novo plano</LinkButton>}
       />
 
-      <PlansPanel
+      <PlansList
         plans={(plans ?? []) as Plan[]}
         counts={counts}
         students={(students ?? []) as { id: string; name: string }[]}
