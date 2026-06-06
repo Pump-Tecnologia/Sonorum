@@ -160,6 +160,53 @@ export async function sendLessonReport(
   return { ok: true, whatsappLinks: result.whatsapp.links }
 }
 
+// Salva o relatório da aula E, em planos com Relatórios, já envia ao aluno —
+// num passo só (a tela de Avaliar usa isto). No free, apenas salva.
+export async function saveAndSendLessonReport(
+  _prev: NotifyActionState,
+  formData: FormData,
+): Promise<NotifyActionState> {
+  const me = await requireStaff()
+  if (!me) return { ok: false, error: 'Acesso negado.' }
+
+  const lessonId = String(formData.get('lessonId') ?? '')
+  if (!lessonId || !formData.has('technique_score')) return { ok: false, error: 'Preencha o relatório.' }
+
+  const admin = await createAdminClient()
+  const { data: lesson } = await admin.from('lessons').select('id, school_id').eq('id', lessonId).maybeSingle()
+  if (!lesson || lesson.school_id !== me.schoolId) return { ok: false, error: 'Aula não encontrada.' }
+
+  const num = (k: string) => {
+    const v = formData.get(k)
+    return v ? Number(v) : null
+  }
+  const { error } = await admin.from('lesson_reports').upsert(
+    {
+      school_id: me.schoolId,
+      lesson_id: lessonId,
+      technique_score: Number(formData.get('technique_score') ?? 0),
+      theory_score: Number(formData.get('theory_score') ?? 0),
+      repertoire_score: Number(formData.get('repertoire_score') ?? 0),
+      practice_score: Number(formData.get('practice_score') ?? 0),
+      current_song: String(formData.get('current_song') ?? '') || null,
+      initial_bpm: num('initial_bpm'),
+      reached_bpm: num('reached_bpm'),
+    },
+    { onConflict: 'lesson_id' },
+  )
+  if (error) return { ok: false, error: 'Não foi possível salvar o relatório.' }
+
+  revalidatePath(`/lessons/${lessonId}/planner`)
+
+  // Envio só nos planos com Relatórios; senão, salvou e pronto.
+  const { getPlanContext } = await import('@/lib/auth/plan')
+  const { features } = await getPlanContext()
+  if (!features.reports) return { ok: true }
+
+  // Reaproveita o envio (recarrega o relatório salvo + notifica).
+  return sendLessonReport(_prev, formData)
+}
+
 const LESSON_EVENTS = new Set<NotificationEvent>(['lesson.scheduled', 'lesson.tomorrow', 'lesson.canceled', 'lesson.rescheduled'])
 
 // Manda lembrete/aviso de uma aula específica.

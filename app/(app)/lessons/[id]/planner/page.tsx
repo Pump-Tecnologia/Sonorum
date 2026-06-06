@@ -9,9 +9,8 @@ import { ResourcePicker } from '@/components/schedule/ResourcePicker'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
-import { WhatsAppNotifyButton } from '@/components/notifications/WhatsAppNotifyButton'
+import { LessonReportForm } from '@/components/schedule/LessonReportForm'
 import { cancelLessonSeries, detachResource, markAttendance, updateLesson, upsertLessonPlan } from '@/lib/actions/lessons'
-import { sendLessonReport } from '@/lib/actions/notifications'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -42,8 +41,6 @@ const SECTION_LABEL: Record<string, string> = {
   homework: 'Tarefa de casa',
   general: 'Geral',
 }
-
-const REPORT_LABEL = { technique: 'Técnica', theory: 'Teoria', repertoire: 'Repertório', practice: 'Dedicação' }
 
 const PRIMARY_BTN = 'rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700'
 
@@ -291,63 +288,7 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
           <h2 className="text-base font-semibold text-ink">Relatório de desempenho</h2>
           {report && <Badge tone="success">Preenchido</Badge>}
         </div>
-        <form action={updateLesson} className="space-y-4">
-          <input type="hidden" name="lessonId" value={lesson.id} />
-
-          {(['technique', 'theory', 'repertoire', 'practice'] as const).map((key) => (
-            <Field key={key} label={REPORT_LABEL[key]} htmlFor={`${key}_score`}>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <label key={n} className="cursor-pointer">
-                    <input
-                      type="radio"
-                      name={`${key}_score`}
-                      value={n}
-                      defaultChecked={report?.[`${key}_score` as keyof typeof report] === n}
-                      className="peer sr-only"
-                    />
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-sm font-semibold transition-colors hover:bg-brand-50 peer-checked:border-brand-500 peer-checked:bg-brand-600 peer-checked:text-white">
-                      {n}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </Field>
-          ))}
-
-          <Field label="Música atual" htmlFor="current_song">
-            <Input id="current_song" name="current_song" defaultValue={report?.current_song ?? ''} />
-          </Field>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="BPM inicial" htmlFor="initial_bpm">
-              <Input id="initial_bpm" name="initial_bpm" type="number" defaultValue={report?.initial_bpm ?? ''} />
-            </Field>
-            <Field label="BPM alcançado" htmlFor="reached_bpm">
-              <Input id="reached_bpm" name="reached_bpm" type="number" defaultValue={report?.reached_bpm ?? ''} />
-            </Field>
-          </div>
-
-          <button type="submit" className={PRIMARY_BTN}>Salvar relatório</button>
-        </form>
-
-        {/* Envio do relatório ao aluno (Relatórios — planos pagos) */}
-        {features.reports && (
-          <div className="mt-4 border-t border-hairline pt-4">
-            {report ? (
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-ink-muted">Enviar este relatório ao aluno por e-mail/WhatsApp.</p>
-                <WhatsAppNotifyButton
-                  action={sendLessonReport}
-                  hidden={{ lessonId: lesson.id }}
-                  label="Enviar ao aluno"
-                />
-              </div>
-            ) : (
-              <p className="text-xs text-ink-muted">Salve o relatório acima para poder enviá-lo ao aluno.</p>
-            )}
-          </div>
-        )}
+        <LessonReportForm lessonId={lesson.id} report={report} canSend={features.reports} />
       </Card>
 
       <Card>
