@@ -173,12 +173,13 @@ export function ScheduleCalendar({
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
           }}
           buttonText={{
             today: 'Hoje',
             month: 'Mês',
             week: 'Semana',
+            day: 'Dia',
             list: 'Lista',
           }}
           height="auto"

@@ -220,12 +220,15 @@ export default async function AdminDashboard() {
           {alerts.length === 0 ? (
             <p className="text-sm text-ink-muted">Tudo em dia por aqui. 🎵</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {alerts.slice(0, 5).map((a, i) => (
                 <li key={i}>
-                  <Link href={a.href} className={`block rounded-lg border-l-2 px-3 py-2 ${a.tone === 'danger' ? 'border-red-500 bg-red-50/50' : 'border-amber-400 bg-amber-50/40'}`}>
-                    <p className="text-sm font-medium text-ink">{a.label}</p>
-                    <p className="text-xs text-ink-muted">{a.detail}</p>
+                  <Link href={a.href} className="flex items-start gap-2.5 rounded-xl border border-hairline px-3 py-2.5 transition-colors hover:bg-surface-muted">
+                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${a.tone === 'danger' ? 'bg-red-500' : 'bg-amber-400'}`} aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-ink">{a.label}</p>
+                      <p className="text-xs text-ink-muted">{a.detail}</p>
+                    </div>
                   </Link>
                 </li>
               ))}

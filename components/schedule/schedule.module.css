@@ -143,8 +143,7 @@
   gap: 1px;
   height: 100%;
   padding: 0.1875rem 0.4375rem;
-  border-left: 3px solid var(--accent, var(--ds-ink));
-  border-radius: 0.375rem 0 0 0.375rem;
+  border-radius: 0.375rem;
 }
 .eventTime {
   font-size: 0.625rem;
