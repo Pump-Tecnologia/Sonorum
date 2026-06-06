@@ -54,7 +54,7 @@ export default async function StudentSchedulePage() {
                     <div>
                       <p className="font-medium text-ink">{l.title}</p>
                       <p className="mt-0.5 text-sm text-ink-muted">
-                        {new Date(l.start_datetime).toLocaleString('pt-BR', {
+                        {new Date(l.start_datetime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo',
                           weekday: 'short', day: '2-digit', month: 'short',
                           hour: '2-digit', minute: '2-digit',
                         })}

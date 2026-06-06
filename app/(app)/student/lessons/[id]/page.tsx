@@ -44,7 +44,7 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
     <>
       <PageHeader
         title={lesson.title}
-        subtitle={new Date(lesson.start_datetime).toLocaleString('pt-BR', {
+        subtitle={new Date(lesson.start_datetime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo',
           weekday: 'long', day: '2-digit', month: 'long',
           hour: '2-digit', minute: '2-digit',
         })}

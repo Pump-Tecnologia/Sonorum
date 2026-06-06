@@ -70,7 +70,7 @@ export default async function TeacherDashboard() {
   const nextEnd = nextLesson ? new Date(nextLesson.end_datetime) : null
   const isLive = nextStart && nextEnd ? nextStart <= now && now <= nextEnd : false
   const minsTo = nextStart ? Math.round((nextStart.getTime() - now.getTime()) / 60000) : null
-  const countdown = isLive ? 'Agora' : minsTo !== null && minsTo > 0 && minsTo <= 360 ? `em ${minsTo} min` : nextStart ? nextStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''
+  const countdown = isLive ? 'Agora' : minsTo !== null && minsTo > 0 && minsTo <= 360 ? `em ${minsTo} min` : nextStart ? nextStart.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }) : ''
 
   // Semana — metas
   const week = (weekRes.data ?? []) as unknown as WeekRow[]
@@ -102,7 +102,7 @@ export default async function TeacherDashboard() {
               <p className="text-xl font-bold text-ink">{nextLesson.title}</p>
               <p className="text-sm text-ink-muted">
                 {nextStudent?.name ?? '—'}
-                {nextStart && <> · {nextStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</>}
+                {nextStart && <> · {nextStart.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}</>}
                 {nextLesson.room?.name && <> · {nextLesson.room.name}</>}
               </p>
               {(nextLesson.goals || nextLesson.notes) && (
@@ -165,9 +165,9 @@ export default async function TeacherDashboard() {
                     <div>
                       <p className="text-sm font-medium text-ink">{student?.name ?? '—'}</p>
                       <p className="text-xs text-ink-muted">
-                        {new Date(l.start_datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(l.start_datetime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}
                         {' – '}
-                        {new Date(l.end_datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(l.end_datetime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}
                         {l.room?.name && <> · {l.room.name}</>}
                       </p>
                     </div>

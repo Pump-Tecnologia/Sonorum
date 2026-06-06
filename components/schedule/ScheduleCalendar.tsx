@@ -324,7 +324,7 @@ export function ScheduleCalendar({
                   <h2 className={styles.modalTitle}>{eventModal.student_name}</h2>
                 )}
                 <p className={styles.modalSubtitle}>
-                  {new Date(eventModal.start).toLocaleString('pt-BR', {
+                  {new Date(eventModal.start).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo',
                     weekday: 'short',
                     day: '2-digit',
                     month: 'short',

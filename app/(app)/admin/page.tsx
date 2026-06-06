@@ -250,7 +250,7 @@ export default async function AdminDashboard() {
                 <li key={l.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
                   <div>
                     <span className="font-medium">{l.users?.name ?? '—'}</span>
-                    <span className="ml-2 text-xs text-ink-muted">{new Date(l.start_datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="ml-2 text-xs text-ink-muted">{new Date(l.start_datetime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
                 </li>

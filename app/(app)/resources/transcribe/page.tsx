@@ -14,7 +14,7 @@ import { createClient } from '@/lib/supabase/server'
 export const metadata = { title: 'Transcrições por IA' }
 
 function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 export default async function TranscriptionQueuePage() {

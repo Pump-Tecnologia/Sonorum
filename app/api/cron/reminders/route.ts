@@ -75,7 +75,7 @@ export async function GET(req: Request) {
       const start = new Date(l.start_datetime)
       await notify('lesson.tomorrow', l.student_id, {
         title: l.title,
-        time: start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        time: start.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }),
         room: (l.room as { name: string } | null)?.name ?? null,
         teacherName: (l.teacher as { name: string } | null)?.name ?? null,
       }, { relatedId: l.id })

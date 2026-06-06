@@ -36,8 +36,10 @@ export async function syncLessonToCalendars(lessonId: string): Promise<void> {
   const event: CalendarEventInput = {
     title: lesson.title,
     description: 'Aula — Sonorum',
-    startISO: lesson.start_datetime,
-    endISO: lesson.end_datetime,
+    // ISO UTC explícito (…Z) pro Google interpretar o instante sem ambiguidade
+    // de fuso e exibir no fuso do usuário.
+    startISO: new Date(lesson.start_datetime).toISOString(),
+    endISO: new Date(lesson.end_datetime).toISOString(),
     location: room,
   }
 

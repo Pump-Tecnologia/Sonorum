@@ -57,7 +57,7 @@ export default async function StudentDashboard() {
             <div>
               <p className="text-sm font-medium text-ink">{nextLesson.title}</p>
               <p className="mt-1 text-sm text-ink-muted">
-                {new Date(nextLesson.start_datetime).toLocaleString('pt-BR', {
+                {new Date(nextLesson.start_datetime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo',
                   weekday: 'long', day: '2-digit', month: 'long',
                   hour: '2-digit', minute: '2-digit',
                 })}

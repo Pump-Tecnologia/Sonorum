@@ -181,8 +181,8 @@ export async function notifyLesson(
   if (!lesson) return { ok: false, error: 'Aula não encontrada.' }
 
   const start = new Date(lesson.start_datetime)
-  const when = start.toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
-  const time = start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  const when = start.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const time = start.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })
   const room = (lesson.room as { name: string } | null)?.name ?? null
   const teacherName = (lesson.teacher as { name: string } | null)?.name ?? null
 

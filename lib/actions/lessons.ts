@@ -164,7 +164,7 @@ export async function createLesson(
   const firstStart = new Date(occurrences[0][0])
   await notify('lesson.scheduled', d.studentId, {
     title: d.title,
-    when: firstStart.toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+    when: firstStart.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
   })
 
   revalidatePath('/schedule')
@@ -399,7 +399,7 @@ export async function cancelLesson(formData: FormData) {
 
   if (lesson) {
     await notify('lesson.canceled', lesson.student_id, {
-      when: new Date(lesson.start_datetime).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      when: new Date(lesson.start_datetime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
     }, { relatedId: lessonId })
   }
 
