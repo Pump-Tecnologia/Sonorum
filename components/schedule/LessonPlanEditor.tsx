@@ -144,22 +144,27 @@ function SectionEditor({
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [creating, setCreating] = useState(false)
+  // Filtro de categoria do RECURSO — começa na categoria da seção (Aquecimento
+  // sugere recursos de Aquecimento, etc.); '' = todas.
+  const [category, setCategory] = useState<string>(section.defaultResourceCategory ?? '')
 
   const attachedIds = new Set(resources.map((r) => r.resourceId))
 
-  async function fetchResources(q: string) {
+  async function fetchResources(q: string, cat: string) {
     setSearching(true)
     const params = new URLSearchParams()
     if (q) params.set('q', q)
-    else if (instrumentCategory) params.set('category', instrumentCategory)
+    if (cat) params.set('category', cat)
+    if (instrumentCategory) params.set('instrumentCategory', instrumentCategory)
     const res = await fetch(`/api/resources?${params.toString()}`)
     const data = (await res.json()) as SearchResult[]
     setResults(Array.isArray(data) ? data : [])
     setSearching(false)
   }
 
+  // Ao abrir o picker, já lista (navegável) pela categoria da seção + instrumento.
   useEffect(() => {
-    if (picker && results.length === 0 && !query) void fetchResources('')
+    if (picker) void fetchResources(query, category)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [picker])
 
@@ -228,16 +233,24 @@ function SectionEditor({
       {picker && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
+            <select
+              value={category}
+              onChange={(e) => { setCategory(e.target.value); void fetchResources(query, e.target.value) }}
+              aria-label={`Filtrar categoria em ${section.label}`}
+              className="shrink-0 rounded-xl border border-hairline bg-surface px-2 py-2 text-xs"
+            >
+              <option value="">Todas</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
             <input
               type="search"
               autoFocus
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value)
-                if (e.target.value.length >= 2) void fetchResources(e.target.value)
-                else void fetchResources('')
+                void fetchResources(e.target.value, category)
               }}
-              placeholder={instrument ? `Buscar (sugerindo ${instrument})…` : 'Buscar por título ou instrumento…'}
+              placeholder={instrument ? `Buscar (sugerindo ${instrument})…` : 'Buscar por título…'}
               aria-label={`Buscar recurso para ${section.label}`}
               className={INPUT_CLS}
             />
@@ -261,8 +274,8 @@ function SectionEditor({
               ))}
             </ul>
           )}
-          {!searching && query.length >= 2 && visibleResults.length === 0 && (
-            <p className="text-xs text-ink-muted">Nada encontrado. Use “Criar da aula” para um material novo.</p>
+          {!searching && results.length === 0 && (
+            <p className="text-xs text-ink-muted">Nada nesta categoria. Troque o filtro, busque, ou use “Criar da aula”.</p>
           )}
         </div>
       )}
