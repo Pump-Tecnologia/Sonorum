@@ -37,6 +37,10 @@ export function GoogleCalendarConnect({ enabled, connected }: { enabled: boolean
           >
             Conectar Google Calendar
           </a>
+          <p className="text-xs text-ink-muted">
+            Usamos só para criar/atualizar suas aulas na agenda.{' '}
+            <a href="/privacidade" className="hover:text-brand-600 hover:underline">Política de privacidade</a>.
+          </p>
         </div>
       )}
     </Card>
