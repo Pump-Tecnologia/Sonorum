@@ -42,35 +42,9 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
   const [primary, setPrimary] = useState(school.brandPrimary ?? DEFAULT_PRIMARY)
   const [secondary, setSecondary] = useState(school.brandSecondary ?? DEFAULT_SECONDARY)
 
-  const features = PLAN_FEATURES[school.planType as keyof typeof PLAN_FEATURES] ?? PLAN_FEATURES.free
-
   return (
-    <div className="grid max-w-5xl gap-6 lg:grid-cols-3">
-      {/* Plano atual — info apenas (lateral) */}
-      <Card className="h-fit lg:order-2 lg:col-span-1">
-        <h2 className="mb-4 text-base font-semibold text-ink">Plano atual</h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-ink">{features.label}</p>
-            <p className="text-sm text-ink-muted">
-              {Number.isFinite(features.studentLimit)
-                ? `Até ${features.studentLimit} alunos`
-                : 'Alunos ilimitados'}
-              {' · '}
-              {Number.isFinite(features.teacherLimit)
-                ? `${features.teacherLimit} professor`
-                : 'Professores ilimitados'}
-            </p>
-          </div>
-          <Badge tone={school.planType === 'free' ? 'neutral' : 'brand'}>
-            {features.label}
-          </Badge>
-        </div>
-      </Card>
-
-      {/* Dados da escola */}
-      <Card className="lg:order-1 lg:col-span-2">
-        <h2 className="mb-4 text-base font-semibold text-ink">Identidade</h2>
+    <Card>
+      <h2 className="mb-4 text-base font-semibold text-ink">Identidade</h2>
         <form action={action} className="space-y-5">
           {state.ok && (
             <p className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-medium text-accent-800">
@@ -206,6 +180,24 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
           <SubmitButton pendingLabel="Salvando…">Salvar configurações</SubmitButton>
         </form>
       </Card>
-    </div>
+  )
+}
+
+// Card compacto do plano atual (lateral em Configurações).
+export function PlanSummaryCard({ planType }: { planType: string }) {
+  const features = PLAN_FEATURES[planType as keyof typeof PLAN_FEATURES] ?? PLAN_FEATURES.free
+  return (
+    <Card>
+      <h2 className="mb-3 text-sm font-semibold text-ink">Plano atual</h2>
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium text-ink">{features.label}</p>
+          <p className="text-xs text-ink-muted">
+            {Number.isFinite(features.studentLimit) ? `Até ${features.studentLimit} alunos` : 'Alunos ilimitados'}
+          </p>
+        </div>
+        <Badge tone={planType === 'free' ? 'neutral' : 'brand'}>{features.label}</Badge>
+      </div>
+    </Card>
   )
 }

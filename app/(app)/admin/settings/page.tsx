@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { PageHeader } from '@/components/app/PageHeader'
 import { NotificationChannelCard } from '@/components/admin/NotificationChannelCard'
 import { RoomsManager } from '@/components/admin/RoomsManager'
-import { SchoolSettingsForm } from '@/components/admin/SchoolSettingsForm'
+import { SchoolSettingsForm, PlanSummaryCard } from '@/components/admin/SchoolSettingsForm'
 import { getCurrentUser } from '@/lib/auth/session'
 import { planFeatures } from '@/lib/constants/plans'
 import { isWhatsAppCloudEnabled } from '@/lib/notifications/whatsapp-cloud'
@@ -30,27 +30,35 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader title="Configurações" subtitle="Identidade, salas e plano da escola" />
-      <div className="space-y-6">
-        <SchoolSettingsForm
-          school={{
-            name: school.name,
-            customName: school.custom_name,
-            brandPrimary: school.brand_primary,
-            brandSecondary: school.brand_secondary,
-            logoUrl: school.logo_path,
-            planType: school.plan_type,
-            studentLimit: school.student_limit,
-            pixKey: school.pix_key,
-            pixKeyType: school.pix_key_type,
-            pixCity: school.pix_city,
-          }}
-          canBrand={planFeatures(school.plan_type).branding}
-        />
-        <NotificationChannelCard
-          whatsappOfficial={planFeatures(school.plan_type).whatsappOfficial}
-          whatsappActive={isWhatsAppCloudEnabled()}
-        />
-        <RoomsManager rooms={(rooms ?? []) as { id: string; name: string }[]} />
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Form principal */}
+        <div className="lg:col-span-2">
+          <SchoolSettingsForm
+            school={{
+              name: school.name,
+              customName: school.custom_name,
+              brandPrimary: school.brand_primary,
+              brandSecondary: school.brand_secondary,
+              logoUrl: school.logo_path,
+              planType: school.plan_type,
+              studentLimit: school.student_limit,
+              pixKey: school.pix_key,
+              pixKeyType: school.pix_key_type,
+              pixCity: school.pix_city,
+            }}
+            canBrand={planFeatures(school.plan_type).branding}
+          />
+        </div>
+
+        {/* Lateral: cards pequenos */}
+        <div className="space-y-6">
+          <PlanSummaryCard planType={school.plan_type} />
+          <NotificationChannelCard
+            whatsappOfficial={planFeatures(school.plan_type).whatsappOfficial}
+            whatsappActive={isWhatsAppCloudEnabled()}
+          />
+          <RoomsManager rooms={(rooms ?? []) as { id: string; name: string }[]} />
+        </div>
       </div>
     </>
   )
