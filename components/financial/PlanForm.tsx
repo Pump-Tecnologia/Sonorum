@@ -35,7 +35,7 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
   const k = plan?.id ?? 'new'
 
   return (
-    <div className="space-y-6">
+    <div className="grid gap-x-8 gap-y-6 lg:grid-cols-2">
       {/* Identidade */}
       <div className="space-y-4">
         <SectionLabel>Identidade</SectionLabel>

@@ -45,9 +45,9 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
   const features = PLAN_FEATURES[school.planType as keyof typeof PLAN_FEATURES] ?? PLAN_FEATURES.free
 
   return (
-    <div className="max-w-xl space-y-6">
-      {/* Plano atual — info apenas */}
-      <Card>
+    <div className="grid max-w-5xl gap-6 lg:grid-cols-3">
+      {/* Plano atual — info apenas (lateral) */}
+      <Card className="h-fit lg:order-2 lg:col-span-1">
         <h2 className="mb-4 text-base font-semibold text-ink">Plano atual</h2>
         <div className="flex items-center justify-between">
           <div>
@@ -69,7 +69,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
       </Card>
 
       {/* Dados da escola */}
-      <Card>
+      <Card className="lg:order-1 lg:col-span-2">
         <h2 className="mb-4 text-base font-semibold text-ink">Identidade</h2>
         <form action={action} className="space-y-5">
           {state.ok && (

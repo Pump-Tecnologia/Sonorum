@@ -16,7 +16,7 @@ export default async function NewPlanPage() {
       <Link href="/plans" className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted hover:text-brand-600">
         ← Voltar para planos
       </Link>
-      <div className="max-w-xl">
+      <div className="max-w-5xl">
         <Card>
           <CreatePlanForm redirectTo="/plans" />
         </Card>
