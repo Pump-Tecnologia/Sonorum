@@ -146,6 +146,7 @@ export async function sendLessonReport(
   const result = await notify('lesson.report', lesson.student_id, {
     lessonTitle: lesson.title,
     lessonDate,
+    reportUrl: `${appBaseUrl()}/relatorio/${lessonId}`,
     technique: report.technique_score,
     theory: report.theory_score,
     repertoire: report.repertoire_score,

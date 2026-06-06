@@ -73,8 +73,8 @@ export const WHATSAPP_TEMPLATES: Partial<Record<NotificationEvent, WhatsAppTempl
   'lesson.report': {
     name: 'relatorio_aula',
     language: 'pt_BR',
-    // {{1}} aluno · {{2}} data · {{3}} música · {{4}} bpm
-    variables: (p) => [who(p), str(p.lessonDate), str(p.currentSong, '—'), str(p.bpm, '—')],
+    // {{1}} aluno · {{2}} data · {{3}} música · {{4}} bpm · {{5}} link do relatório
+    variables: (p) => [who(p), str(p.lessonDate), str(p.currentSong, '—'), str(p.bpm, '—'), str(p.reportUrl)],
   },
   'progress.monthly_report': {
     name: 'relatorio_mensal',

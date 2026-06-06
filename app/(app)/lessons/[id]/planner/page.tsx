@@ -14,6 +14,7 @@ import { cancelLessonSeries, detachResource, markAttendance, updateLesson, upser
 import { lessonStatus } from '@/lib/constants/lessons'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
+import { appBaseUrl } from '@/lib/payments'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Planejador de aula' }
@@ -60,7 +61,7 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, series_id, student_id, users!lessons_student_id_fkey(name, instrument)')
+    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, series_id, student_id, users!lessons_student_id_fkey(name, instrument, phone)')
     .eq('id', id)
     .maybeSingle()
 
@@ -94,7 +95,7 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
     return acc
   }, {})
 
-  const student = lesson.users as { name: string; instrument: unknown } | null
+  const student = lesson.users as { name: string; instrument: unknown; phone: string | null } | null
 
   // Janela da aula vs. agora — define o "modo dar-aula".
   const now = new Date()
@@ -288,7 +289,14 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
           <h2 className="text-base font-semibold text-ink">Relatório de desempenho</h2>
           {report && <Badge tone="success">Preenchido</Badge>}
         </div>
-        <LessonReportForm lessonId={lesson.id} report={report} canSend={features.reports} />
+        <LessonReportForm
+          lessonId={lesson.id}
+          report={report}
+          canSend={features.reports}
+          studentName={student?.name ?? ''}
+          studentPhone={student?.phone ?? null}
+          reportUrl={`${appBaseUrl()}/relatorio/${lesson.id}`}
+        />
       </Card>
 
       <Card>
