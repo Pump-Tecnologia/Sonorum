@@ -93,8 +93,11 @@ export default async function ReportsPage({
       <PageHeader
         title="Relatórios de aula"
         subtitle="Envie o relatório de cada aula ao aluno"
-        action={<ReportDateRange from={from} to={to} />}
       />
+
+      <div className="mb-4">
+        <ReportDateRange from={from} to={to} />
+      </div>
 
       <Table>
         <Thead>

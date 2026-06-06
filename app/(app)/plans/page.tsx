@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation'
 
+import Link from 'next/link'
+
 import { PageHeader } from '@/components/app/PageHeader'
 import { type Plan } from '@/components/financial/PlanForm'
 import { PlansList } from '@/components/financial/PlansList'
-import { LinkButton } from '@/components/ui/Button'
+import { Button } from '@/components/ui/Button'
 import { requireFeature } from '@/lib/auth/plan'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -38,7 +40,11 @@ export default async function PlansPage() {
       <PageHeader
         title="Planos de mensalidade"
         subtitle="Crie planos, matricule alunos e cobre no Financeiro"
-        action={<LinkButton href="/plans/new">+ Novo plano</LinkButton>}
+        action={
+          <Link href="/plans/new">
+            <Button>Novo plano</Button>
+          </Link>
+        }
       />
 
       <PlansList

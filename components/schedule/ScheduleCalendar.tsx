@@ -169,11 +169,11 @@ export function ScheduleCalendar({
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
           locale={ptBrLocale}
-          initialView="listWeek"
+          initialView="dayGridMonth"
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'listWeek,dayGridMonth,timeGridWeek,timeGridDay',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
           }}
           buttonText={{
             today: 'Hoje',

@@ -18,6 +18,20 @@ interface Branding {
   branded: boolean
 }
 
+// Luminância relativa (sRGB) → decide se o fundo é claro (texto escuro) ou
+// escuro (texto branco). Aceita #rgb/#rrggbb.
+function isLightColor(hex: string): boolean {
+  const h = hex.replace('#', '')
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+  if (full.length !== 6) return false
+  const channel = (i: number) => {
+    const c = parseInt(full.slice(i, i + 2), 16) / 255
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+  }
+  const lum = 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4)
+  return lum > 0.5
+}
+
 // Marca da escola por request (nome + cores + logo). Cores/logo só valem se o
 // plano tem branding (Premium); abaixo disso, cai no visual padrão Sonorum.
 const getSchoolBranding = cache(async (schoolId: string | null): Promise<Branding | null> => {
@@ -49,7 +63,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   // Cores da marca → CSS vars do shell (a sidebar usa --ds-panel-bg / --ds-green).
   const shellStyle: Record<string, string> = {}
-  if (branding?.primary) shellStyle['--ds-panel-bg'] = branding.primary
+  if (branding?.primary) {
+    shellStyle['--ds-panel-bg'] = branding.primary
+    // Texto da sidebar adapta ao contraste: marca clara → texto escuro.
+    shellStyle['--ds-on-panel'] = isLightColor(branding.primary) ? '#15243A' : '#ffffff'
+  }
   if (branding?.secondary) {
     shellStyle['--ds-green'] = branding.secondary
     shellStyle['--ds-green-deep'] = branding.secondary

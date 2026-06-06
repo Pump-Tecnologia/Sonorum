@@ -22,16 +22,16 @@ export function NotificationChannelCard({ whatsappOfficial, whatsappActive }: Pr
 
       {whatsappOfficial ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-hairline bg-surface-muted/30 p-3">
-            <div>
+          <div className="rounded-xl border border-hairline bg-surface-muted/30 p-3">
+            <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-medium text-ink">WhatsApp oficial</p>
-              <p className="text-xs text-ink-muted">
-                Envio automático pelo número oficial do Sonorum — sem precisar clicar.
-              </p>
+              <Badge tone={whatsappActive ? 'success' : 'warning'}>
+                {whatsappActive ? 'Ativo' : 'Em ativação'}
+              </Badge>
             </div>
-            <Badge tone={whatsappActive ? 'success' : 'warning'}>
-              {whatsappActive ? 'Ativo' : 'Em ativação'}
-            </Badge>
+            <p className="mt-1.5 text-xs text-ink-muted">
+              Envio automático pelo número oficial do Sonorum — sem precisar clicar.
+            </p>
           </div>
           <p className="text-xs text-ink-muted">
             O e-mail continua disponível como canal opcional, ativável na conta de cada aluno.
