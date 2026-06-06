@@ -462,14 +462,30 @@ export async function saveLessonPlan(
     .eq('id', lessonId)
     .eq('school_id', me.schoolId)
 
+  // Seções (sec.<id>) e campos (fld.<key>) são dinâmicos — vêm do blueprint da
+  // categoria. Guardamos tudo num envelope em specific_data e espelhamos as
+  // seções/campos canônicos nas colunas legadas (relatório e "Dar aula" leem delas).
+  const sections: Record<string, string> = {}
+  const fields: Record<string, string> = {}
+  for (const [k, v] of formData.entries()) {
+    if (typeof v !== 'string' || !v.trim()) continue
+    if (k.startsWith('sec.')) sections[k.slice(4)] = v
+    else if (k.startsWith('fld.')) fields[k.slice(4)] = v
+  }
+  const blueprintKey = String(formData.get('blueprintKey') ?? '') || null
+  const planNotes = String(formData.get('plan_notes') ?? '') || null
+
   const plan = {
     school_id: me.schoolId,
     lesson_id: lessonId,
-    warmup: String(formData.get('warmup') ?? '') || null,
-    repertoire: String(formData.get('repertoire') ?? '') || null,
-    homework: String(formData.get('homework') ?? '') || null,
-    target_bpm: String(formData.get('target_bpm') ?? '') || null,
-    notes: String(formData.get('plan_notes') ?? '') || null,
+    // espelho legado (subconjunto canônico)
+    warmup: sections.warmup ?? null,
+    repertoire: sections.repertoire ?? null,
+    homework: sections.homework ?? null,
+    target_bpm: fields.target_bpm ?? null,
+    notes: planNotes,
+    // fonte completa (dinâmica)
+    specific_data: { v: 1, blueprintKey, sections, fields },
   }
   const { error } = await supabase.from('lesson_plans').upsert(plan, { onConflict: 'lesson_id' })
   if (error) return { ok: false, error: 'Não foi possível salvar o planejamento.' }
@@ -537,10 +553,10 @@ export async function detachResource(formData: FormData) {
 // Cria um recurso pedagógico LEVE direto da aula e já anexa na seção escolhida.
 // Pensado para o professor que percebe, planejando, que precisa de um material
 // novo — uma versão resumida agora, refinável depois no fluxo de Recursos.
-const SECTION_VALUES = ['warmup', 'repertoire', 'homework', 'general'] as const
 const createFromLessonSchema = z.object({
   lessonId: z.string().uuid(),
-  section: z.enum(SECTION_VALUES).default('general'),
+  // Seção é um id de blueprint (slug dinâmico), não mais um enum fixo.
+  section: z.string().min(1).max(64).regex(/^[a-z0-9_]+$/).default('general'),
   title: z.string().min(1, 'Dê um título ao recurso.').max(255),
   category: z.enum(CATEGORIES),
   contentType: z.enum(CONTENT_TYPES).default('Texto'),

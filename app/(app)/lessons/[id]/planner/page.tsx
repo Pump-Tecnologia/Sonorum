@@ -12,14 +12,14 @@ import { Field, Select, Textarea } from '@/components/ui/Field'
 import { LessonReportForm } from '@/components/schedule/LessonReportForm'
 import { cancelLessonSeries, markAttendance, updateLesson } from '@/lib/actions/lessons'
 import { lessonStatus } from '@/lib/constants/lessons'
+import { GENERAL_SECTION, resolveBlueprint } from '@/lib/constants/lesson-blueprints'
+import { readPlanContent } from '@/lib/lesson-plan'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
 import { appBaseUrl } from '@/lib/payments'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Aula' }
-
-const SECTION_OPTS = ['warmup', 'repertoire', 'homework', 'general'] as const
 
 const STATUS_OPTS = [
   { value: 'scheduled', label: 'Agendada' },
@@ -35,13 +35,6 @@ const ATTENDANCE_BTNS = [
   { value: 'late', label: 'Atrasado', cls: 'bg-amber-500 text-white hover:bg-amber-600' },
   { value: 'missed', label: 'Faltou', cls: 'bg-red-600 text-white hover:bg-red-700' },
 ] as const
-
-const SECTION_LABEL: Record<string, string> = {
-  warmup: 'Aquecimento',
-  repertoire: 'Repertório',
-  homework: 'Tarefa de casa',
-  general: 'Geral',
-}
 
 const PRIMARY_BTN = 'rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700'
 
@@ -104,9 +97,9 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
       instrument: r.pedagogical_resources!.instrument,
     }))
 
-  // Agrupa por seção (usado no checklist de "Dar aula")
-  const bySection = SECTION_OPTS.reduce<Record<string, AttachedResource[]>>((acc, s) => {
-    acc[s] = editorAttached.filter((r) => r.section === s)
+  // Agrupa recursos por id de seção (usado no checklist de "Dar aula").
+  const bySection = editorAttached.reduce<Record<string, AttachedResource[]>>((acc, r) => {
+    ;(acc[r.section] ??= []).push(r)
     return acc
   }, {})
 
@@ -118,6 +111,10 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
     ? (rawInstrument[0] != null ? String(rawInstrument[0]) : null)
     : (typeof rawInstrument === 'string' && rawInstrument ? rawInstrument : null)
   const studentInstrumentCategory = student?.instrument_category ?? null
+
+  // Estrutura do plano conforme a categoria do aluno + conteúdo normalizado.
+  const blueprint = resolveBlueprint(studentInstrument, studentInstrumentCategory)
+  const planContent = readPlanContent(plan)
 
   // Janela da aula vs. agora — define o "modo dar-aula".
   const now = new Date()
@@ -133,6 +130,16 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
   // ── Fase 1: Planejar (antes da aula) ──────────────────────────────────────
   const planTab = (
     <div className="space-y-5">
+      {(studentInstrument || studentInstrumentCategory) && (
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-ink-muted">Estrutura de</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+            🎵 {studentInstrument ?? studentInstrumentCategory}
+            {studentInstrument && studentInstrumentCategory ? ` · ${studentInstrumentCategory}` : ''}
+          </span>
+          <span className="text-xs text-ink-muted">— seções e campos adaptados a esta categoria</span>
+        </div>
+      )}
       <LessonTemplateBar
         lessonId={lesson.id}
         templates={templateList}
@@ -142,13 +149,8 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
       <LessonPlanEditor
         lessonId={lesson.id}
         goals={lesson.goals ?? ''}
-        plan={{
-          warmup: plan?.warmup ?? '',
-          repertoire: plan?.repertoire ?? '',
-          homework: plan?.homework ?? '',
-          target_bpm: plan?.target_bpm ?? '',
-          notes: plan?.notes ?? '',
-        }}
+        blueprint={blueprint}
+        content={planContent}
         attached={editorAttached}
         instrumentCategory={studentInstrumentCategory}
         instrument={studentInstrument}
@@ -157,13 +159,17 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
   )
 
   // Checklist do plano (read-only) para guiar a execução durante a aula.
-  const planSections = [
-    { key: 'warmup', note: plan?.warmup ?? '' },
-    { key: 'repertoire', note: plan?.repertoire ?? '' },
-    { key: 'homework', note: plan?.homework ?? '' },
-  ] as const
+  const blueprintSectionIds = new Set(blueprint.sections.map((s) => s.id))
+  const otherItems = editorAttached.filter((r) => r.section === 'general' || !blueprintSectionIds.has(r.section))
+  const planFieldEntries = blueprint.fields
+    .map((f) => ({ label: f.label, value: planContent.fields[f.key] ?? '' }))
+    .filter((f) => f.value)
   const hasPlan = Boolean(
-    lesson.goals || plan?.warmup || plan?.repertoire || plan?.homework || plan?.target_bpm || plan?.notes || editorAttached.length,
+    lesson.goals ||
+      Object.values(planContent.sections).some(Boolean) ||
+      planFieldEntries.length ||
+      planContent.planNotes ||
+      editorAttached.length,
   )
 
   // ── Fase 2: Dar aula (durante) ────────────────────────────────────────────
@@ -186,13 +192,14 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                 <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{lesson.goals}</p>
               </div>
             )}
-            {planSections.map((s) => {
-              const items = bySection[s.key]!
-              if (!s.note && items.length === 0) return null
+            {blueprint.sections.map((s) => {
+              const note = planContent.sections[s.id] ?? ''
+              const items = bySection[s.id] ?? []
+              if (!note && items.length === 0) return null
               return (
-                <div key={s.key}>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{SECTION_LABEL[s.key]}</p>
-                  {s.note && <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{s.note}</p>}
+                <div key={s.id}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{s.label}</p>
+                  {note && <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{note}</p>}
                   {items.length > 0 && (
                     <ul className="mt-1.5 space-y-1">
                       {items.map((r) => (
@@ -207,11 +214,11 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                 </div>
               )
             })}
-            {bySection.general!.length > 0 && (
+            {otherItems.length > 0 && (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{SECTION_LABEL.general}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{GENERAL_SECTION.label}</p>
                 <ul className="mt-1.5 space-y-1">
-                  {bySection.general!.map((r) => (
+                  {otherItems.map((r) => (
                     <li key={r.pivotId} className="flex items-center gap-2 text-sm text-ink">
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
                       {r.title}
@@ -220,16 +227,20 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
                 </ul>
               </div>
             )}
-            {plan?.target_bpm && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Meta de BPM</p>
-                <p className="mt-1 text-sm font-medium text-ink">{plan.target_bpm}</p>
+            {planFieldEntries.length > 0 && (
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                {planFieldEntries.map((f) => (
+                  <div key={f.label}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{f.label}</p>
+                    <p className="mt-0.5 text-sm font-medium text-ink">{f.value}</p>
+                  </div>
+                ))}
               </div>
             )}
-            {plan?.notes && (
+            {planContent.planNotes && (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Notas</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{plan.notes}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{planContent.planNotes}</p>
               </div>
             )}
           </div>

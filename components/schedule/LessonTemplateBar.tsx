@@ -132,7 +132,7 @@ export function LessonTemplateBar({
         </Link>
       </div>
       {error && <p className="mt-2 text-xs font-medium text-red-600">{error}</p>}
-      <p className="mt-1.5 text-[11px] text-ink-muted">Salvar como modelo usa o planejamento já salvo — salve o plano antes.</p>
+      <p className="mt-1.5 text-[11px] text-ink-muted">Salvar como modelo usa o planejamento já salvo (objetivos, aquecimento, repertório, tarefa e BPM) — salve o plano antes.</p>
     </div>
   )
 }
