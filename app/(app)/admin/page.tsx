@@ -6,6 +6,7 @@ import { Button, LinkButton } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { StatCard } from '@/components/ui/StatCard'
+import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { getCurrentUser } from '@/lib/auth/session'
 import { getPlanContext } from '@/lib/auth/plan'
@@ -39,7 +40,11 @@ export default async function AdminDashboard() {
   type TodayLessonRow = { id: string; start_datetime: string; status: string; users: { name: string } | null }
   type RetentionRow = { student_id: string; status: string; users: { name: string } | null }
   type ReportEmbed = { technique_score: number; theory_score: number; repertoire_score: number; practice_score: number }
-  type TeacherLessonRow = { teacher_id: string | null; status: string; student_id: string; lesson_reports: ReportEmbed[] | ReportEmbed | null }
+  type TeacherLessonRow = {
+    teacher_id: string | null; status: string; student_id: string; start_datetime: string
+    student: { name: string } | null; teacher: { name: string } | null
+    lesson_reports: ReportEmbed[] | ReportEmbed | null
+  }
 
   const [
     teachersCount, lessonsToday, chargesMonth, chargesLast, retentionLessons,
@@ -60,7 +65,7 @@ export default async function AdminDashboard() {
     supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'student').gte('created_at', lastMonth.start).lte('created_at', lastMonth.end + 'T23:59:59'),
     supabase.from('users').select('instrument_category').eq('role', 'student'),
     supabase.from('users').select('id, name').eq('role', 'teacher').order('name'),
-    supabase.from('lessons').select('teacher_id, status, student_id, lesson_reports(technique_score, theory_score, repertoire_score, practice_score)').gte('start_datetime', month.start + 'T00:00:00').lte('start_datetime', month.end + 'T23:59:59'),
+    supabase.from('lessons').select('teacher_id, status, student_id, start_datetime, student:users!lessons_student_id_fkey(name), teacher:users!lessons_teacher_id_fkey(name), lesson_reports(technique_score, theory_score, repertoire_score, practice_score)').gte('start_datetime', month.start + 'T00:00:00').lte('start_datetime', month.end + 'T23:59:59'),
     supabase.from('lessons').select('id', { count: 'exact', head: true }).is('teacher_id', null).gte('start_datetime', now.toISOString()).neq('status', 'canceled'),
   ])
 
@@ -118,6 +123,43 @@ export default async function AdminDashboard() {
     }
   }).sort((a, b) => b.completed - a.completed).slice(0, 5)
 
+  // Operacional do mês (frequência por aluno, produtividade e presenças
+  // pendentes) — derivado das mesmas aulas do mês.
+  const nowIso = now.toISOString()
+  const attMap = new Map<string, { id: string; name: string; attended: number; missed: number }>()
+  const prodMap = new Map<string, { name: string; done: number; missed: number; toMark: number }>()
+  const pendingByTeacher = new Map<string, { name: string; count: number }>()
+  let pendingTotal = 0
+  for (const l of (teacherMonthLessons.data ?? []) as unknown as TeacherLessonRow[]) {
+    if (l.status === 'completed' || l.status === 'late' || l.status === 'missed') {
+      const a = attMap.get(l.student_id) ?? { id: l.student_id, name: l.student?.name ?? '—', attended: 0, missed: 0 }
+      if (l.status === 'missed') a.missed++
+      else a.attended++
+      attMap.set(l.student_id, a)
+    }
+    if (l.status === 'scheduled' && l.start_datetime < nowIso) {
+      pendingTotal++
+      const key = l.teacher_id ?? 'sem'
+      const t = pendingByTeacher.get(key) ?? { name: l.teacher?.name ?? 'Sem professor', count: 0 }
+      t.count++
+      pendingByTeacher.set(key, t)
+    }
+    if (l.teacher_id && l.status !== 'canceled') {
+      const p = prodMap.get(l.teacher_id) ?? { name: l.teacher?.name ?? '—', done: 0, missed: 0, toMark: 0 }
+      if (l.status === 'completed' || l.status === 'late') p.done++
+      else if (l.status === 'missed') p.missed++
+      else if (l.status === 'scheduled' && l.start_datetime < nowIso) p.toMark++
+      prodMap.set(l.teacher_id, p)
+    }
+  }
+  const attendance = [...attMap.values()]
+    .map((a) => ({ ...a, rate: a.attended + a.missed > 0 ? Math.round((a.attended / (a.attended + a.missed)) * 100) : 0 }))
+    .sort((a, b) => a.rate - b.rate)
+  const productivity = [...prodMap.values()]
+    .map((p) => ({ ...p, doneRate: p.done + p.missed > 0 ? Math.round((p.done / (p.done + p.missed)) * 100) : 0 }))
+    .sort((a, b) => b.done - a.done)
+  const pendings = [...pendingByTeacher.values()].sort((a, b) => b.count - a.count)
+
   // Atenção necessária — sinais reais e acionáveis
   type Alert = { label: string; detail: React.ReactNode; href: string; tone: 'danger' | 'warning' }
   const alerts: Alert[] = []
@@ -125,6 +167,8 @@ export default async function AdminDashboard() {
     alerts.push({ label: `${overdue.length} cobrança(s) vencida(s)`, detail: <><MoneyValue value={overdueSum} /> em atraso</>, href: '/financial', tone: 'danger' })
   if ((unassigned.count ?? 0) > 0)
     alerts.push({ label: `${unassigned.count} aula(s) sem professor`, detail: 'Atribua um professor na agenda', href: '/schedule', tone: 'warning' })
+  if (pendingTotal > 0)
+    alerts.push({ label: `${pendingTotal} presença(s) pendente(s)`, detail: 'Aulas já passaram sem presença lançada', href: '/schedule', tone: 'warning' })
   for (const r of retentionRisk.filter((r) => r.count >= 3))
     alerts.push({ label: `${r.name} faltou ${r.count}×`, detail: 'Risco de evasão', href: `/admin/students/${r.id}`, tone: 'danger' })
 
@@ -275,6 +319,77 @@ export default async function AdminDashboard() {
             </ul>
           )}
         </Card>
+      </div>
+
+      {/* ── Operação do mês ───────────────────────────────────────────────── */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        {/* Frequência por aluno */}
+        <Card>
+          <h2 className="mb-4 text-base font-semibold text-ink">Frequência <span className="text-sm font-normal text-ink-muted">(mês)</span></h2>
+          <Table>
+            <Thead>
+              <Tr><Th>Aluno</Th><Th>Presenças</Th><Th>Faltas</Th><Th>Taxa</Th></Tr>
+            </Thead>
+            <tbody>
+              {attendance.length === 0 && <EmptyRow colSpan={4}>Sem presenças registradas no mês.</EmptyRow>}
+              {attendance.map((a) => (
+                <Tr key={a.id}>
+                  <Td className="font-medium">
+                    <Link href={`/admin/students/${a.id}`} className="text-brand-700 hover:underline">{a.name}</Link>
+                  </Td>
+                  <Td>{a.attended}</Td>
+                  <Td>{a.missed}</Td>
+                  <Td><Badge tone={a.rate >= 80 ? 'success' : a.rate >= 60 ? 'warning' : 'danger'}>{a.rate}%</Badge></Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card>
+
+        {/* Produtividade dos professores */}
+        <Card>
+          <h2 className="mb-4 text-base font-semibold text-ink">Produtividade <span className="text-sm font-normal text-ink-muted">(professores, mês)</span></h2>
+          <Table>
+            <Thead>
+              <Tr><Th>Professor</Th><Th>Realizadas</Th><Th>Faltas</Th><Th>A lançar</Th><Th>Conclusão</Th></Tr>
+            </Thead>
+            <tbody>
+              {productivity.length === 0 && <EmptyRow colSpan={5}>Sem aulas no mês.</EmptyRow>}
+              {productivity.map((p, i) => (
+                <Tr key={i}>
+                  <Td className="font-medium">{p.name}</Td>
+                  <Td className="font-semibold">{p.done}</Td>
+                  <Td>{p.missed}</Td>
+                  <Td>{p.toMark}</Td>
+                  <Td><Badge tone={p.doneRate >= 80 ? 'success' : p.doneRate >= 50 ? 'warning' : 'neutral'}>{p.doneRate}%</Badge></Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card>
+
+        {/* Presenças pendentes */}
+        {pendingTotal > 0 && (
+          <Card className="lg:col-span-2">
+            <h2 className="mb-1 text-base font-semibold text-ink">Presenças pendentes</h2>
+            <p className="mb-4 text-sm text-ink-muted">
+              {pendingTotal} aula(s) já passaram e seguem como “Agendada” — a presença não foi lançada.
+            </p>
+            <Table>
+              <Thead>
+                <Tr><Th>Professor</Th><Th className="text-right">Aulas a lançar</Th></Tr>
+              </Thead>
+              <tbody>
+                {pendings.map((p, i) => (
+                  <Tr key={i}>
+                    <Td className="font-medium">{p.name}</Td>
+                    <Td className="text-right font-semibold text-amber-600">{p.count}</Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </Card>
+        )}
       </div>
     </>
   )
