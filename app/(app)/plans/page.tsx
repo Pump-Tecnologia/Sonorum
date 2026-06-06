@@ -51,11 +51,7 @@ export default async function PlansPage() {
         </div>
 
         <Card className="h-fit">
-          <h2 className="mb-1 text-base font-semibold text-ink">Novo plano</h2>
-          <p className="mb-4 text-xs text-ink-muted">
-            Mensalidade = valor fixo no mês. Por aula = preço × aulas realizadas. O desconto de
-            pontualidade vale se o aluno paga até o vencimento.
-          </p>
+          <h2 className="mb-4 text-base font-semibold text-ink">Novo plano</h2>
           <CreatePlanForm />
         </Card>
       </div>

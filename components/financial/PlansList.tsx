@@ -93,43 +93,49 @@ export function PlansList({ plans, counts, students }: { plans: Plan[]; counts: 
             ) : (
               <>
                 <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold text-ink">{p.name}</p>
                       <Badge tone={perClass ? 'warning' : 'neutral'}>{billingTypeLabel(p.billing_type)}</Badge>
                       {!p.active && <Badge tone="danger">Inativo</Badge>}
-                      {age && <span className="text-xs text-ink-muted">· {age}</span>}
                     </div>
-                    {p.description && <p className="mt-0.5 text-sm text-ink-muted">{p.description}</p>}
-                    <p className="mt-1 text-base font-bold text-brand-700">
-                      {formatBRL(p.amount)}
-                      <span className="text-xs font-normal text-ink-muted">{unit}</span>
+                    {p.description && <p className="mt-1 text-sm text-ink-muted">{p.description}</p>}
+
+                    <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="text-xl font-bold text-brand-700">
+                        {formatBRL(p.amount)}
+                        <span className="text-xs font-normal text-ink-muted">{unit}</span>
+                      </span>
                       {p.early_pay_amount != null && (
-                        <span className="ml-2 text-sm font-semibold text-accent-700">
+                        <span className="text-sm font-semibold text-accent-700">
                           {formatBRL(p.early_pay_amount)}
-                          <span className="text-xs font-normal text-ink-muted"> até o vencimento</span>
+                          <span className="text-xs font-normal text-ink-muted"> até o venc.</span>
                         </span>
                       )}
-                    </p>
-                    <p className="mt-1 text-xs font-medium text-ink-muted">
-                      {count === 0 ? 'Nenhum aluno matriculado' : `${count} aluno${count > 1 ? 's' : ''} matriculado${count > 1 ? 's' : ''}`}
-                    </p>
+                      {age && <span className="text-xs text-ink-muted">{age}</span>}
+                    </div>
+
+                    <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${count > 0 ? 'bg-brand-50 text-brand-700' : 'bg-surface-muted text-ink-muted'}`}>
+                      {count === 0 ? 'Sem alunos' : `${count} aluno${count > 1 ? 's' : ''}`}
+                    </span>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
+
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <Button
-                      variant="ghost"
-                      className="px-2 py-1 text-xs"
+                      className="px-3 py-1.5 text-xs"
                       onClick={() => setEnrollingId(enrollingId === p.id ? null : p.id)}
                     >
-                      Matricular
+                      + Matricular
                     </Button>
-                    <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditingId(p.id)}>Editar</Button>
-                    <DeleteButton
-                      action={deletePlan}
-                      hidden={{ planId: p.id }}
-                      label="Excluir"
-                      confirmText={`Excluir o plano "${p.name}"? Matrículas existentes não serão afetadas.`}
-                    />
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditingId(p.id)}>Editar</Button>
+                      <DeleteButton
+                        action={deletePlan}
+                        hidden={{ planId: p.id }}
+                        label="Excluir"
+                        confirmText={`Excluir o plano "${p.name}"? Matrículas existentes não serão afetadas.`}
+                      />
+                    </div>
                   </div>
                 </div>
                 {enrollingId === p.id && (
