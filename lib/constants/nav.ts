@@ -39,6 +39,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Professores', href: '/admin/teachers', icon: 'teacher' },
     { label: 'Alunos', href: '/admin/students', icon: 'users' },
     { label: 'Recursos', href: '/resources', icon: 'folder' },
+    { label: 'Modelos de aula', href: '/modelos', icon: 'book' },
     { label: 'Transcrição IA', href: '/resources/transcribe', icon: 'sparkles' },
     { label: 'Planos', href: '/plans', icon: 'tag' },
     { label: 'Financeiro', href: '/financial', icon: 'wallet' },
@@ -49,6 +50,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Dashboard', href: '/teacher', icon: 'home' },
     { label: 'Agenda', href: '/schedule', icon: 'calendar' },
     { label: 'Recursos', href: '/resources', icon: 'folder' },
+    { label: 'Modelos de aula', href: '/modelos', icon: 'book' },
     { label: 'Transcrição IA', href: '/resources/transcribe', icon: 'sparkles' },
   ],
   student: [

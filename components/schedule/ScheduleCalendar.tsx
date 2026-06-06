@@ -359,7 +359,7 @@ export function ScheduleCalendar({
 
             <div className={styles.modalFooter}>
               <a href={`/lessons/${eventModal.id}/planner`} className={styles.linkInline}>
-                Abrir planejador →
+                Abrir aula →
               </a>
               {canManage && eventModal.status !== 'canceled' && (
                 confirmingCancel ? (

@@ -309,6 +309,62 @@ export type Database = {
           },
         ]
       }
+      lesson_plan_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          goals: string | null
+          homework_note: string | null
+          id: string
+          instrument: string | null
+          instrument_category: string | null
+          name: string
+          repertoire_note: string | null
+          school_id: string
+          target_bpm: string | null
+          updated_at: string
+          warmup_note: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          goals?: string | null
+          homework_note?: string | null
+          id?: string
+          instrument?: string | null
+          instrument_category?: string | null
+          name: string
+          repertoire_note?: string | null
+          school_id: string
+          target_bpm?: string | null
+          updated_at?: string
+          warmup_note?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          goals?: string | null
+          homework_note?: string | null
+          id?: string
+          instrument?: string | null
+          instrument_category?: string | null
+          name?: string
+          repertoire_note?: string | null
+          school_id?: string
+          target_bpm?: string | null
+          updated_at?: string
+          warmup_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_plan_templates_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_reports: {
         Row: {
           created_at: string

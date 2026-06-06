@@ -8,6 +8,7 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { removeLessonFromCalendars, syncLessonToCalendars } from '@/lib/calendar/sync'
 import { notify } from '@/lib/notifications/notify'
 import { RECURRENCE_PRESETS, presetWeeks } from '@/lib/constants/recurrence'
+import { CATEGORIES, CONTENT_TYPES } from '@/lib/constants/resources'
 import { localBrToServerISO } from '@/lib/timezone'
 
 export type LessonActionState = {
@@ -192,7 +193,7 @@ export async function updateLesson(formData: FormData) {
   if (formData.has('private_notes')) updates.private_notes = String(formData.get('private_notes')) || null
 
   if (Object.keys(updates).length > 0) {
-    await supabase.from('lessons').update(updates).eq('id', lessonId)
+    await supabase.from('lessons').update(updates).eq('id', lessonId).eq('school_id', me.schoolId)
   }
 
   // Relatório de desempenho
@@ -383,18 +384,20 @@ export async function cancelLessonSeries(formData: FormData) {
 
 export async function cancelLesson(formData: FormData) {
   const me = await getCurrentUser()
-  if (!me?.schoolId) return
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
   const lessonId = String(formData.get('lessonId') ?? '')
   const supabase = await createClient()
 
-  // Lê antes do update p/ ter dados pro template.
+  // Lê antes do update p/ ter dados pro template (escopo da escola).
   const { data: lesson } = await supabase
     .from('lessons')
     .select('student_id, start_datetime')
     .eq('id', lessonId)
+    .eq('school_id', me.schoolId)
     .maybeSingle()
+  if (!lesson) return
 
-  await supabase.from('lessons').update({ status: 'canceled' }).eq('id', lessonId)
+  await supabase.from('lessons').update({ status: 'canceled' }).eq('id', lessonId).eq('school_id', me.schoolId)
   await removeLessonFromCalendars(lessonId).catch(() => {})
 
   if (lesson) {
@@ -420,20 +423,44 @@ export async function markAttendance(formData: FormData) {
   if (!lessonId || !isValid) return
 
   const supabase = await createClient()
-  await supabase.from('lessons').update({ status }).eq('id', lessonId)
+  await supabase.from('lessons').update({ status }).eq('id', lessonId).eq('school_id', me.schoolId)
 
   revalidatePath('/schedule')
   revalidatePath('/teacher')
   revalidatePath(`/lessons/${lessonId}/planner`)
 }
 
-// ── Lesson Plan (warmup/repertoire/homework/target_bpm) ─────────────────────
-export async function upsertLessonPlan(formData: FormData) {
+// ── Lesson Plan ──────────────────────────────────────────────────────────────
+// Salva objetivos (lessons.goals) + planejamento (lesson_plans) num passo só —
+// é o "Salvar/Atualizar" único da tela da aula. Notas por seção (warmup/
+// repertoire/homework) e BPM são opcionais; o conteúdo "estruturado" mora nos
+// recursos anexados (lesson_pedagogical_resource).
+export async function saveLessonPlan(
+  _prev: LessonActionState,
+  formData: FormData,
+): Promise<LessonActionState> {
   const me = await getCurrentUser()
-  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return { ok: false, error: 'Acesso negado.' }
 
   const lessonId = String(formData.get('lessonId') ?? '')
+  if (!lessonId) return { ok: false, error: 'Aula inválida.' }
+
   const supabase = await createClient()
+
+  // Pré-flight: a aula tem que ser da escola do staff (defense-in-depth além do RLS).
+  const { data: owned } = await supabase
+    .from('lessons')
+    .select('id')
+    .eq('id', lessonId)
+    .eq('school_id', me.schoolId)
+    .maybeSingle()
+  if (!owned) return { ok: false, error: 'Aula não encontrada.' }
+
+  await supabase
+    .from('lessons')
+    .update({ goals: String(formData.get('goals') ?? '') || null })
+    .eq('id', lessonId)
+    .eq('school_id', me.schoolId)
 
   const plan = {
     school_id: me.schoolId,
@@ -444,9 +471,12 @@ export async function upsertLessonPlan(formData: FormData) {
     target_bpm: String(formData.get('target_bpm') ?? '') || null,
     notes: String(formData.get('plan_notes') ?? '') || null,
   }
+  const { error } = await supabase.from('lesson_plans').upsert(plan, { onConflict: 'lesson_id' })
+  if (error) return { ok: false, error: 'Não foi possível salvar o planejamento.' }
 
-  await supabase.from('lesson_plans').upsert(plan, { onConflict: 'lesson_id' })
   revalidatePath(`/lessons/${lessonId}/planner`)
+  revalidatePath('/schedule')
+  return { ok: true }
 }
 
 // ── Anexar / desanexar recursos pedagógicos à aula ───────────────────────────
@@ -461,6 +491,15 @@ export async function attachResource(formData: FormData) {
   if (!lessonId || !resourceId) return
 
   const supabase = await createClient()
+
+  // A aula tem que ser da escola do staff (defense-in-depth além do RLS).
+  const { data: ownedLesson } = await supabase
+    .from('lessons')
+    .select('id')
+    .eq('id', lessonId)
+    .eq('school_id', me.schoolId)
+    .maybeSingle()
+  if (!ownedLesson) return
 
   // Evita duplicata (lesson + resource + section)
   const { data: existing } = await supabase
@@ -493,4 +532,97 @@ export async function detachResource(formData: FormData) {
   const supabase = await createClient()
   await supabase.from('lesson_pedagogical_resource').delete().eq('id', pivotId)
   revalidatePath(`/lessons/${lessonId}/planner`)
+}
+
+// Cria um recurso pedagógico LEVE direto da aula e já anexa na seção escolhida.
+// Pensado para o professor que percebe, planejando, que precisa de um material
+// novo — uma versão resumida agora, refinável depois no fluxo de Recursos.
+const SECTION_VALUES = ['warmup', 'repertoire', 'homework', 'general'] as const
+const createFromLessonSchema = z.object({
+  lessonId: z.string().uuid(),
+  section: z.enum(SECTION_VALUES).default('general'),
+  title: z.string().min(1, 'Dê um título ao recurso.').max(255),
+  category: z.enum(CATEGORIES),
+  contentType: z.enum(CONTENT_TYPES).default('Texto'),
+  body: z.string().optional(),
+  contentLink: z.string().url('Link inválido.').optional().or(z.literal('')),
+  // instrument_category é TEXT no banco; aceita qualquer string (o instrumento do
+  // aluno pode não estar no enum). Evita falha críptica de validação.
+  instrumentCategory: z.string().max(255).optional(),
+  instrument: z.string().max(255).optional().or(z.literal('')),
+})
+
+export interface CreateResourceFromLessonInput {
+  lessonId: string
+  section: string
+  title: string
+  category: string
+  contentType?: string
+  body?: string
+  contentLink?: string
+  instrumentCategory?: string | null
+  instrument?: string | null
+}
+
+export async function createResourceFromLesson(
+  input: CreateResourceFromLessonInput,
+): Promise<{ ok: boolean; error?: string }> {
+  const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return { ok: false, error: 'Acesso negado.' }
+
+  const parsed = createFromLessonSchema.safeParse({
+    lessonId: input.lessonId,
+    section: input.section || 'general',
+    title: input.title,
+    category: input.category,
+    contentType: input.contentType || 'Texto',
+    body: input.body,
+    contentLink: input.contentLink || '',
+    instrumentCategory: input.instrumentCategory || '',
+    instrument: input.instrument || '',
+  })
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos.' }
+  }
+  const d = parsed.data
+  const supabase = await createClient()
+
+  // A aula tem que ser da escola do staff — evita criar recurso órfão (anexação
+  // bloqueada pelo RLS) e cross-tenant.
+  const { data: lesson } = await supabase
+    .from('lessons')
+    .select('id')
+    .eq('id', d.lessonId)
+    .eq('school_id', me.schoolId)
+    .maybeSingle()
+  if (!lesson) return { ok: false, error: 'Aula não encontrada.' }
+
+  const { data: created, error } = await supabase
+    .from('pedagogical_resources')
+    .insert({
+      school_id: me.schoolId,
+      title: d.title,
+      category: d.category,
+      instrument_category: d.instrumentCategory || null,
+      instrument: d.instrument || null,
+      difficulty: 'Iniciante',
+      content_type: d.contentType,
+      body: d.body || null,
+      content_link: d.contentLink || null,
+      created_by: me.id,
+    })
+    .select('id')
+    .single()
+
+  if (error || !created) return { ok: false, error: 'Não foi possível criar o recurso.' }
+
+  await supabase.from('lesson_pedagogical_resource').insert({
+    lesson_id: d.lessonId,
+    pedagogical_resource_id: created.id,
+    section: d.section,
+  })
+
+  revalidatePath(`/lessons/${d.lessonId}/planner`)
+  revalidatePath('/resources')
+  return { ok: true }
 }

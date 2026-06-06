@@ -113,7 +113,7 @@ export default async function TeacherDashboard() {
             </div>
             <Link href={`/lessons/${nextLesson.id}/planner`}>
               <span className="inline-flex items-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                {isLive ? 'Iniciar aula' : 'Abrir planejador'} →
+                {isLive ? 'Iniciar aula' : 'Abrir aula'} →
               </span>
             </Link>
           </div>
@@ -126,8 +126,8 @@ export default async function TeacherDashboard() {
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {nextLesson && (
           <Link href={`/lessons/${nextLesson.id}/planner`} className="rounded-2xl border border-hairline bg-surface p-4 transition-colors hover:border-brand-300">
-            <p className="text-sm font-semibold text-ink">Planejador</p>
-            <p className="text-xs text-ink-muted">Plano e presença da aula</p>
+            <p className="text-sm font-semibold text-ink">Aula</p>
+            <p className="text-xs text-ink-muted">Planejar, dar aula e avaliar</p>
           </Link>
         )}
         {QUICK_ACTIONS.map((a) => (
