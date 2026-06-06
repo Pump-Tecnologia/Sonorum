@@ -80,64 +80,62 @@ export function PlansList({ plans, counts, students }: { plans: Plan[]; counts: 
     return <p className="text-sm text-ink-muted">Nenhum plano cadastrado. Crie um ao lado.</p>
 
   return (
-    <div className="space-y-3">
+    <div className="grid items-start gap-4 sm:grid-cols-2">
       {plans.map((p) => {
         const perClass = p.billing_type === 'per_class'
         const unit = perClass ? '/aula' : '/mês'
         const age = ageLabel(p.min_age, p.max_age)
         const count = counts[p.id] ?? 0
         return (
-          <Card key={p.id} className="p-4">
+          <Card key={p.id} className="flex flex-col p-5">
             {editingId === p.id ? (
               <EditPlanForm plan={p} onClose={() => setEditingId(null)} />
             ) : (
               <>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold text-ink">{p.name}</p>
-                      <Badge tone={perClass ? 'warning' : 'neutral'}>{billingTypeLabel(p.billing_type)}</Badge>
-                      {!p.active && <Badge tone="danger">Inativo</Badge>}
-                    </div>
-                    {p.description && <p className="mt-1 text-sm text-ink-muted">{p.description}</p>}
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-semibold text-ink">{p.name}</p>
+                  <Badge tone={perClass ? 'warning' : 'neutral'}>{billingTypeLabel(p.billing_type)}</Badge>
+                  {!p.active && <Badge tone="danger">Inativo</Badge>}
+                </div>
+                {p.description && <p className="mt-1 text-sm text-ink-muted">{p.description}</p>}
 
-                    <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <span className="text-xl font-bold text-brand-700">
-                        {formatBRL(p.amount)}
-                        <span className="text-xs font-normal text-ink-muted">{unit}</span>
-                      </span>
-                      {p.early_pay_amount != null && (
-                        <span className="text-sm font-semibold text-accent-700">
-                          {formatBRL(p.early_pay_amount)}
-                          <span className="text-xs font-normal text-ink-muted"> até o venc.</span>
-                        </span>
-                      )}
-                      {age && <span className="text-xs text-ink-muted">{age}</span>}
-                    </div>
-
-                    <span className={`mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${count > 0 ? 'bg-brand-50 text-brand-700' : 'bg-surface-muted text-ink-muted'}`}>
-                      {count === 0 ? 'Sem alunos' : `${count} aluno${count > 1 ? 's' : ''}`}
+                <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-2xl font-bold text-brand-700">
+                    {formatBRL(p.amount)}
+                    <span className="text-sm font-normal text-ink-muted">{unit}</span>
+                  </span>
+                  {p.early_pay_amount != null && (
+                    <span className="text-sm font-semibold text-accent-700">
+                      {formatBRL(p.early_pay_amount)}
+                      <span className="text-xs font-normal text-ink-muted"> até o venc.</span>
                     </span>
-                  </div>
+                  )}
+                  {age && <span className="text-xs text-ink-muted">{age}</span>}
+                </div>
 
-                  <div className="flex shrink-0 flex-col items-end gap-1.5">
-                    <Button
-                      className="px-3 py-1.5 text-xs"
-                      onClick={() => setEnrollingId(enrollingId === p.id ? null : p.id)}
-                    >
-                      + Matricular
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditingId(p.id)}>Editar</Button>
-                      <DeleteButton
-                        action={deletePlan}
-                        hidden={{ planId: p.id }}
-                        label="Excluir"
-                        confirmText={`Excluir o plano "${p.name}"? Matrículas existentes não serão afetadas.`}
-                      />
-                    </div>
+                <span className={`mt-3 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${count > 0 ? 'bg-brand-50 text-brand-700' : 'bg-surface-muted text-ink-muted'}`}>
+                  {count === 0 ? 'Sem alunos' : `${count} aluno${count > 1 ? 's' : ''}`}
+                </span>
+
+                {/* Ações no rodapé do card */}
+                <div className="mt-4 flex items-center justify-between gap-2 border-t border-hairline pt-3">
+                  <Button
+                    className="px-3 py-1.5 text-xs"
+                    onClick={() => setEnrollingId(enrollingId === p.id ? null : p.id)}
+                  >
+                    + Matricular
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditingId(p.id)}>Editar</Button>
+                    <DeleteButton
+                      action={deletePlan}
+                      hidden={{ planId: p.id }}
+                      label="Excluir"
+                      confirmText={`Excluir o plano "${p.name}"? Matrículas existentes não serão afetadas.`}
+                    />
                   </div>
                 </div>
+
                 {enrollingId === p.id && (
                   <EnrollInline planId={p.id} perClass={perClass} students={students} onDone={() => setEnrollingId(null)} />
                 )}

@@ -39,13 +39,11 @@ export default async function PlansPage() {
         subtitle="Crie planos, matricule alunos e cobre no Financeiro"
       />
 
-      <div className="max-w-3xl">
-        <PlansPanel
-          plans={(plans ?? []) as Plan[]}
-          counts={counts}
-          students={(students ?? []) as { id: string; name: string }[]}
-        />
-      </div>
+      <PlansPanel
+        plans={(plans ?? []) as Plan[]}
+        counts={counts}
+        students={(students ?? []) as { id: string; name: string }[]}
+      />
     </>
   )
 }
