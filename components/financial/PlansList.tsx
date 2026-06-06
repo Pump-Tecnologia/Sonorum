@@ -43,7 +43,7 @@ function EnrollInline({ planId, perClass, students, onDone }: { planId: string; 
     <form action={action} className="mt-3 space-y-3 rounded-xl border border-hairline bg-surface-muted/40 p-3">
       <input type="hidden" name="planId" value={planId} />
       {state.error && <p className="text-sm font-medium text-red-600">{state.error}</p>}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-[1fr_6.5rem_9.5rem]">
         <Field label="Aluno" htmlFor={`enr-student-${planId}`} error={fe.studentId}>
           <select
             id={`enr-student-${planId}`}
@@ -56,18 +56,20 @@ function EnrollInline({ planId, perClass, students, onDone }: { planId: string; 
             {students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </Field>
-        <Field label="Dia do vencimento" htmlFor={`enr-due-${planId}`} error={fe.dueDay}>
-          <Input id={`enr-due-${planId}`} name="dueDay" type="number" min="1" max="31" placeholder="Ex.: 10" required />
+        <Field label="Vencimento" htmlFor={`enr-due-${planId}`} error={fe.dueDay} hint="dia do mês">
+          <Input id={`enr-due-${planId}`} name="dueDay" type="number" min="1" max="31" placeholder="10" required />
         </Field>
-        <Field label={perClass ? 'Preço/aula (opcional)' : 'Valor custom (opcional)'} htmlFor={`enr-amount-${planId}`} error={fe.customAmount}>
-          <Input id={`enr-amount-${planId}`} name="customAmount" type="number" min="0" step="0.01" placeholder="—" />
+        <Field label="Valor" htmlFor={`enr-amount-${planId}`} error={fe.customAmount} hint={perClass ? 'por aula' : 'opcional'}>
+          <Input id={`enr-amount-${planId}`} name="customAmount" type="number" min="0" step="0.01" placeholder="igual ao plano" />
         </Field>
       </div>
-      <div className="flex items-center gap-2">
-        <SubmitButton pendingLabel="Matriculando…">Matricular</SubmitButton>
-        <button type="button" onClick={onDone} className="text-sm text-ink-muted hover:text-ink">Cancelar</button>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-ink-muted">Substitui a matrícula ativa anterior do aluno.</p>
+        <div className="flex shrink-0 items-center gap-2">
+          <button type="button" onClick={onDone} className="text-sm font-medium text-ink-muted hover:text-ink">Cancelar</button>
+          <SubmitButton fullWidth={false} pendingLabel="Matriculando…">Matricular</SubmitButton>
+        </div>
       </div>
-      <p className="text-xs text-ink-muted">Matricular substitui a matrícula ativa anterior do aluno.</p>
     </form>
   )
 }
