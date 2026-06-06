@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
-import { CreatePlanForm, type Plan } from '@/components/financial/PlanForm'
-import { PlansList } from '@/components/financial/PlansList'
-import { Card } from '@/components/ui/Card'
+import { type Plan } from '@/components/financial/PlanForm'
+import { PlansPanel } from '@/components/financial/PlansPanel'
 import { requireFeature } from '@/lib/auth/plan'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -40,20 +39,12 @@ export default async function PlansPage() {
         subtitle="Crie planos, matricule alunos e cobre no Financeiro"
       />
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-        <div>
-          <h2 className="mb-4 text-base font-semibold text-ink">Planos cadastrados</h2>
-          <PlansList
-            plans={(plans ?? []) as Plan[]}
-            counts={counts}
-            students={(students ?? []) as { id: string; name: string }[]}
-          />
-        </div>
-
-        <Card className="h-fit">
-          <h2 className="mb-4 text-base font-semibold text-ink">Novo plano</h2>
-          <CreatePlanForm />
-        </Card>
+      <div className="max-w-3xl">
+        <PlansPanel
+          plans={(plans ?? []) as Plan[]}
+          counts={counts}
+          students={(students ?? []) as { id: string; name: string }[]}
+        />
       </div>
     </>
   )
