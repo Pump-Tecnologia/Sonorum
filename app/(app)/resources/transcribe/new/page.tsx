@@ -15,6 +15,15 @@ export default async function NewTranscriptionPage() {
         title="Transcrever áudio"
         subtitle="A IA gera um rascunho de cifra a partir do áudio. Você revisa antes de publicar."
       />
+      <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <span aria-hidden="true" className="text-lg leading-none">🚧</span>
+        <div>
+          <p className="text-sm font-semibold text-amber-900">Recurso em desenvolvimento</p>
+          <p className="mt-0.5 text-sm text-amber-800">
+            A transcrição por IA ainda está sendo finalizada — os resultados podem ser imprecisos.
+          </p>
+        </div>
+      </div>
       <TranscriptionUploadForm />
     </>
   )

@@ -41,6 +41,16 @@ export default async function TranscriptionQueuePage() {
         }
       />
 
+      <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <span aria-hidden="true" className="text-lg leading-none">🚧</span>
+        <div>
+          <p className="text-sm font-semibold text-amber-900">Recurso em desenvolvimento</p>
+          <p className="mt-0.5 text-sm text-amber-800">
+            A transcrição de áudio por IA ainda está sendo finalizada. Os resultados podem ser imprecisos ou ficar indisponíveis enquanto ajustamos o recurso.
+          </p>
+        </div>
+      </div>
+
       {list.length === 0 ? (
         <Card>
           <p className="text-sm text-ink-muted">

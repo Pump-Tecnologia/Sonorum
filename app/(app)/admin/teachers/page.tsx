@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
+import { SearchBox } from '@/components/admin/SearchBox'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
@@ -19,26 +20,49 @@ type TeacherRow = {
   user: { name: string; email: string } | null
 }
 
-export default async function TeachersPage() {
+export default async function TeachersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
+  const { q } = await searchParams
+  const term = (q ?? '').trim()
+
   const supabase = await createClient()
   const { data } = await supabase
     .from('teachers')
     .select('id, user_id, status, instruments, user:users(name, email)')
     .order('created_at', { ascending: false })
 
-  const teachers = (data ?? []) as unknown as TeacherRow[]
+  const all = (data ?? []) as unknown as TeacherRow[]
+  // Filtro por nome/e-mail (em memória — a relação está num join embutido).
+  const teachers = term
+    ? all.filter((t) => {
+        const hay = `${t.user?.name ?? ''} ${t.user?.email ?? ''}`.toLowerCase()
+        return hay.includes(term.toLowerCase())
+      })
+    : all
 
   return (
     <>
       <PageHeader
         title="Professores"
-        subtitle={`${teachers.length} professor(es)`}
+        subtitle={`${teachers.length} professor(es)${term ? ` · busca: "${term}"` : ''}`}
         action={
           <Link href="/admin/teachers/new">
             <Button>Novo professor</Button>
           </Link>
         }
       />
+
+      <div className="mb-4 max-w-sm">
+        <SearchBox
+          basePath="/admin/teachers"
+          defaultValue={term}
+          placeholder="Buscar professor por nome ou e-mail…"
+          label="Buscar professor"
+        />
+      </div>
 
       <Table>
         <Thead>
