@@ -58,6 +58,7 @@
   flex-shrink: 0;
   background: var(--ds-panel-bg);
   color: var(--ds-on-panel, #fff);
+  border-right: 1px solid color-mix(in oklab, var(--ds-on-panel, #fff) 12%, transparent);
   display: flex;
   flex-direction: column;
   height: 100dvh;

@@ -67,9 +67,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const branding = await getSchoolBranding(user.schoolId)
 
-  // Marca = ACENTO apenas. A interface (sidebar/superfícies) fica neutra e fixa;
-  // a cor da escola re-tinta o brand-* (botões/links/item ativo).
-  const shellStyle: Record<string, string> = branding?.accent ? accentVars(branding.accent) : {}
+  // Marca = ACENTO + sidebar neutra. Sem personalização, a sidebar é o navy
+  // Sonorum. Ao personalizar, a sidebar vira um branco acizentado (neutro, não
+  // brifica o navy do Sonorum com a cor da escola) + texto escuro; a cor da
+  // marca aparece só como acento (brand-*, item ativo).
+  const shellStyle: Record<string, string> = branding?.accent
+    ? {
+        ...accentVars(branding.accent),
+        '--ds-panel-bg': '#EAEDF2', // branco acizentado neutro
+        '--ds-on-panel': '#2A3645', // texto escuro sobre painel claro
+      }
+    : {}
 
   const isImpersonating = Boolean(impersonatorId) && impersonatorId !== user.id
 
