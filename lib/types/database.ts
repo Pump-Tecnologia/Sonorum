@@ -141,6 +141,75 @@ export type Database = {
           },
         ]
       }
+      google_calendar_connections: {
+        Row: {
+          calendar_id: string
+          connected_at: string
+          google_email: string | null
+          id: string
+          provider: string
+          refresh_token_enc: string
+          revoked_at: string | null
+          school_id: string | null
+          scope: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendar_id?: string
+          connected_at?: string
+          google_email?: string | null
+          id?: string
+          provider?: string
+          refresh_token_enc: string
+          revoked_at?: string | null
+          school_id?: string | null
+          scope?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendar_id?: string
+          connected_at?: string
+          google_email?: string | null
+          id?: string
+          provider?: string
+          refresh_token_enc?: string
+          revoked_at?: string | null
+          school_id?: string | null
+          scope?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lesson_calendar_events: {
+        Row: {
+          created_at: string
+          external_event_id: string
+          id: string
+          lesson_id: string
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          external_event_id: string
+          id?: string
+          lesson_id: string
+          provider?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          external_event_id?: string
+          id?: string
+          lesson_id?: string
+          provider?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lesson_pedagogical_resource: {
         Row: {
           created_at: string

@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
+import { removeLessonFromCalendars, syncLessonToCalendars } from '@/lib/calendar/sync'
 import { notify } from '@/lib/notifications/notify'
 import { RECURRENCE_PRESETS, presetWeeks } from '@/lib/constants/recurrence'
 import { localBrToServerISO } from '@/lib/timezone'
@@ -150,8 +151,14 @@ export async function createLesson(
     series_id: seriesId,
   })
 
-  const { error } = await supabase.from('lessons').insert(occurrences.map(([s, e]) => toInsert(s, e)))
+  const { data: inserted, error } = await supabase
+    .from('lessons')
+    .insert(occurrences.map(([s, e]) => toInsert(s, e)))
+    .select('id')
   if (error) return { ok: false, error: 'Não foi possível criar a aula.' }
+
+  // Espelha nas agendas externas dos participantes conectados (no-op sem Google).
+  await Promise.all((inserted ?? []).map((l) => syncLessonToCalendars(l.id).catch(() => {})))
 
   // Notifica só a 1ª ocorrência (recorrência manda só um aviso geral).
   const firstStart = new Date(occurrences[0][0])
@@ -338,6 +345,9 @@ export async function updateLessonSchedule(
     if (error) return { ok: false, error: 'Não foi possível atualizar a aula.' }
   }
 
+  // Reflete o novo horário/sala/professor nas agendas externas (no-op sem Google).
+  await syncLessonToCalendars(d.lessonId).catch(() => {})
+
   revalidatePath(`/lessons/${d.lessonId}/planner`)
   revalidatePath('/schedule')
   return { ok: true }
@@ -385,6 +395,7 @@ export async function cancelLesson(formData: FormData) {
     .maybeSingle()
 
   await supabase.from('lessons').update({ status: 'canceled' }).eq('id', lessonId)
+  await removeLessonFromCalendars(lessonId).catch(() => {})
 
   if (lesson) {
     await notify('lesson.canceled', lesson.student_id, {
