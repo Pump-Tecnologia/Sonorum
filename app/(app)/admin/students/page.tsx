@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
+import { ResetPasswordButton } from '@/components/admin/ResetPasswordButton'
 import { StudentSearch } from '@/components/admin/StudentSearch'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -68,9 +69,14 @@ export default async function StudentsPage({
         title="Alunos"
         subtitle={`${students.length} aluno(s)${term ? ` · busca: "${term}"` : ''}`}
         action={
-          <Link href="/admin/students/new">
-            <Button>Novo aluno</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/admin/students/import">
+              <Button variant="secondary">Importar</Button>
+            </Link>
+            <Link href="/admin/students/new">
+              <Button>Novo aluno</Button>
+            </Link>
+          </div>
         }
       />
 
@@ -118,7 +124,10 @@ export default async function StudentsPage({
                   <Badge tone={st.tone}>{st.label}</Badge>
                 </Td>
                 <Td className="text-right">
-                  <ImpersonateButton targetUserId={s.id} />
+                  <div className="flex items-center justify-end gap-3">
+                    <ResetPasswordButton userId={s.id} userName={s.name} />
+                    <ImpersonateButton targetUserId={s.id} />
+                  </div>
                 </Td>
               </Tr>
             )
