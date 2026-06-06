@@ -430,6 +430,28 @@ export async function markAttendance(formData: FormData) {
   revalidatePath(`/lessons/${lessonId}/planner`)
 }
 
+// Inicia a aula: scheduled → in_progress (estado "Em andamento"). Só avança a
+// partir de agendada; idempotente para in_progress.
+export async function startLesson(formData: FormData) {
+  const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
+
+  const lessonId = String(formData.get('lessonId') ?? '')
+  if (!lessonId) return
+
+  const supabase = await createClient()
+  await supabase
+    .from('lessons')
+    .update({ status: 'in_progress' })
+    .eq('id', lessonId)
+    .eq('school_id', me.schoolId)
+    .in('status', ['scheduled', 'in_progress'])
+
+  revalidatePath('/schedule')
+  revalidatePath('/teacher')
+  revalidatePath(`/lessons/${lessonId}/planner`)
+}
+
 // ── Lesson Plan ──────────────────────────────────────────────────────────────
 // Salva objetivos (lessons.goals) + planejamento (lesson_plans) num passo só —
 // é o "Salvar/Atualizar" único da tela da aula. Notas por seção (warmup/

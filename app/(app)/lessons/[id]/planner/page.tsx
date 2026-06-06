@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Field, Select, Textarea } from '@/components/ui/Field'
 import { LessonReportForm } from '@/components/schedule/LessonReportForm'
-import { cancelLessonSeries, markAttendance, updateLesson } from '@/lib/actions/lessons'
+import { cancelLessonSeries, markAttendance, startLesson, updateLesson } from '@/lib/actions/lessons'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { GENERAL_SECTION, resolveBlueprint } from '@/lib/constants/lesson-blueprints'
 import { readPlanContent } from '@/lib/lesson-plan'
@@ -23,6 +23,7 @@ export const metadata = { title: 'Aula' }
 
 const STATUS_OPTS = [
   { value: 'scheduled', label: 'Agendada' },
+  { value: 'in_progress', label: 'Em andamento' },
   { value: 'completed', label: 'Realizada' },
   { value: 'late', label: 'Atrasado' },
   { value: 'missed', label: 'Faltou' },
@@ -38,10 +39,10 @@ const ATTENDANCE_BTNS = [
 
 const PRIMARY_BTN = 'rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700'
 
-// Decide em qual fase abrir: em andamento ou aguardando presença → Dar aula;
+// Decide em qual fase abrir: em andamento / na janela / aguardando presença → Aula;
 // já realizada/atrasada/faltou → Avaliar; resto (agendada futura) → Planejar.
 function computeDefaultTab(status: string, hasStarted: boolean, isLive: boolean): string {
-  if (isLive || (status === 'scheduled' && hasStarted)) return 'live'
+  if (status === 'in_progress' || isLive || (status === 'scheduled' && hasStarted)) return 'live'
   if (['completed', 'late', 'missed'].includes(status)) return 'evaluate'
   return 'plan'
 }
@@ -124,6 +125,8 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
   const hasStarted = now >= start
   // Aula já começou/passou e ainda está "Agendada" → presença pendente.
   const awaitingAttendance = lesson.status === 'scheduled' && hasStarted
+  const isInProgress = lesson.status === 'in_progress'
+  const isDone = ['completed', 'late', 'missed'].includes(lesson.status)
 
   const defaultTab = computeDefaultTab(lesson.status, hasStarted, isLive)
 
@@ -247,85 +250,115 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
         )}
       </Card>
 
-      <Card className={isLive ? 'border-accent-500 bg-accent-50/40' : awaitingAttendance ? 'border-amber-300' : ''}>
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <Card className={isInProgress ? 'border-accent-500 bg-accent-50/40' : awaitingAttendance ? 'border-amber-300' : ''}>
+        {isInProgress ? (
+          // EM ANDAMENTO → encerrar registrando a presença
           <div>
-            {isLive && (
-              <span className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-accent-600" />
-                Aula em andamento
-              </span>
-            )}
-            <h2 className="text-base font-semibold text-ink">Presença</h2>
-            <p className="text-sm text-ink-muted">
-              {awaitingAttendance
-                ? 'A aula já começou — registre a presença do aluno.'
-                : <>Status atual: <strong className="text-ink">{lessonStatus(lesson.status).label}</strong></>}
-            </p>
+            <span className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-accent-600" />
+              Aula em andamento
+            </span>
+            <h2 className="text-base font-semibold text-ink">Encerrar a aula</h2>
+            <p className="mb-3 text-sm text-ink-muted">Como a aula terminou? Isso conclui e leva para a avaliação.</p>
+            <div className="flex flex-wrap gap-2">
+              {ATTENDANCE_BTNS.map((b) => (
+                <form key={b.value} action={markAttendance}>
+                  <input type="hidden" name="lessonId" value={lesson.id} />
+                  <input type="hidden" name="status" value={b.value} />
+                  <button type="submit" className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-opacity ${b.cls} opacity-90 hover:opacity-100`}>
+                    {b.label}
+                  </button>
+                </form>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {ATTENDANCE_BTNS.map((b) => (
-              <form key={b.value} action={markAttendance}>
+        ) : isDone ? (
+          // JÁ REGISTRADA
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-ink">Aula registrada</h2>
+              <p className="mt-1 text-sm text-ink-muted">
+                Resultado: <Badge tone={lessonStatus(lesson.status).tone}>{lessonStatus(lesson.status).label}</Badge> — abra <strong className="text-ink">Avaliar</strong> para o relatório.
+              </p>
+            </div>
+          </div>
+        ) : (
+          // AGENDADA → iniciar
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-base font-semibold text-ink">Pronto para começar?</h2>
+              <p className="mt-1 text-sm text-ink-muted">
+                {awaitingAttendance
+                  ? 'Passou do horário — inicie a aula ou registre que o aluno faltou.'
+                  : 'Ao começar, inicie a aula para conduzir pelo plano e registrar o fim.'}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <form action={startLesson}>
                 <input type="hidden" name="lessonId" value={lesson.id} />
-                <input type="hidden" name="status" value={b.value} />
-                <button
-                  type="submit"
-                  className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${b.cls} ${
-                    lesson.status === b.value ? 'ring-2 ring-ink/30 ring-offset-2' : 'opacity-90 hover:opacity-100'
-                  }`}
-                >
-                  {b.label}
+                <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-700">
+                  ▶ Iniciar aula
                 </button>
               </form>
-            ))}
+              <form action={markAttendance}>
+                <input type="hidden" name="lessonId" value={lesson.id} />
+                <input type="hidden" name="status" value="missed" />
+                <button type="submit" className="rounded-xl border border-red-200 bg-surface px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50">
+                  Aluno faltou
+                </button>
+              </form>
+            </div>
           </div>
-        </div>
+        )}
 
-        <form action={updateLesson} className="mt-4 flex flex-wrap items-end gap-3 border-t border-hairline pt-4">
-          <input type="hidden" name="lessonId" value={lesson.id} />
-          <Field label="Ajustar status manualmente" htmlFor="status">
-            <Select id="status" name="status" defaultValue={lesson.status}>
-              {STATUS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </Select>
-          </Field>
-          <button type="submit" className="rounded-xl border border-hairline bg-surface px-4 py-2.5 text-sm font-semibold text-ink hover:bg-surface-muted">
-            Salvar status
-          </button>
-        </form>
-      </Card>
-
-      <Card>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-ink">Horário e atribuição</h2>
-          {lesson.series_id && (
-            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-              parte de uma série semanal
-            </span>
-          )}
-        </div>
-        <LessonScheduleForm
-          lessonId={lesson.id}
-          startDatetime={lesson.start_datetime}
-          endDatetime={lesson.end_datetime}
-          currentRoomId={lesson.room_id}
-          currentTeacherId={lesson.teacher_id}
-          rooms={roomList}
-          teachers={teacherList}
-          canEditTeacher={me?.role === 'admin'}
-          isInSeries={Boolean(lesson.series_id)}
-        />
-        {lesson.series_id && (
-          <form action={cancelLessonSeries} className="mt-3 border-t border-hairline pt-3">
+        <details className="mt-4 border-t border-hairline pt-3">
+          <summary className="cursor-pointer text-xs font-medium text-ink-muted hover:text-ink">Ajustar status manualmente</summary>
+          <form action={updateLesson} className="mt-3 flex flex-wrap items-end gap-3">
             <input type="hidden" name="lessonId" value={lesson.id} />
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
-            >
-              Cancelar esta aula e todas as próximas da série
+            <Field label="Status" htmlFor="status">
+              <Select id="status" name="status" defaultValue={lesson.status}>
+                {STATUS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
+            </Field>
+            <button type="submit" className="rounded-xl border border-hairline bg-surface px-4 py-2.5 text-sm font-semibold text-ink hover:bg-surface-muted">
+              Salvar status
             </button>
           </form>
-        )}
+        </details>
       </Card>
+
+      <details className="rounded-2xl border border-hairline bg-surface p-4">
+        <summary className="flex cursor-pointer items-center justify-between gap-3 text-sm font-semibold text-ink">
+          <span>Horário e atribuição</span>
+          {lesson.series_id && (
+            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">série semanal</span>
+          )}
+        </summary>
+        <div className="mt-4">
+          <LessonScheduleForm
+            lessonId={lesson.id}
+            startDatetime={lesson.start_datetime}
+            endDatetime={lesson.end_datetime}
+            currentRoomId={lesson.room_id}
+            currentTeacherId={lesson.teacher_id}
+            rooms={roomList}
+            teachers={teacherList}
+            canEditTeacher={me?.role === 'admin'}
+            isInSeries={Boolean(lesson.series_id)}
+          />
+          {lesson.series_id && (
+            <form action={cancelLessonSeries} className="mt-3 border-t border-hairline pt-3">
+              <input type="hidden" name="lessonId" value={lesson.id} />
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
+              >
+                Cancelar esta aula e todas as próximas da série
+              </button>
+            </form>
+          )}
+        </div>
+      </details>
     </div>
   )
 
@@ -365,7 +398,7 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
 
   const tabs: PlannerTab[] = [
     { id: 'plan', label: 'Planejar', hint: 'Defina objetivos, planeje o conteúdo e anexe recursos antes da aula.', content: planTab },
-    { id: 'live', label: 'Dar aula', hint: 'Registre a presença e ajuste horário/sala durante ou logo após a aula.', content: liveTab },
+    { id: 'live', label: 'Aula', hint: 'Inicie a aula, conduza pelo plano e encerre registrando a presença.', content: liveTab },
     { id: 'evaluate', label: 'Avaliar', hint: 'Depois da aula: avalie o desempenho e deixe feedback ao aluno.', content: evaluateTab },
   ]
 

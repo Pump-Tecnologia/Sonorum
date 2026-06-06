@@ -1,10 +1,11 @@
 // Fonte única da verdade dos status de aula (espelha o CHECK em public.lessons).
-export type LessonStatus = 'scheduled' | 'completed' | 'late' | 'missed' | 'canceled'
+export type LessonStatus = 'scheduled' | 'in_progress' | 'completed' | 'late' | 'missed' | 'canceled'
 
-export type StatusTone = 'success' | 'warning' | 'danger' | 'neutral'
+export type StatusTone = 'success' | 'warning' | 'danger' | 'neutral' | 'brand'
 
 export const LESSON_STATUS: Record<LessonStatus, { label: string; tone: StatusTone }> = {
   scheduled: { label: 'Agendada', tone: 'neutral' },
+  in_progress: { label: 'Em andamento', tone: 'brand' },
   completed: { label: 'Realizada', tone: 'success' },
   late: { label: 'Atrasado', tone: 'warning' },
   missed: { label: 'Faltou', tone: 'danger' },

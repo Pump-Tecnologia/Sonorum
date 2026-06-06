@@ -3,6 +3,7 @@ import { cache } from 'react'
 
 import { ImpersonationBanner } from '@/components/app/ImpersonationBanner'
 import { Sidebar } from '@/components/app/Sidebar'
+import { UpcomingLessonReminder } from '@/components/app/UpcomingLessonReminder'
 import styles from '@/components/app/app.module.css'
 import { FinanceVisibilityProvider } from '@/components/ui/FinanceVisibility'
 import { getImpersonatorId } from '@/lib/actions/impersonate'
@@ -97,6 +98,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           />
           <main className={styles.main}>{children}</main>
         </div>
+        {user.role === 'teacher' && <UpcomingLessonReminder />}
       </div>
     </FinanceVisibilityProvider>
   )
