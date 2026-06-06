@@ -18,6 +18,8 @@ export default function LandingPage() {
         <p>
           © {new Date().getFullYear()} Sonorum ·{' '}
           <Link href="/privacidade" className="hover:text-brand-600 hover:underline">Política de Privacidade</Link>
+          {' · '}
+          <Link href="/termos" className="hover:text-brand-600 hover:underline">Termos de Serviço</Link>
         </p>
       </footer>
     </>
