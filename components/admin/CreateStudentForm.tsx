@@ -11,7 +11,7 @@ import { createStudent, type StudentActionState } from '@/lib/actions/students'
 
 const initial: StudentActionState = { ok: false }
 
-export function CreateStudentForm() {
+export function CreateStudentForm({ teachers }: { teachers: { id: string; name: string }[] }) {
   const [state, action] = useActionState(createStudent, initial)
   const fe = state.fieldErrors ?? {}
 
@@ -50,6 +50,12 @@ export function CreateStudentForm() {
             <Input id="parentContact" name="parentContact" />
           </Field>
           <InstrumentFields categoryError={fe.instrumentCategory} instrumentError={fe.instrument} />
+          <Field label="Professor fixo (opcional)" htmlFor="defaultTeacherId" error={fe.defaultTeacherId} hint="Sugerido ao agendar aulas">
+            <Select id="defaultTeacherId" name="defaultTeacherId" defaultValue="">
+              <option value="">Nenhum</option>
+              {teachers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </Select>
+          </Field>
         </div>
 
         <p className="rounded-xl bg-surface-muted px-4 py-3 text-xs text-ink-muted">

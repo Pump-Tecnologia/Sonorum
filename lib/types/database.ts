@@ -1118,6 +1118,7 @@ export type Database = {
           address: string | null
           avatar_path: string | null
           created_at: string
+          default_teacher_id: string | null
           due_day: number | null
           email: string
           id: string
@@ -1140,6 +1141,7 @@ export type Database = {
           address?: string | null
           avatar_path?: string | null
           created_at?: string
+          default_teacher_id?: string | null
           due_day?: number | null
           email: string
           id: string
@@ -1162,6 +1164,7 @@ export type Database = {
           address?: string | null
           avatar_path?: string | null
           created_at?: string
+          default_teacher_id?: string | null
           due_day?: number | null
           email?: string
           id?: string

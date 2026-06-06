@@ -19,6 +19,7 @@ const createStudentSchema = z.object({
   status: z.enum(['active', 'paused', 'inactive']).default('active'),
   notifyTo: z.enum(['student', 'parent', 'both']).default('both'),
   notifyEmail: z.boolean().default(false),
+  defaultTeacherId: z.string().uuid().optional().or(z.literal('')),
   objectives: z.string().optional(),
 })
 
@@ -71,6 +72,7 @@ export async function createStudent(
     status: formData.get('status') || 'active',
     notifyTo: formData.get('notifyTo') || 'both',
     notifyEmail: formData.get('notifyEmail') === 'on',
+    defaultTeacherId: formData.get('defaultTeacherId') || '',
     objectives: formData.get('objectives') || undefined,
   })
   if (!parsed.success) {
@@ -89,6 +91,19 @@ export async function createStudent(
     .map((s) => s.trim())
     .filter(Boolean)
 
+  // Professor fixo (opcional) precisa ser um professor da mesma escola.
+  if (d.defaultTeacherId) {
+    const adminCheck = await createAdminClient()
+    const { data: teacher } = await adminCheck
+      .from('users')
+      .select('id')
+      .eq('id', d.defaultTeacherId)
+      .eq('school_id', me.schoolId)
+      .eq('role', 'teacher')
+      .maybeSingle()
+    if (!teacher) return { ok: false, fieldErrors: { defaultTeacherId: 'Professor não encontrado nesta escola.' } }
+  }
+
   const tempPassword = generatePassword()
   const result = await createUserWithProfile({
     email: d.email,
@@ -104,6 +119,7 @@ export async function createStudent(
       status: d.status,
       notify_to: d.notifyTo,
       notify_email: d.notifyEmail,
+      default_teacher_id: d.defaultTeacherId || null,
     },
   })
 

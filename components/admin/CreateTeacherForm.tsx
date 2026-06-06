@@ -6,6 +6,7 @@ import { SubmitButton } from '@/components/auth/SubmitButton'
 import { CreatePersonResult } from '@/components/admin/CreatePersonResult'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
+import { MultiInstrumentField } from '@/components/ui/InstrumentFields'
 import { createTeacher, type TeacherActionState } from '@/lib/actions/teachers'
 
 const initial: TeacherActionState = { ok: false }
@@ -43,14 +44,8 @@ export function CreateTeacherForm() {
           <Input id="email" name="email" type="email" required />
         </Field>
 
-        <Field
-          label="Instrumentos"
-          htmlFor="instruments"
-          error={fe.instruments}
-          hint="Separe por vírgula (ex.: Violão, Piano)"
-        >
-          <Input id="instruments" name="instruments" placeholder="Violão, Piano" />
-        </Field>
+        <MultiInstrumentField name="instruments" label="Instrumentos" />
+        {fe.instruments && <p className="text-xs font-medium text-red-600">{fe.instruments}</p>}
 
         <SubmitButton pendingLabel="Criando…">Criar professor</SubmitButton>
       </form>
