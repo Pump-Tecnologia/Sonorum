@@ -14,7 +14,6 @@ interface SchoolData {
   name: string
   customName: string | null
   brandPrimary: string | null
-  brandSecondary: string | null
   logoUrl: string | null
   planType: string
   studentLimit: number
@@ -34,13 +33,11 @@ const PIX_KEY_TYPES = [
 const initial: SettingsActionState = { ok: false }
 
 const DEFAULT_PRIMARY = '#2B4C79'
-const DEFAULT_SECONDARY = '#7CC99B'
 
 export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; canBrand: boolean }) {
   const [state, action] = useActionState(updateSchoolSettings, initial)
   const fe = state.fieldErrors ?? {}
   const [primary, setPrimary] = useState(school.brandPrimary ?? DEFAULT_PRIMARY)
-  const [secondary, setSecondary] = useState(school.brandSecondary ?? DEFAULT_SECONDARY)
 
   return (
     <Card>
@@ -77,30 +74,22 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
 
           {canBrand ? (
             <>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Cor primária" htmlFor="brandPrimary" error={fe.brandPrimary}>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={primary}
-                      onChange={(e) => setPrimary(e.target.value)}
-                      className="h-10 w-10 cursor-pointer rounded-lg border border-hairline"
-                    />
-                    <Input id="brandPrimary" name="brandPrimary" value={primary} onChange={(e) => setPrimary(e.target.value)} placeholder={DEFAULT_PRIMARY} className="font-mono" />
-                  </div>
-                </Field>
-                <Field label="Cor secundária" htmlFor="brandSecondary" error={fe.brandSecondary}>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={secondary}
-                      onChange={(e) => setSecondary(e.target.value)}
-                      className="h-10 w-10 cursor-pointer rounded-lg border border-hairline"
-                    />
-                    <Input id="brandSecondary" name="brandSecondary" value={secondary} onChange={(e) => setSecondary(e.target.value)} placeholder={DEFAULT_SECONDARY} className="font-mono" />
-                  </div>
-                </Field>
-              </div>
+              <Field
+                label="Cor da marca"
+                htmlFor="brandPrimary"
+                error={fe.brandPrimary}
+                hint="Usada como acento: botões, links e o item ativo do menu. A interface continua com o tema padrão para garantir legibilidade."
+              >
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={primary}
+                    onChange={(e) => setPrimary(e.target.value)}
+                    className="h-10 w-10 cursor-pointer rounded-lg border border-hairline"
+                  />
+                  <Input id="brandPrimary" name="brandPrimary" value={primary} onChange={(e) => setPrimary(e.target.value)} placeholder={DEFAULT_PRIMARY} className="max-w-[180px] font-mono" />
+                </div>
+              </Field>
 
               <Field label="Logo (PNG, JPG, WEBP ou SVG · até 2MB)" htmlFor="logo" error={fe.logo}>
                 <input
@@ -121,10 +110,13 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
                 )}
               </Field>
 
-              {/* Preview */}
-              <div className="flex h-12 items-center gap-3 rounded-xl px-4" style={{ backgroundColor: primary }}>
-                <span className="text-sm font-semibold text-white">{school.customName || school.name}</span>
-                <span className="rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: secondary, color: primary }}>Preview</span>
+              {/* Preview do acento: botão + link */}
+              <div className="flex items-center gap-3 rounded-xl border border-hairline bg-surface-muted/30 px-4 py-3">
+                <span className="inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style={{ backgroundColor: primary }}>
+                  Botão
+                </span>
+                <span className="text-sm font-semibold" style={{ color: primary }}>Link de exemplo</span>
+                <span className="text-xs text-ink-muted">← cor de acento</span>
               </div>
             </>
           ) : (

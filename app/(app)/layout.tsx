@@ -12,46 +12,52 @@ import { createClient } from '@/lib/supabase/server'
 
 interface Branding {
   name: string | null
-  primary: string | null
-  secondary: string | null
+  accent: string | null
   logoUrl: string | null
   branded: boolean
 }
 
-// Luminância relativa (sRGB) → decide se o fundo é claro (texto escuro) ou
-// escuro (texto branco). Aceita #rgb/#rrggbb.
-function isLightColor(hex: string): boolean {
-  const h = hex.replace('#', '')
-  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
-  if (full.length !== 6) return false
-  const channel = (i: number) => {
-    const c = parseInt(full.slice(i, i + 2), 16) / 255
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
-  }
-  const lum = 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4)
-  return lum > 0.5
-}
-
-// Marca da escola por request (nome + cores + logo). Cores/logo só valem se o
-// plano tem branding (Premium); abaixo disso, cai no visual padrão Sonorum.
+// Marca da escola por request (nome + cor de acento + logo). Cor/logo só valem
+// se o plano tem branding (Premium); abaixo disso, cai no visual padrão Sonorum.
 const getSchoolBranding = cache(async (schoolId: string | null): Promise<Branding | null> => {
   if (!schoolId) return null
   const supabase = await createClient()
   const { data } = await supabase
     .from('schools')
-    .select('custom_name, name, brand_primary, brand_secondary, logo_path, plan_type')
+    .select('custom_name, name, brand_primary, logo_path, plan_type')
     .eq('id', schoolId)
     .single()
   if (!data) return null
   const branded = planFeatures(data.plan_type).branding
   return {
     name: data.custom_name || data.name || null,
-    primary: branded ? data.brand_primary : null,
-    secondary: branded ? data.brand_secondary : null,
+    accent: branded ? data.brand_primary : null,
     logoUrl: branded ? data.logo_path : null,
     branded,
   }
 })
+
+// Re-tinta o brand-* a partir de UMA cor de acento (modelo white-label de
+// mercado: a interface fica neutra, a marca aparece só como acento). As
+// variações claras/escuras saem por color-mix (contraste previsível).
+function accentVars(accent: string): Record<string, string> {
+  const mix = (pct: number, base: 'white' | 'black') => `color-mix(in srgb, ${accent} ${pct}%, ${base})`
+  return {
+    '--color-brand-50': mix(8, 'white'),
+    '--color-brand-100': mix(16, 'white'),
+    '--color-brand-200': mix(34, 'white'),
+    '--color-brand-300': mix(52, 'white'),
+    '--color-brand-400': mix(68, 'white'),
+    '--color-brand-500': mix(85, 'white'),
+    '--color-brand-600': accent,
+    '--color-brand-700': mix(82, 'black'),
+    '--color-brand-800': mix(68, 'black'),
+    '--color-brand-900': mix(55, 'black'),
+    // Destaque do item ativo da sidebar (sidebar continua navy fixa).
+    '--ds-accent': accent,
+    '--ds-accent-deep': mix(82, 'black'),
+  }
+}
 
 // Guarda da área autenticada. O middleware já bloqueia não-logados e roteia por
 // papel; aqui garantimos o perfil e montamos o shell com a sidebar.
@@ -61,17 +67,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const branding = await getSchoolBranding(user.schoolId)
 
-  // Cores da marca → CSS vars do shell (a sidebar usa --ds-panel-bg / --ds-green).
-  const shellStyle: Record<string, string> = {}
-  if (branding?.primary) {
-    shellStyle['--ds-panel-bg'] = branding.primary
-    // Texto da sidebar adapta ao contraste: marca clara → texto escuro.
-    shellStyle['--ds-on-panel'] = isLightColor(branding.primary) ? '#15243A' : '#ffffff'
-  }
-  if (branding?.secondary) {
-    shellStyle['--ds-green'] = branding.secondary
-    shellStyle['--ds-green-deep'] = branding.secondary
-  }
+  // Marca = ACENTO apenas. A interface (sidebar/superfícies) fica neutra e fixa;
+  // a cor da escola re-tinta o brand-* (botões/links/item ativo).
+  const shellStyle: Record<string, string> = branding?.accent ? accentVars(branding.accent) : {}
 
   const isImpersonating = Boolean(impersonatorId) && impersonatorId !== user.id
 

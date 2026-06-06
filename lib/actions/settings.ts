@@ -15,11 +15,6 @@ const settingsSchema = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida (use #rrggbb)')
     .optional()
     .or(z.literal('')),
-  brandSecondary: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida (use #rrggbb)')
-    .optional()
-    .or(z.literal('')),
   // Chave PIX da escola (recebedora) — disponível em TODOS os planos.
   pixKey: z.string().max(77, 'Chave PIX muito longa').optional().or(z.literal('')),
   pixKeyType: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).optional().or(z.literal('')),
@@ -42,7 +37,6 @@ export async function updateSchoolSettings(
   const parsed = settingsSchema.safeParse({
     customName: formData.get('customName') || undefined,
     brandPrimary: formData.get('brandPrimary') || '',
-    brandSecondary: formData.get('brandSecondary') || '',
     pixKey: formData.get('pixKey') || '',
     pixKeyType: formData.get('pixKeyType') || '',
     pixCity: formData.get('pixCity') || '',
@@ -69,6 +63,7 @@ export async function updateSchoolSettings(
     brand_secondary?: string | null
     logo_path?: string | null
   }
+  // A cor secundária foi descontinuada (modelo de acento único) — zera no save.
   const update: SchoolUpdate = {
     custom_name: d.customName || null,
     pix_key: d.pixKey || null,
@@ -79,7 +74,7 @@ export async function updateSchoolSettings(
   const { features } = await getPlanContext()
   if (features.branding) {
     update.brand_primary = d.brandPrimary || null
-    update.brand_secondary = d.brandSecondary || null
+    update.brand_secondary = null
 
     const { data: cur } = await supabase.from('schools').select('logo_path').eq('id', me.schoolId).maybeSingle()
     const file = formData.get('logo')

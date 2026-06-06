@@ -12,6 +12,10 @@
   --ds-green: #63C08F;
   --ds-green-soft: #A8DCC1;
   --ds-green-deep: #4FAB78;
+  /* Acento (item ativo da sidebar). Default = verde Sonorum; a marca da escola
+     (Premium) sobrescreve via style inline no shell. */
+  --ds-accent: var(--ds-green);
+  --ds-accent-deep: var(--ds-green-deep);
   --ds-canvas: #F2F4F7;
   --ds-surface: #FFFFFF;
   --ds-text: #2B2E34;
@@ -199,13 +203,13 @@
   color: var(--ds-on-panel, #fff);
 }
 .sidebarLinkActive {
-  background: var(--ds-green);
-  color: var(--ds-on-panel, #fff);
+  background: var(--ds-accent);
+  color: #fff;
   font-weight: 600;
 }
 .sidebarLinkActive:hover {
-  background: var(--ds-green-deep);
-  color: var(--ds-on-panel, #fff);
+  background: var(--ds-accent-deep);
+  color: #fff;
 }
 
 .sidebarFooter {

@@ -38,7 +38,6 @@ export default async function SettingsPage() {
               name: school.name,
               customName: school.custom_name,
               brandPrimary: school.brand_primary,
-              brandSecondary: school.brand_secondary,
               logoUrl: school.logo_path,
               planType: school.plan_type,
               studentLimit: school.student_limit,
