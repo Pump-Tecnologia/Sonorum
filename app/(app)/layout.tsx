@@ -74,8 +74,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const shellStyle: Record<string, string> = branding?.accent
     ? {
         ...accentVars(branding.accent),
-        '--ds-panel-bg': '#EAEDF2', // branco acizentado neutro
-        '--ds-on-panel': '#2A3645', // texto escuro sobre painel claro
+        '--ds-panel-bg': '#D3D8E0', // cinza claro neutro (não whitelabel)
+        '--ds-on-panel': '#28323F', // texto escuro sobre painel claro
       }
     : {}
 

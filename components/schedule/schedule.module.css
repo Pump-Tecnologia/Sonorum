@@ -80,14 +80,14 @@
 }
 .calendar :global(.fc .fc-button-primary:not(:disabled).fc-button-active),
 .calendar :global(.fc .fc-button-primary:not(:disabled):active) {
-  background: var(--ds-ink);
-  border-color: var(--ds-ink);
+  background: var(--color-brand-600, var(--ds-ink));
+  border-color: var(--color-brand-600, var(--ds-ink));
   color: #fff;
 }
 .calendar :global(.fc .fc-today-button) {
-  background: var(--ds-ink);
+  background: var(--color-brand-600, var(--ds-ink));
   color: #fff;
-  border-color: var(--ds-ink);
+  border-color: var(--color-brand-600, var(--ds-ink));
 }
 .calendar :global(.fc .fc-today-button:disabled) {
   opacity: 0.5;

@@ -361,11 +361,11 @@
 .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
 .btnPrimary {
-  background: var(--ds-ink);
+  background: var(--color-brand-600, var(--ds-ink));
   color: #fff;
   box-shadow: 0 8px 20px -10px rgb(31 58 95 / 0.5);
 }
-.btnPrimary:hover:not(:disabled) { background: var(--ds-ink-deep); }
+.btnPrimary:hover:not(:disabled) { background: var(--color-brand-700, var(--ds-ink-deep)); }
 .btnSecondary {
   background: var(--ds-green);
   color: #fff;
