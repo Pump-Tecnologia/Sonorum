@@ -45,7 +45,8 @@ export function SiteHeader() {
 
         <div className={styles.navCta}>
           <Link href="/login" className={styles.navSignIn}>Entrar</Link>
-          <Link href="/register" className={`${styles.btn} ${styles.btnPrimary}`}>
+          {/* No mobile o "Criar conta" repetiria o CTA do hero — só aparece no desktop */}
+          <Link href="/register" className={`${styles.btn} ${styles.btnPrimary} ${styles.navCtaCreate}`}>
             Criar conta
             <IconArrow />
           </Link>

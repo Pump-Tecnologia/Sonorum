@@ -12,14 +12,6 @@ const HERO_ENDINGS = [
   'controle manual.',
 ]
 
-// Avatares na paleta do design system — variações da marca
-const AVATARS = [
-  { c: '#1F3A5F', l: 'D' },
-  { c: '#63C08F', l: 'M' },
-  { c: '#4FAB78', l: 'R' },
-  { c: '#3A5A7F', l: 'C' },
-]
-
 export function Hero() {
   return (
     <section className={styles.hero}>
@@ -28,15 +20,20 @@ export function Hero() {
           {/* Eyebrow no padrão do design system — sem cara de pill SaaS */}
           <p className={styles.heroEyebrow}>Para escolas de música</p>
 
+          {/* Quebra responsiva: no mobile parte depois de "música," p/ caber em
+              2 linhas ("…música," / "sem <palavra>"); no desktop (≥640px) mantém
+              a quebra original depois de "sem". */}
           <h1 className={styles.heroH1}>
-            Sua escola de música, sem
-            <br />
+            Sua escola de música,
+            <br className={styles.heroBrMobile} />
+            {' sem '}
+            <br className={styles.heroBrDesktop} />
             <Typewriter words={HERO_ENDINGS} />
           </h1>
 
           <p className={styles.heroSub}>
             Agendamento, cobranças, desempenho dos alunos e material didático num sistema feito
-            para quem vive de música — não de TI.
+            para quem vive de música.
           </p>
 
           <div className={styles.heroCtas}>
@@ -47,24 +44,6 @@ export function Hero() {
             <Link href="#features" className={`${styles.btn} ${styles.btnOutline}`}>
               Ver como funciona
             </Link>
-          </div>
-
-          {/* Reforço da oferta de grátis logo abaixo dos CTAs — texto humano */}
-          <p className={styles.heroOffer}>
-            Plano Essencial grátis para sempre · até 5 alunos · sem cartão de crédito
-          </p>
-
-          <div className={styles.heroTrust}>
-            <div className={styles.trustAvatars}>
-              {AVATARS.map((a) => (
-                <span key={a.l} className={styles.trustAvatar} style={{ background: a.c }}>
-                  {a.l}
-                </span>
-              ))}
-            </div>
-            <p className={styles.trustText}>
-              Professores de todo o Brasil já usam o Sonorum
-            </p>
           </div>
         </div>
 

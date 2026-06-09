@@ -28,7 +28,12 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <span className={styles.footerBrandWord}>Sonorum</span>
           </Link>
 
-          <p className={styles.footerCopy}>© Sonorum · Gestão para escolas de música</p>
+          <p className={styles.footerCopy}>
+            © {new Date().getFullYear()} Sonorum ·{' '}
+            <Link href="/privacidade">Política de Privacidade</Link>
+            {' · '}
+            <Link href="/termos">Termos de Serviço</Link>
+          </p>
 
           <p className={styles.footerCredit}>
             Desenvolvido por{' '}

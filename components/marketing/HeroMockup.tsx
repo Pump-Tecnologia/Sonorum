@@ -1,4 +1,4 @@
-import { IconCalendar, IconChart, IconCheck, IconClock, IconGrad, IconUsers, IconWallet } from '@/components/marketing/icons'
+import { IconCalendar, IconChart, IconGrad, IconUsers, IconWallet } from '@/components/marketing/icons'
 import styles from '@/components/marketing/marketing.module.css'
 
 // Mockup do dashboard mostrado no hero — espelha o do Laravel antigo (sonorum.app/admin).
@@ -46,14 +46,6 @@ export function HeroMockup() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* O ::after do badge verde adiciona um dot 'ao vivo' — não precisa de ícone */}
-      <div className={`${styles.mockupBadge} ${styles.mockupBadgePaid}`}>
-        <IconCheck size={12} /> Mensalidade paga
-      </div>
-      <div className={`${styles.mockupBadge} ${styles.mockupBadgeNext}`}>
-        <IconClock size={12} /> Aula em 15 min
       </div>
     </div>
   )

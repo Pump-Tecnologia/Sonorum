@@ -75,17 +75,26 @@
 }
 /* Grid 3 colunas (1fr auto 1fr) deixa o menu fixo no centro mesmo
    quando a brand encolhe no scroll — espaços laterais idênticos. */
+/* Mobile: flex simples (brand à esquerda, CTAs à direita). O grid de 3 colunas
+   só serve quando os navLinks existem (≥768px) — sem eles, o auto-placement
+   jogava os CTAs para a coluna do meio, deixando um vão à direita. */
 .navInner {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 4.25rem;
   gap: 1rem;
   transition: height 250ms ease;
 }
-.navInner > :first-child { justify-self: start; }
-.navInner > :nth-child(2) { justify-self: center; }
-.navInner > :last-child { justify-self: end; }
+@media (min-width: 768px) {
+  .navInner {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+  }
+  .navInner > :first-child { justify-self: start; }
+  .navInner > :nth-child(2) { justify-self: center; }
+  .navInner > :last-child { justify-self: end; }
+}
 .nav[data-scrolled] .navInner { height: 3.75rem; }
 
 .brand {
@@ -130,6 +139,10 @@
   margin-left: -0.625rem; /* fecha o gap do .brand quando o texto some */
   pointer-events: none;
 }
+/* Mobile: só o símbolo da marca — o wordmark espremeria os CTAs e seria cortado */
+@media (max-width: 599px) {
+  .brandWord { display: none; }
+}
 .navLinks {
   display: none;
   gap: 2rem;
@@ -172,6 +185,13 @@
 }
 .navCta .btn svg { width: 12px; height: 12px; }
 
+/* Mobile: só "Entrar" no cabeçalho — "Criar conta" reaparece com o menu (≥768px).
+   Seletor com 2 classes p/ vencer a especificidade de .btn (display: inline-flex). */
+.navCta .navCtaCreate { display: none; }
+@media (min-width: 768px) {
+  .navCta .navCtaCreate { display: inline-flex; }
+}
+
 /* ── Botões base ─────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
@@ -183,6 +203,7 @@
   font-weight: 600;
   border-radius: var(--r-md);
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
   border: 1px solid transparent;
   transition: background-color 200ms ease, color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
@@ -274,24 +295,28 @@
   display: inline-block;
 }
 
-/* Reforço da oferta (texto humano, sem visual de promoção agressiva) */
-.heroOffer {
-  margin: 1rem 0 0 0;
-  font-family: var(--font-body);
-  font-size: 0.8125rem;
-  color: var(--ds-text-muted);
-}
 .heroH1 {
   margin: 1.5rem 0 0 0;
   font-family: var(--font-display);
-  font-size: 2.625rem;
+  /* Fluido no mobile p/ caber em 2 linhas ("Sua escola de música," /
+     "sem <palavra>") sem estourar — calibrado p/ a frase e a palavra mais
+     longas terem margem de 320px até o desktop. */
+  font-size: clamp(1.8rem, 0.7rem + 5.8vw, 2.625rem);
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.025em;
   color: var(--ds-ink);
+  overflow-wrap: break-word;
 }
 @media (min-width: 640px) { .heroH1 { font-size: 3.25rem; } }
 @media (min-width: 1024px) { .heroH1 { font-size: 4.25rem; } }
+/* Quebra do H1 muda de posição entre mobile e desktop (ver Hero.tsx) */
+.heroBrMobile { display: inline; }
+.heroBrDesktop { display: none; }
+@media (min-width: 640px) {
+  .heroBrMobile { display: none; }
+  .heroBrDesktop { display: inline; }
+}
 .heroH1 em {
   font-style: normal;
   color: var(--ds-green-deep);
@@ -327,11 +352,10 @@
   margin-top: 1.25rem;
   max-width: 36rem;
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--ds-text-muted);
   line-height: 1.65;
 }
-@media (min-width: 640px) { .heroSub { font-size: 1.0625rem; } }
 .heroCtas {
   margin-top: 2rem;
   display: flex;
@@ -339,35 +363,6 @@
   align-items: center;
   gap: 0.75rem;
 }
-.heroTrust {
-  margin-top: 2.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-}
-.trustAvatars {
-  display: flex;
-}
-.trustAvatar {
-  width: 2.125rem;
-  height: 2.125rem;
-  border-radius: 9999px;
-  border: 2px solid var(--ds-canvas);
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: -0.5rem;
-}
-.trustAvatar:first-child { margin-left: 0; }
-.trustText {
-  font-size: 0.875rem;
-  color: var(--ds-text-muted);
-}
-
 /* ── Hero mockup ─────────────────────────────────────────────────────────── */
 .mockup {
   position: relative;
@@ -513,66 +508,6 @@
   font-weight: 500;
   color: var(--ds-text-muted);
 }
-/* Badges flutuantes: afastados das bordas, levemente rotacionados,
-   com flutuação contínua e sombras coloridas suaves. */
-.mockupBadge {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5625rem 1rem;
-  border-radius: 9999px;
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-  z-index: 2;
-  /* Hover: pausa a flutuação para o usuário ler com calma */
-  transition: transform 300ms ease, box-shadow 300ms ease;
-}
-
-.mockupBadgePaid {
-  top: -3.5rem;
-  left: -4.5rem;
-  background: var(--ds-green);
-  color: #fff;
-  box-shadow:
-    0 10px 30px -8px rgb(79 171 120 / 0.5),
-    0 0 0 4px rgb(255 255 255 / 0.6);
-  animation: floatA 6s ease-in-out infinite;
-}
-.mockupBadgeNext {
-  bottom: -3.5rem;
-  right: -4.5rem;
-  background: var(--ds-surface);
-  color: var(--ds-ink);
-  border: 1px solid var(--ds-hairline);
-  box-shadow:
-    0 14px 35px -10px rgb(31 58 95 / 0.18),
-    0 0 0 4px rgb(255 255 255 / 0.6);
-  animation: floatB 7s ease-in-out infinite;
-}
-
-/* Flutuação só vertical — sem rotação para os badges não ficarem entortados */
-@keyframes floatA {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
-}
-@keyframes floatB {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mockupBadgePaid, .mockupBadgeNext { animation: none; }
-}
-
-/* Em telas menores, encolhe e aproxima das bordas */
-@media (max-width: 640px) {
-  .mockupBadgePaid { top: -1rem; left: -0.5rem; }
-  .mockupBadgeNext { bottom: -1rem; right: -0.5rem; }
-}
-
 /* ── Ticker ──────────────────────────────────────────────────────────────── */
 .ticker {
   overflow: hidden;
@@ -838,8 +773,12 @@
 .planCardFeatured {
   background: var(--ds-green);
   color: #fff;
-  transform: scale(1.02);
   box-shadow: 0 30px 60px -15px rgb(79 171 120 / 0.5);
+}
+/* O destaque por escala só faz sentido entre as 3 colunas do desktop;
+   empilhado no mobile, viraria só um card desalinhado. */
+@media (min-width: 1024px) {
+  .planCardFeatured { transform: scale(1.02); }
 }
 .planBadge {
   position: absolute;
@@ -979,7 +918,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  justify-content: flex-end;
+  justify-content: flex-start;
+}
+@media (min-width: 768px) {
+  .ctaActions { justify-content: flex-end; }
 }
 
 /* ── Footer (claro · uma linha) ─────────────────────────────────────────── */
@@ -1013,6 +955,12 @@
   color: var(--ds-ink);
 }
 .footerCopy { font-size: 0.8125rem; color: var(--ds-text-muted); }
+.footerCopy a {
+  color: var(--ds-text-muted);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+.footerCopy a:hover { color: var(--ds-green-deep); }
 .footerCredit { font-size: 0.8125rem; color: var(--ds-text-muted); }
 .footerCredit a {
   color: var(--ds-green-deep);
