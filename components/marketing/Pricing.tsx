@@ -41,6 +41,7 @@ export function Pricing() {
               <li><IconCheck /> Agenda compartilhada</li>
               <li><IconCheck /> Portal do aluno</li>
               <li><IconCheck /> Biblioteca pedagógica</li>
+              <li><IconCheck /> Cobrança via PIX</li>
             </ul>
             <Link href="/register" className={`${styles.planCta} ${styles.planCtaGhost}`}>
               Começar grátis
@@ -59,9 +60,9 @@ export function Pricing() {
               Para escolas em crescimento que precisam de controle total.
             </p>
             <ul className={styles.planFeatures}>
+              <li><IconCheck /> Tudo do Essencial</li>
               <li><IconCheck /> Alunos ilimitados</li>
               <li><IconCheck /> Professores ilimitados</li>
-              <li><IconCheck /> Gestão financeira completa</li>
               <li><IconCheck /> Relatórios de desempenho</li>
               <li><IconCheck /> Repasse de professores</li>
             </ul>
@@ -83,6 +84,12 @@ export function Pricing() {
             </p>
             <ul className={styles.planFeatures}>
               <li><IconCheck /> Tudo do Profissional</li>
+              <li>
+                <IconCheck />
+                <span>Cobrança automática (boleto e cartão) <span className={styles.planSoon}>em breve</span></span>
+              </li>
+              <li><IconCheck /> Transcrição de aulas com IA</li>
+              <li><IconCheck /> Notificações via WhatsApp</li>
               <li><IconCheck /> Branding personalizado</li>
               <li><IconCheck /> Suporte prioritário</li>
               <li><IconCheck /> Onboarding dedicado</li>
