@@ -9,6 +9,13 @@ function subscribeLink(plan: 'professional' | 'premium'): string {
   return `/register?plan=${plan}`
 }
 
+// Plano sob medida não tem auto-serviço: leva ao contato comercial (WhatsApp).
+function customPlanContactLink(): string {
+  const number = process.env.NEXT_PUBLIC_WHATSAPP_SALES_NUMBER ?? ''
+  const message = encodeURIComponent('Olá! Tenho interesse em um plano sob medida do Sonorum.')
+  return `https://wa.me/${number}?text=${message}`
+}
+
 export function Pricing() {
   return (
     <section id="pricing" className={styles.pricing}>
@@ -99,6 +106,27 @@ export function Pricing() {
               <IconArrow />
             </Link>
           </div>
+        </div>
+
+        {/* Plano sob medida — sem auto-serviço, leva ao contato comercial */}
+        <div className={styles.planCustom}>
+          <div className={styles.planCustomText}>
+            <span className={styles.planCustomTag}>Sob medida</span>
+            <h3>Precisa de algo além do Premium?</h3>
+            <p>
+              Recursos exclusivos, integrações dedicadas e atendimento sob medida para redes e
+              instituições. Preço sob consulta.
+            </p>
+          </div>
+          <a
+            href={customPlanContactLink()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${styles.btn} ${styles.btnDark}`}
+          >
+            Falar com a gente
+            <IconArrow />
+          </a>
         </div>
       </div>
     </section>

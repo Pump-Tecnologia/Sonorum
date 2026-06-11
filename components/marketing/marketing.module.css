@@ -891,6 +891,54 @@
 }
 .planCtaPrimary:hover { background: var(--ds-ink-deep); }
 
+/* Plano sob medida — faixa abaixo dos 3 cards, sobre o fundo escuro da seção */
+.planCustom {
+  position: relative;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  border-radius: var(--r-xl);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.04);
+}
+@media (min-width: 768px) {
+  .planCustom {
+    flex-direction: row;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.75rem 2.25rem;
+  }
+}
+.planCustomTag {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ds-green-soft);
+  margin-bottom: 0.5rem;
+}
+.planCustomText h3 {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #fff;
+}
+.planCustomText p {
+  margin-top: 0.5rem;
+  max-width: 42rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: color-mix(in oklab, #fff 75%, transparent);
+}
+.planCustom .btn { flex-shrink: 0; }
+
 /* ── CTA final ───────────────────────────────────────────────────────────── */
 .ctaSection { padding-block: 6rem; background: var(--ds-canvas); }
 .ctaInner {
