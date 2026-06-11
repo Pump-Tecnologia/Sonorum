@@ -22,7 +22,7 @@ export const getPlanContext = cache(async (): Promise<PlanContext> => {
 
   const supabase = await createClient()
   const [{ data: school }, { count }] = await Promise.all([
-    supabase.from('schools').select('plan_type, expiration_date').eq('id', user.schoolId).single(),
+    supabase.from('schools').select('plan_type, expiration_date, feature_overrides').eq('id', user.schoolId).single(),
     supabase
       .from('users')
       .select('id', { count: 'exact', head: true })
@@ -34,7 +34,7 @@ export const getPlanContext = cache(async (): Promise<PlanContext> => {
   return {
     schoolId: user.schoolId,
     planType,
-    features: planFeatures(planType),
+    features: planFeatures(planType, school?.feature_overrides),
     studentCount: count ?? 0,
     expirationDate: (school?.expiration_date as string) ?? null,
   }

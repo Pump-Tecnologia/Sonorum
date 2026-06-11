@@ -11,7 +11,7 @@ export interface SonorumClaims {
   school_id: string | null
 }
 
-export type SchoolPlanType = 'free' | 'basic' | 'professional' | 'premium'
+export type SchoolPlanType = 'free' | 'basic' | 'professional' | 'premium' | 'enterprise'
 export type UserStatus = 'active' | 'paused' | 'inactive'
 export type LessonStatus = 'scheduled' | 'completed' | 'canceled'
 export type ChargeStatus = 'pending' | 'paid' | 'overdue' | 'cancelled'

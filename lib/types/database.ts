@@ -963,6 +963,7 @@ export type Database = {
           created_at: string
           custom_name: string | null
           expiration_date: string | null
+          feature_overrides: Json | null
           id: string
           logo_path: string | null
           monthly_price: number
@@ -985,6 +986,7 @@ export type Database = {
           expiration_date?: string | null
           id?: string
           logo_path?: string | null
+          feature_overrides?: Json | null
           monthly_price?: number
           name: string
           pix_city?: string | null
@@ -1005,6 +1007,7 @@ export type Database = {
           expiration_date?: string | null
           id?: string
           logo_path?: string | null
+          feature_overrides?: Json | null
           monthly_price?: number
           name?: string
           pix_city?: string | null

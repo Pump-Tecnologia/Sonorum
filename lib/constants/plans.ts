@@ -59,6 +59,19 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     branding: true,
     whatsappOfficial: true,
   },
+  // Plano "Sob medida": herda tudo do Premium; preço é negociado por escola
+  // (schools.monthly_price). Fora de SELLABLE_PLANS — atribuído só pelo superadmin.
+  enterprise: {
+    label: 'Sob medida',
+    price: 0,
+    studentLimit: Infinity,
+    teacherLimit: Infinity,
+    financial: true,
+    reports: true,
+    transcription: true,
+    branding: true,
+    whatsappOfficial: true,
+  },
 }
 
 // Planos vendáveis por auto-serviço (na ordem exibida).
@@ -72,8 +85,29 @@ export function planPrice(planType: string, schoolMonthlyPrice?: number | null):
   return PLAN_FEATURES[(planType as SchoolPlanType)]?.price ?? 0
 }
 
-export function planFeatures(planType: string | null | undefined): PlanFeatures {
-  return PLAN_FEATURES[(planType as SchoolPlanType) ?? 'free'] ?? PLAN_FEATURES.free
+// Recursos que o superadmin pode sobrescrever por escola (schools.feature_overrides).
+// Usado sobretudo pelo plano enterprise ("Sob medida"), mas vale para qualquer plano.
+export const OVERRIDABLE_FEATURES = [
+  'financial', 'reports', 'transcription', 'branding', 'whatsappOfficial',
+] as const
+export type OverridableFeature = (typeof OVERRIDABLE_FEATURES)[number]
+
+// Aplica os overrides da escola (jsonb) sobre os recursos do plano. Só chaves
+// conhecidas e booleanas valem; o resto é ignorado (entrada não confiável).
+export function applyFeatureOverrides(base: PlanFeatures, overrides: unknown): PlanFeatures {
+  if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) return base
+  const raw = overrides as Record<string, unknown>
+  const merged: PlanFeatures = { ...base }
+  for (const key of OVERRIDABLE_FEATURES) {
+    if (typeof raw[key] === 'boolean') merged[key] = raw[key] as boolean
+  }
+  return merged
+}
+
+// `overrides` é o schools.feature_overrides (jsonb). null/ausente = só o plano.
+export function planFeatures(planType: string | null | undefined, overrides?: unknown): PlanFeatures {
+  const base = PLAN_FEATURES[(planType as SchoolPlanType) ?? 'free'] ?? PLAN_FEATURES.free
+  return overrides == null ? base : applyFeatureOverrides(base, overrides)
 }
 
 export type PlanFeatureKey = 'financial' | 'reports' | 'transcription' | 'branding'

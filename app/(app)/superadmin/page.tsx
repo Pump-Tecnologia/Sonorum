@@ -14,7 +14,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 export const metadata = { title: 'Visão geral da rede' }
 
 const PLAN_LABEL: Record<string, string> = {
-  free: 'Essencial', basic: 'Básico', professional: 'Profissional', premium: 'Premium',
+  free: 'Essencial', basic: 'Básico', professional: 'Profissional', premium: 'Premium', enterprise: 'Sob medida',
 }
 
 function relTime(iso: string, now: Date): string {

@@ -19,7 +19,7 @@ export default async function SettingsPage() {
   const [{ data: school }, { data: rooms }] = await Promise.all([
     supabase
       .from('schools')
-      .select('name, custom_name, brand_primary, brand_secondary, logo_path, plan_type, student_limit, pix_key, pix_key_type, pix_city')
+      .select('name, custom_name, brand_primary, brand_secondary, logo_path, plan_type, student_limit, pix_key, pix_key_type, pix_city, feature_overrides')
       .eq('id', user.schoolId)
       .single(),
     supabase.from('rooms').select('id, name').eq('school_id', user.schoolId).order('name'),
@@ -45,7 +45,7 @@ export default async function SettingsPage() {
               pixKeyType: school.pix_key_type,
               pixCity: school.pix_city,
             }}
-            canBrand={planFeatures(school.plan_type).branding}
+            canBrand={planFeatures(school.plan_type, school.feature_overrides).branding}
           />
         </div>
 
@@ -53,7 +53,7 @@ export default async function SettingsPage() {
         <div className="space-y-6">
           <PlanSummaryCard planType={school.plan_type} />
           <NotificationChannelCard
-            whatsappOfficial={planFeatures(school.plan_type).whatsappOfficial}
+            whatsappOfficial={planFeatures(school.plan_type, school.feature_overrides).whatsappOfficial}
             whatsappActive={isWhatsAppCloudEnabled()}
           />
           <RoomsManager rooms={(rooms ?? []) as { id: string; name: string }[]} />

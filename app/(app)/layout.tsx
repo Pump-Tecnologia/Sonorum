@@ -25,11 +25,11 @@ const getSchoolBranding = cache(async (schoolId: string | null): Promise<Brandin
   const supabase = await createClient()
   const { data } = await supabase
     .from('schools')
-    .select('custom_name, name, brand_primary, logo_path, plan_type')
+    .select('custom_name, name, brand_primary, logo_path, plan_type, feature_overrides')
     .eq('id', schoolId)
     .single()
   if (!data) return null
-  const branded = planFeatures(data.plan_type).branding
+  const branded = planFeatures(data.plan_type, data.feature_overrides).branding
   return {
     name: data.custom_name || data.name || null,
     accent: branded ? data.brand_primary : null,

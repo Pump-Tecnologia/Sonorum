@@ -5,13 +5,26 @@ import { z } from 'zod'
 
 import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
+import { OVERRIDABLE_FEATURES } from '@/lib/constants/plans'
 import { createUserWithProfile, generatePassword } from '@/lib/users/admin'
 import { provisionSchoolLibrary } from '@/lib/actions/resource-templates'
+
+// Lê os toggles de recurso do form (ov_<feature> = ''|'on'|'off') e monta o
+// objeto de override por escola. Vazio → null (sem override, segue o plano).
+function parseFeatureOverrides(formData: FormData): Record<string, boolean> | null {
+  const out: Record<string, boolean> = {}
+  for (const key of OVERRIDABLE_FEATURES) {
+    const v = String(formData.get(`ov_${key}`) ?? '')
+    if (v === 'on') out[key] = true
+    else if (v === 'off') out[key] = false
+  }
+  return Object.keys(out).length > 0 ? out : null
+}
 
 const createSchoolSchema = z.object({
   name: z.string().min(2, 'Informe o nome da escola').max(255),
   adminEmail: z.string().email('E-mail inválido').max(255),
-  planType: z.enum(['free', 'professional', 'premium']),
+  planType: z.enum(['free', 'professional', 'premium', 'enterprise']),
   monthlyPrice: z.coerce.number().min(0, 'Valor inválido'),
 })
 
@@ -112,7 +125,7 @@ export async function createSchool(
 
 const updateSchoolSchema = z.object({
   schoolId: z.string().uuid(),
-  planType: z.enum(['free', 'professional', 'premium']),
+  planType: z.enum(['free', 'professional', 'premium', 'enterprise']),
   monthlyPrice: z.coerce.number().min(0, 'Valor inválido'),
   expirationDate: z.string().optional().or(z.literal('')),
 })
@@ -144,6 +157,7 @@ export async function updateSchool(
   const { schoolId, planType, monthlyPrice, expirationDate } = parsed.data
   const admin = await createAdminClient()
   const studentLimit = planType === 'free' ? 5 : 999999
+  const featureOverrides = parseFeatureOverrides(formData)
 
   const { error } = await admin
     .from('schools')
@@ -153,6 +167,7 @@ export async function updateSchool(
       monthly_price: monthlyPrice,
       expiration_date: expirationDate || null,
       student_limit: studentLimit,
+      feature_overrides: featureOverrides,
     })
     .eq('id', schoolId)
 

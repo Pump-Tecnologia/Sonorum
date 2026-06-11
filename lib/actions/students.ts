@@ -43,11 +43,11 @@ export async function createStudent(
   // Limite de alunos conforme o plano (Essencial = 5; pagos = ilimitado).
   const { data: school } = await admin
     .from('schools')
-    .select('plan_type')
+    .select('plan_type, feature_overrides')
     .eq('id', me.schoolId)
     .single()
 
-  const features = planFeatures(school?.plan_type)
+  const features = planFeatures(school?.plan_type, school?.feature_overrides)
   if (Number.isFinite(features.studentLimit)) {
     const { count } = await admin
       .from('users')

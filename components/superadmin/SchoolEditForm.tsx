@@ -8,6 +8,7 @@ import { AppField, AppInput, AppSelect } from '@/components/app/AppField'
 import { AppSubmit } from '@/components/app/AppSubmit'
 import styles from '@/components/app/app.module.css'
 import { updateSchool, type SchoolActionState } from '@/lib/actions/schools'
+import { OVERRIDABLE_FEATURES, type OverridableFeature } from '@/lib/constants/plans'
 
 interface SchoolEditData {
   id: string
@@ -15,9 +16,25 @@ interface SchoolEditData {
   planType: string
   monthlyPrice: number
   expirationDate: string | null
+  featureOverrides: Record<string, boolean>
 }
 
 const initial: SchoolActionState = { ok: false }
+
+const FEATURE_LABELS: Record<OverridableFeature, string> = {
+  financial: 'Financeiro',
+  reports: 'Relatórios',
+  transcription: 'Transcrição IA',
+  branding: 'Branding',
+  whatsappOfficial: 'WhatsApp oficial',
+}
+
+// '' = segue o plano · 'on' = força ativar · 'off' = força desativar
+function overrideValue(overrides: Record<string, boolean>, key: OverridableFeature): string {
+  if (overrides[key] === true) return 'on'
+  if (overrides[key] === false) return 'off'
+  return ''
+}
 
 export function SchoolEditForm({ school }: { school: SchoolEditData }) {
   const [state, action] = useActionState(updateSchool, initial)
@@ -37,6 +54,7 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
               <option value="free">Essencial (grátis)</option>
               <option value="professional">Profissional</option>
               <option value="premium">Premium</option>
+              <option value="enterprise">Sob medida</option>
             </AppSelect>
           </AppField>
 
@@ -64,6 +82,31 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
             defaultValue={school.expirationDate ?? ''}
           />
         </AppField>
+
+        {/* Overrides de recursos por escola — sobretudo para o plano "Sob medida" */}
+        <div>
+          <p style={{ margin: '0.5rem 0 0.25rem', fontWeight: 600, fontSize: '0.875rem' }}>
+            Recursos (sobrescreve o plano)
+          </p>
+          <p className={styles.hint} style={{ marginBottom: '0.75rem' }}>
+            Padrão = segue o plano. Use para liberar ou bloquear um recurso só nesta escola (ex.: Sob medida).
+          </p>
+          <div className={`${styles.formRow} ${styles.formRow2}`}>
+            {OVERRIDABLE_FEATURES.map((key) => (
+              <AppField key={key} label={FEATURE_LABELS[key]} htmlFor={`ov_${key}`}>
+                <AppSelect
+                  id={`ov_${key}`}
+                  name={`ov_${key}`}
+                  defaultValue={overrideValue(school.featureOverrides, key)}
+                >
+                  <option value="">Padrão do plano</option>
+                  <option value="on">Ativado</option>
+                  <option value="off">Desativado</option>
+                </AppSelect>
+              </AppField>
+            ))}
+          </div>
+        </div>
 
         <AppSubmit pendingLabel="Salvando…">Salvar alterações</AppSubmit>
       </form>

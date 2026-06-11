@@ -51,11 +51,11 @@ export async function createTeacher(
   // Limite de professores conforme o plano (Essencial = 1; pagos = ilimitado).
   const { data: school } = await admin
     .from('schools')
-    .select('plan_type')
+    .select('plan_type, feature_overrides')
     .eq('id', me.schoolId)
     .single()
 
-  const features = planFeatures(school?.plan_type)
+  const features = planFeatures(school?.plan_type, school?.feature_overrides)
   if (Number.isFinite(features.teacherLimit)) {
     const { count } = await admin
       .from('teachers')

@@ -77,6 +77,7 @@ export function CreateSchoolForm() {
               <option value="free">Essencial (grátis)</option>
               <option value="professional">Profissional</option>
               <option value="premium">Premium</option>
+              <option value="enterprise">Sob medida</option>
             </AppSelect>
           </AppField>
 
