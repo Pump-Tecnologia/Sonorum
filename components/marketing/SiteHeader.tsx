@@ -41,6 +41,7 @@ export function SiteHeader() {
           <a href="#features" className={styles.navLink}>Recursos</a>
           <a href="#pricing" className={styles.navLink}>Planos</a>
           <a href="#contact" className={styles.navLink}>Contato</a>
+          <Link href="/blog" className={styles.navLink}>Blog</Link>
         </nav>
 
         <div className={styles.navCta}>
