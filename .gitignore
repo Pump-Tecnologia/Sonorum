@@ -50,3 +50,15 @@ Import.env
 !public/**/*.png
 !public/**/*.jpg
 !public/**/*.jpeg
+
+# posts de redes sociais (imagens e vídeos, não versionar)
+/redes-sociais/
+
+# locais / sensíveis (repositório público)
+.DS_Store
+.claude/settings.local.json
+supabase/.temp/
+AUDITORIA_SEGURANCA.md
+# semente da agenda: usa IDs internos da Escola de teste
+scripts/seed-agenda.mjs
+scripts/unseed-agenda.mjs
