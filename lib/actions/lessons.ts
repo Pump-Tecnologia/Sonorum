@@ -353,13 +353,15 @@ export async function updateLessonSchedule(
       }
       await supabase.from('lessons').update(sibUpdate).eq('id', s.id).eq('school_id', me.schoolId)
     }
+    // Reflete o novo horário/sala/professor de TODAS as aulas mudadas nas
+    // agendas externas (no-op sem Google).
+    await Promise.all((siblings ?? []).map((s) => syncLessonToCalendars(s.id).catch(() => {})))
   } else {
     const { error } = await supabase.from('lessons').update(update).eq('id', d.lessonId).eq('school_id', me.schoolId)
     if (error) return { ok: false, error: 'Não foi possível atualizar a aula.' }
+    // Reflete o novo horário/sala/professor nas agendas externas (no-op sem Google).
+    await syncLessonToCalendars(d.lessonId).catch(() => {})
   }
-
-  // Reflete o novo horário/sala/professor nas agendas externas (no-op sem Google).
-  await syncLessonToCalendars(d.lessonId).catch(() => {})
 
   revalidatePath(`/lessons/${d.lessonId}/planner`)
   revalidatePath('/schedule')
@@ -382,13 +384,17 @@ export async function cancelLessonSeries(formData: FormData) {
     .maybeSingle()
   if (!lesson?.series_id) return
 
-  await supabase
+  const { data: canceled } = await supabase
     .from('lessons')
     .update({ status: 'canceled' })
     .eq('series_id', lesson.series_id)
     .eq('school_id', me.schoolId)
     .gte('start_datetime', lesson.start_datetime)
     .neq('status', 'canceled')
+    .select('id')
+
+  // Tira as aulas canceladas das agendas externas (no-op sem Google).
+  await Promise.all((canceled ?? []).map((l) => removeLessonFromCalendars(l.id).catch(() => {})))
 
   revalidatePath('/schedule')
   revalidatePath(`/lessons/${lessonId}/planner`)
