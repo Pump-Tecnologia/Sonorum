@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation'
 
 import { subscriptionCheckout } from '@/lib/actions/billing'
 import { SELLABLE_PLANS } from '@/lib/constants/plans'
+import { safeInternalRedirect } from '@/lib/auth/redirects'
+import { clientIp, rateLimit, RATE_LIMIT_MESSAGE } from '@/lib/security/rate-limit'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 import {
@@ -39,13 +41,17 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   })
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) }
 
+  // Freia brute force: 10 tentativas / 5 min por IP+e-mail.
+  const ip = await clientIp()
+  const rl = await rateLimit(`signin:${ip}:${parsed.data.email}`, 10, 5 * 60 * 1000)
+  if (!rl.ok) return { ok: false, error: RATE_LIMIT_MESSAGE }
+
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword(parsed.data)
   if (error) return { ok: false, error: 'E-mail ou senha incorretos.' }
 
-  const next = String(formData.get('next') || '/dashboard')
   revalidatePath('/', 'layout')
-  redirect(next.startsWith('/') ? next : '/dashboard')
+  redirect(safeInternalRedirect(formData.get('next')))
 }
 
 // ── Registro (cria escola + usuário admin) ──────────────────────────────────
@@ -58,13 +64,22 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
   })
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) }
 
+  // Freia criação de escolas em massa: 10 cadastros / hora por IP.
+  const ip = await clientIp()
+  const rl = await rateLimit(`signup:${ip}`, 10, 60 * 60 * 1000)
+  if (!rl.ok) return { ok: false, error: RATE_LIMIT_MESSAGE }
+
   const { schoolName, name, email, password } = parsed.data
   const admin = await createAdminClient()
 
-  // 1. Cria a escola.
+  // 1. Cria a escola. 'solo_free' não passa por checkout (é grátis desde já,
+  //    diferente de solo/solo_pro, que nascem 'free' e só viram o plano pago
+  //    depois do pagamento aprovado — ver passo 5).
+  const intendedPlan = String(formData.get('plan') || '')
+  const initialPlanType = intendedPlan === 'solo_free' ? 'solo_free' : 'free'
   const { data: school, error: schoolError } = await admin
     .from('schools')
-    .insert({ name: schoolName, slug: slugify(schoolName), plan_type: 'free', student_limit: 5 })
+    .insert({ name: schoolName, slug: slugify(schoolName), plan_type: initialPlanType, student_limit: 5 })
     .select('id')
     .single()
 
@@ -113,6 +128,21 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     return { ok: false, error: 'Não foi possível finalizar o cadastro. Tente novamente.' }
   }
 
+  // 3.1. Planos Solo/Solo Essencial/Solo Pro são "escola de 1 pessoa só": o
+  //      admin já nasce também como professor (linha em public.teachers), sem
+  //      precisar do toggle manual em /profile. Se o vínculo falhar, desfaz a
+  //      criação inteira para não entregar uma conta Solo incompleta.
+  if (intendedPlan === 'solo_free' || intendedPlan === 'solo' || intendedPlan === 'solo_pro') {
+    const { error: teacherError } = await admin
+      .from('teachers')
+      .insert({ user_id: created.user.id, school_id: schoolId, status: 'active' })
+    if (teacherError) {
+      await admin.auth.admin.deleteUser(created.user.id)
+      await admin.from('schools').delete().eq('id', schoolId)
+      return { ok: false, error: 'Não foi possível finalizar a configuração do plano Solo. Tente novamente.' }
+    }
+  }
+
   // 4. Loga o admin recém-criado (seta cookies de sessão).
   const supabase = await createClient()
   const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
@@ -122,15 +152,14 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
 
   // Veio da landing escolhendo um plano pago → dispara o checkout da assinatura
   // (já logado) e manda direto pro pagamento no MP. Se falhar, cai no /upgrade.
-  const plan = String(formData.get('plan') || '')
-  if (SELLABLE_PLANS.includes(plan as (typeof SELLABLE_PLANS)[number])) {
-    const checkout = await subscriptionCheckout(plan)
-    redirect(checkout.ok && checkout.url ? checkout.url : `/upgrade?plan=${plan}`)
+  // (solo_free não é "sellable" — já nasceu pronto no passo 1, sem checkout.)
+  if (SELLABLE_PLANS.includes(intendedPlan as (typeof SELLABLE_PLANS)[number])) {
+    const checkout = await subscriptionCheckout(intendedPlan)
+    redirect(checkout.ok && checkout.url ? checkout.url : `/upgrade?plan=${intendedPlan}`)
   }
 
   // Senão, respeita ?next (caminho interno) ou vai pro dashboard.
-  const next = String(formData.get('next') || '/dashboard')
-  redirect(next.startsWith('/') ? next : '/dashboard')
+  redirect(safeInternalRedirect(formData.get('next')))
 }
 
 // ── Logout ──────────────────────────────────────────────────────────────────
@@ -152,6 +181,12 @@ export async function requestPasswordReset(
 ): Promise<ActionState> {
   const parsed = forgotPasswordSchema.safeParse({ email: formData.get('email') })
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) }
+
+  // Freia abuso do disparo de e-mails: 5 pedidos / 15 min por IP.
+  // Resposta neutra mesmo no limite — não revela nada sobre o e-mail.
+  const ip = await clientIp()
+  const rl = await rateLimit(`pwreset:${ip}`, 5, 15 * 60 * 1000)
+  if (!rl.ok) return { ok: true }
 
   const supabase = await createClient()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''

@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { AUDIO_EXT_BY_MIME, AUDIO_MAX_BYTES } from '@/lib/constants/transcription'
+import { matchesDeclaredMime } from '@/lib/storage/validate'
 
 // Storage de áudios enviados para transcrição. Bucket PRIVADO: todo acesso é
 // via URL assinada gerada no servidor (service role) — espelha lib/storage/resources.ts.
@@ -12,6 +13,10 @@ export async function uploadAudioFile(file: File, schoolId: string | null): Prom
   if (file.size > AUDIO_MAX_BYTES) return { ok: false, error: 'Áudio acima do limite de 25MB.' }
   const ext = AUDIO_EXT_BY_MIME[file.type]
   if (!ext) return { ok: false, error: 'Formato não suportado. Use MP3, WAV, M4A, AAC ou OGG.' }
+  // MIME do navegador é falsificável — confirma pelos magic bytes do conteúdo.
+  if (!(await matchesDeclaredMime(file))) {
+    return { ok: false, error: 'O conteúdo do arquivo não corresponde ao formato declarado.' }
+  }
 
   const admin = await createAdminClient()
   const path = `${schoolId ?? 'global'}/${crypto.randomUUID()}.${ext}`

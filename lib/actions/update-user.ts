@@ -11,7 +11,6 @@ import { getCurrentUser } from '@/lib/auth/session'
 const baseSchema = {
   name: z.string().min(2).max(255),
   email: z.string().email().max(255),
-  newPassword: z.string().min(8).optional().or(z.literal('')),
 }
 
 const updateStudentSchema = z.object({
@@ -42,14 +41,10 @@ function fieldErrors(error: { flatten: () => { fieldErrors: Record<string, strin
   return Object.fromEntries(Object.entries(flat).map(([k, v]) => [k, v?.[0] ?? 'Inválido']))
 }
 
-// Atualiza e-mail e/ou senha no Supabase Auth (service-role).
-async function updateAuthUser(userId: string, email: string, password: string | undefined) {
+// Atualiza o e-mail no Supabase Auth (service-role). Senhas são definidas pelo próprio usuário.
+async function updateAuthUser(userId: string, email: string) {
   const admin = await createAdminClient()
-  const updates: { email?: string; password?: string } = {}
-  updates.email = email
-  if (password) updates.password = password
-
-  const { error } = await admin.auth.admin.updateUserById(userId, updates)
+  const { error } = await admin.auth.admin.updateUserById(userId, { email })
   return error
 }
 
@@ -66,7 +61,6 @@ export async function updateStudent(
   const parsed = updateStudentSchema.safeParse({
     name: formData.get('name'),
     email: formData.get('email'),
-    newPassword: formData.get('newPassword') || '',
     phone: formData.get('phone') || undefined,
     parentContact: formData.get('parentContact') || undefined,
     instrumentCategory: formData.get('instrumentCategory') || undefined,
@@ -91,7 +85,7 @@ export async function updateStudent(
   if (!target || target.role !== 'student' || target.school_id !== me.schoolId)
     return { ok: false, error: 'Aluno não encontrado.' }
 
-  const authError = await updateAuthUser(studentId, d.email, d.newPassword || undefined)
+  const authError = await updateAuthUser(studentId, d.email)
   if (authError) {
     const dup = /already registered|exists/i.test(authError.message)
     return {
@@ -133,7 +127,6 @@ export async function updateTeacher(
   const parsed = updateTeacherSchema.safeParse({
     name: formData.get('name'),
     email: formData.get('email'),
-    newPassword: formData.get('newPassword') || '',
     instruments: formData.get('instruments') || undefined,
   })
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) }
@@ -145,11 +138,12 @@ export async function updateTeacher(
     .from('teachers')
     .select('id, user_id, school_id')
     .eq('id', teacherId)
+    .eq('school_id', me.schoolId)
     .single()
   if (!teacher || teacher.school_id !== me.schoolId)
     return { ok: false, error: 'Professor não encontrado.' }
 
-  const authError = await updateAuthUser(teacher.user_id, d.email, d.newPassword || undefined)
+  const authError = await updateAuthUser(teacher.user_id, d.email)
   if (authError) {
     const dup = /already registered|exists/i.test(authError.message)
     return {
@@ -162,8 +156,8 @@ export async function updateTeacher(
   const instrumentList = (d.instruments ?? '').split(',').map((s) => s.trim()).filter(Boolean)
 
   await Promise.all([
-    admin.from('users').update({ name: d.name, email: d.email }).eq('id', teacher.user_id),
-    admin.from('teachers').update({ instruments: instrumentList.length ? instrumentList : null }).eq('id', teacherId),
+    admin.from('users').update({ name: d.name, email: d.email }).eq('id', teacher.user_id).eq('school_id', me.schoolId),
+    admin.from('teachers').update({ instruments: instrumentList.length ? instrumentList : null }).eq('id', teacherId).eq('school_id', me.schoolId),
   ])
 
   revalidatePath('/admin/teachers')

@@ -1,3 +1,4 @@
+import { matchesDeclaredMime } from '@/lib/storage/validate'
 import { createAdminClient } from '@/lib/supabase/server'
 
 // Storage de arquivos de recursos pedagógicos (PDF/partitura). Bucket PRIVADO:
@@ -18,6 +19,10 @@ export async function uploadResourceFile(file: File, schoolId: string | null): P
   if (file.size > MAX_BYTES) return { ok: false, error: 'Arquivo acima do limite de 10MB.' }
   const ext = EXT_BY_MIME[file.type]
   if (!ext) return { ok: false, error: 'Formato não suportado. Use PDF, PNG, JPG ou WEBP.' }
+  // MIME do navegador é falsificável — confirma pelos magic bytes do conteúdo.
+  if (!(await matchesDeclaredMime(file))) {
+    return { ok: false, error: 'O conteúdo do arquivo não corresponde ao formato declarado.' }
+  }
 
   const admin = await createAdminClient()
   const path = `${schoolId ?? 'global'}/${crypto.randomUUID()}.${ext}`

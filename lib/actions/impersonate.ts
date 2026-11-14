@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 import { homeForRole } from '@/lib/constants/roles'
+import { signImpersonationState, verifyImpersonationState } from '@/lib/auth/impersonation-cookie'
 
 const IMPERSONATOR_COOKIE = 'sonorum_impersonator'
 
@@ -28,9 +29,10 @@ export async function impersonate(formData: FormData) {
 
   if (!target?.email) return
 
-  // Autorização
+  // Autorização — superadmin NUNCA é alvo (trava de escalonamento horizontal).
+  if (target.role === 'superadmin') return
   if (me.role === 'superadmin') {
-    // pode tudo
+    // pode impersonar admin/teacher/student
   } else if (me.role === 'admin') {
     if (!['teacher', 'student'].includes(target.role)) return
     if (target.school_id !== me.schoolId) return
@@ -45,16 +47,6 @@ export async function impersonate(formData: FormData) {
   })
   if (linkError || !linkData?.properties?.hashed_token) return
 
-  // Guarda o ID do impersonador para depois voltar
-  const jar = await cookies()
-  jar.set(IMPERSONATOR_COOKIE, me.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 8, // 8 horas
-    path: '/',
-  })
-
   // Desloga sessão atual e abre a do alvo usando o token do magic link
   const supabase = await createClient()
   await supabase.auth.signOut()
@@ -64,23 +56,67 @@ export async function impersonate(formData: FormData) {
   })
   if (verifyError) return
 
+  const jar = await cookies()
+  jar.set(IMPERSONATOR_COOKIE, signImpersonationState({
+    actorId: me.id,
+    actorRole: me.role as 'admin' | 'superadmin',
+    actorSchoolId: me.schoolId,
+    targetId: target.id,
+    expiresAt: Math.floor(Date.now() / 1000) + 60 * 60,
+  }), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60,
+    path: '/',
+  })
+
+  // Trilha de auditoria: quem impersonou quem (best-effort, não bloqueia o fluxo).
+  await admin.from('impersonation_events').insert({
+    action: 'start',
+    impersonator_id: me.id,
+    impersonator_role: me.role,
+    target_id: target.id,
+    target_role: target.role,
+    school_id: target.school_id,
+  })
+
   redirect(homeForRole(target.role))
 }
 
 // Volta para o usuário original
 export async function stopImpersonating() {
   const jar = await cookies()
-  const impersonatorId = jar.get(IMPERSONATOR_COOKIE)?.value
-  if (!impersonatorId) return
+  const state = verifyImpersonationState(jar.get(IMPERSONATOR_COOKIE)?.value)
+  if (!state) {
+    jar.delete(IMPERSONATOR_COOKIE)
+    return
+  }
+
+  const current = await getCurrentUser()
+  if (!current || current.id !== state.targetId) {
+    jar.delete(IMPERSONATOR_COOKIE)
+    return
+  }
 
   const admin = await createAdminClient()
   const { data: original } = await admin
     .from('users')
-    .select('id, email, role')
-    .eq('id', impersonatorId)
+    .select('id, email, role, school_id')
+    .eq('id', state.actorId)
     .single()
 
-  if (!original?.email) return
+  const actorStillAuthorized = original &&
+    original.role === state.actorRole &&
+    ((state.actorRole === 'superadmin' && current.role !== 'superadmin') ||
+      (state.actorRole === 'admin' &&
+        original.school_id === state.actorSchoolId &&
+        current.schoolId === state.actorSchoolId &&
+        ['teacher', 'student'].includes(current.role)))
+  if (!actorStillAuthorized || !original?.email) {
+    jar.delete(IMPERSONATOR_COOKIE)
+    return
+  }
 
   const { data: linkData } = await admin.auth.admin.generateLink({
     type: 'magiclink',
@@ -90,9 +126,23 @@ export async function stopImpersonating() {
 
   const supabase = await createClient()
   await supabase.auth.signOut()
-  await supabase.auth.verifyOtp({
+  const { error: verifyError } = await supabase.auth.verifyOtp({
     type: 'magiclink',
     token_hash: linkData.properties.hashed_token,
+  })
+  if (verifyError) {
+    jar.delete(IMPERSONATOR_COOKIE)
+    redirect('/login')
+  }
+
+  // Fecha a trilha só depois de confirmar a volta para a conta original.
+  await admin.from('impersonation_events').insert({
+    action: 'stop',
+    impersonator_id: original.id,
+    impersonator_role: original.role,
+    target_id: current.id,
+    target_role: current.role,
+    school_id: current.schoolId,
   })
 
   jar.delete(IMPERSONATOR_COOKIE)
@@ -102,5 +152,6 @@ export async function stopImpersonating() {
 // Lê o cookie para mostrar o banner
 export async function getImpersonatorId(): Promise<string | null> {
   const jar = await cookies()
-  return jar.get(IMPERSONATOR_COOKIE)?.value ?? null
+  const state = verifyImpersonationState(jar.get(IMPERSONATOR_COOKIE)?.value)
+  return state?.actorId ?? null
 }

@@ -146,31 +146,22 @@ export async function applyTemplateToLesson(
     .maybeSingle()
   if (!lesson) return { ok: false, error: 'Aula não encontrada.' }
 
-  // Aplica o PLANO primeiro (conteúdo principal); só depois os objetivos — assim
-  // uma falha no plano não deixa os objetivos alterados sem plano correspondente.
+  // Objetivos e plano são aplicados na mesma transação.
   // Aplicar SUBSTITUI o plano: grava as colunas legadas e LIMPA o envelope
   // specific_data, para que readPlanContent hidrate do que o modelo escreveu
   // (senão o envelope antigo teria precedência e o modelo não apareceria).
-  const { error } = await supabase.from('lesson_plans').upsert(
-    {
-      school_id: me.schoolId,
-      lesson_id: lessonId,
+  const { data: saved, error } = await supabase.rpc('save_lesson_plan', {
+    p_lesson_id: lessonId,
+    p_goals: tpl.goals || null,
+    p_plan: {
       warmup: tpl.warmup_note || null,
       repertoire: tpl.repertoire_note || null,
       homework: tpl.homework_note || null,
       target_bpm: tpl.target_bpm || null,
       specific_data: null,
     },
-    { onConflict: 'lesson_id' },
-  )
-  if (error) return { ok: false, error: 'Não foi possível aplicar o modelo.' }
-
-  const { error: goalsError } = await supabase
-    .from('lessons')
-    .update({ goals: tpl.goals || null })
-    .eq('id', lessonId)
-    .eq('school_id', me.schoolId)
-  if (goalsError) return { ok: false, error: 'Modelo aplicado, mas não foi possível atualizar os objetivos.' }
+  })
+  if (error || saved !== true) return { ok: false, error: 'Não foi possível aplicar o modelo.' }
 
   revalidatePath(`/lessons/${lessonId}/planner`)
   return { ok: true }

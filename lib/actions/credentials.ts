@@ -2,12 +2,12 @@
 
 import { getCurrentUser } from '@/lib/auth/session'
 import { sendCredentialsEmail } from '@/lib/notifications/credentials'
+import { rateLimit, RATE_LIMIT_MESSAGE } from '@/lib/security/rate-limit'
 import { createAdminClient } from '@/lib/supabase/server'
-import { generatePassword } from '@/lib/users/admin'
 
 export type ResetPasswordState = { ok: boolean; error?: string; message?: string }
 
-// Redefine a senha de um aluno/professor da escola e envia a nova por e-mail.
+// Envia ao aluno/professor um link de uso único para que escolha nova senha.
 export async function resetUserPassword(
   _prev: ResetPasswordState,
   formData: FormData,
@@ -17,6 +17,10 @@ export async function resetUserPassword(
 
   const userId = String(formData.get('userId') ?? '')
   if (!userId) return { ok: false, error: 'Usuário inválido.' }
+
+  // Cada reset dispara e-mail — limita a cadência por admin.
+  const rl = await rateLimit(`pwadmin:${me.id}`, 10, 10 * 60 * 1000)
+  if (!rl.ok) return { ok: false, error: RATE_LIMIT_MESSAGE }
 
   const admin = await createAdminClient()
   const { data: target } = await admin
@@ -30,19 +34,15 @@ export async function resetUserPassword(
   }
   if (!target.email) return { ok: false, error: 'Usuário sem e-mail cadastrado.' }
 
-  const password = generatePassword()
-  const { error } = await admin.auth.admin.updateUserById(userId, { password })
-  if (error) return { ok: false, error: 'Não foi possível redefinir a senha.' }
-
   const school = target.schools as { name: string; custom_name: string | null } | null
   const res = await sendCredentialsEmail({
+    admin,
     to: target.email,
     name: target.name,
-    password,
     schoolName: school?.custom_name || school?.name || null,
     kind: 'reset',
   })
-  if (!res.ok) return { ok: false, error: 'Senha redefinida, mas o e-mail falhou. Tente novamente.' }
+  if (!res.ok) return { ok: false, error: 'Não foi possível enviar o link de redefinição. Tente novamente.' }
 
-  return { ok: true, message: `Nova senha enviada para ${target.email}.` }
+  return { ok: true, message: `Link de redefinição enviado para ${target.email}.` }
 }

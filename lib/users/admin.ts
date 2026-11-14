@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import type { Role } from '@/lib/constants/roles'
 import type { TablesUpdate } from '@/lib/types/database'
 
-// Senha temporária legível para contas criadas por um admin.
+// Senha aleatória inicial para a conta; o usuário define a própria senha pelo link de recuperação.
 export function generatePassword(length = 12): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
   const bytes = crypto.getRandomValues(new Uint8Array(length))
@@ -59,7 +59,10 @@ export async function createUserWithProfile({
 
   if (profileError) {
     await admin.auth.admin.deleteUser(created.user.id)
-    return { ok: false, error: 'Não foi possível finalizar o perfil do usuário.' }
+    const error = profileError.message.includes('student_limit_reached')
+      ? 'Limite de alunos do plano atingido. Faça upgrade para adicionar mais alunos.'
+      : 'Não foi possível finalizar o perfil do usuário.'
+    return { ok: false, error }
   }
 
   return { ok: true, userId: created.user.id }
