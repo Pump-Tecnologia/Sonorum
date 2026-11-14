@@ -1,3 +1,4 @@
+import { SCHOOL_BRAND_COLOR_ENABLED } from '@/lib/constants/branding'
 import type { NotificationEvent, NotificationPayload } from '@/lib/notifications/types'
 
 interface Template {
@@ -24,15 +25,16 @@ const payLineWa = (p: NotificationPayload): string => (p.payUrl ? `\n\n💳 *Pag
 
 // Wrapper HTML mínimo (logo da escola entra se Premium → branding nativo).
 function htmlWrap(p: NotificationPayload, inner: string): string {
-  const brand = v(p.brandPrimary, '#2B4C79')
+  // Cor da marca da escola em backlog: os e-mails usam o verde Sonorum.
+  const brand = v(SCHOOL_BRAND_COLOR_ENABLED ? p.brandPrimary : null, '#25463c')
   const logo = v(p.logoUrl)
-  return `<!doctype html><html><body style="margin:0;padding:0;background:#f4f6fa;font-family:system-ui,sans-serif;color:#1F3A5F">
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#f4f8f5;font-family:system-ui,sans-serif;color:#1c362e">
   <div style="max-width:560px;margin:0 auto;padding:24px">
-    <div style="background:#fff;border-radius:16px;padding:32px;box-shadow:0 8px 24px -10px rgba(31,58,95,.1)">
+    <div style="background:#fff;border-radius:16px;padding:32px;box-shadow:0 8px 24px -10px rgba(28,54,46,.1)">
       ${logo ? `<img src="${logo}" alt="" style="height:40px;margin-bottom:16px">` : ''}
-      <div style="font-size:14px;line-height:1.6;color:#1F3A5F">${inner}</div>
-      <hr style="border:none;border-top:1px solid #E4E8EF;margin:24px 0">
-      <div style="font-size:12px;color:#6B7480">${v(p.schoolName, 'Sua escola')} · enviado pelo <span style="color:${brand};font-weight:600">Sonorum</span></div>
+      <div style="font-size:14px;line-height:1.6;color:#1c362e">${inner}</div>
+      <hr style="border:none;border-top:1px solid #e3ece6;margin:24px 0">
+      <div style="font-size:12px;color:#5c7568">${v(p.schoolName, 'Sua escola')} · enviado pelo <span style="color:${brand};font-weight:600">Sonorum</span></div>
     </div>
   </div></body></html>`
 }
@@ -117,7 +119,7 @@ export const TEMPLATES: Record<NotificationEvent, Template> = {
       const skills = `Técnica ${v(p.technique, '–')}/5 · Teoria ${v(p.theory, '–')}/5 · Repertório ${v(p.repertoire, '–')}/5 · Prática ${v(p.practice, '–')}/5`
       const text = `${greeting(p)}\n\nRelatório da aula${p.lessonTitle ? ` "${v(p.lessonTitle)}"` : ''}${p.lessonDate ? ` de ${v(p.lessonDate)}` : ''}:\n• Avaliação: ${skills}${p.currentSong ? `\n• Música: ${v(p.currentSong)}` : ''}${p.bpm ? `\n• BPM: ${v(p.bpm)}` : ''}${p.notes ? `\n\nObservações: ${v(p.notes)}` : ''}${p.reportUrl ? `\n\n📄 Ver relatório completo: ${v(p.reportUrl)}` : ''}\n\n${sig(p)}`
       const reportBtn = p.reportUrl
-        ? `<div style="margin:18px 0"><a href="${v(p.reportUrl)}" style="display:inline-block;background:#2b4c79;color:#fff;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:10px">Ver relatório completo</a></div>`
+        ? `<div style="margin:18px 0"><a href="${v(p.reportUrl)}" style="display:inline-block;background:#25463c;color:#fff;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:10px">Ver relatório completo</a></div>`
         : ''
       const html = htmlWrap(p, `<p>${greeting(p)}</p><p>Segue o relatório da sua aula${p.lessonTitle ? ` <strong>${v(p.lessonTitle)}</strong>` : ''}${p.lessonDate ? ` de <strong>${v(p.lessonDate)}</strong>` : ''}:</p><ul><li>Técnica: <strong>${v(p.technique, '–')}/5</strong></li><li>Teoria: <strong>${v(p.theory, '–')}/5</strong></li><li>Repertório: <strong>${v(p.repertoire, '–')}/5</strong></li><li>Prática: <strong>${v(p.practice, '–')}/5</strong></li>${p.currentSong ? `<li>Música atual: ${v(p.currentSong)}</li>` : ''}${p.bpm ? `<li>BPM: ${v(p.bpm)}</li>` : ''}</ul>${p.notes ? `<p style="margin-top:12px"><strong>Observações:</strong> ${v(p.notes)}</p>` : ''}${reportBtn}`)
       return { html, text }

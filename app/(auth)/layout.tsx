@@ -3,11 +3,10 @@ import Link from 'next/link'
 
 import styles from '@/components/auth/auth.module.css'
 
-// Logo vazado em todos os lugares — visível porque o fundo do painel
-// usa um tom de azul ligeiramente mais claro/vivido que o azul da marca.
+// Símbolo da marca sobre o painel escuro e o formulário claro.
 const LOGO_VAZADO = '/brand/logo-vazado.png'
 
-// Layout de autenticação: painel de marca à esquerda (fundo ink),
+// Layout de autenticação: painel de marca à esquerda,
 // formulário à direita (canvas claro). Em mobile, só o formulário aparece
 // com uma brand reduzida no topo.
 export default function AuthLayout({ children }: { children: React.ReactNode }) {

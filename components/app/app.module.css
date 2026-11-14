@@ -5,42 +5,46 @@
    ──────────────────────────────────────────────────────────────────────────── */
 
 .shell {
-  --ds-ink: #1F3A5F;
-  --ds-ink-deep: #142844;
-  --ds-panel-bg: #25456E;
-  --ds-on-panel: #fff; /* texto sobre o painel; ajustado por contraste se a marca for clara */
+  /* Tokens antigos (--ds-*): as telas ainda não migradas dependem deles.
+     Já apontam para a paleta verde do padrão novo. */
+  --ds-ink: #25463c;
+  --ds-ink-deep: #1c362e;
   --ds-green: #63C08F;
   --ds-green-soft: #A8DCC1;
   --ds-green-deep: #4FAB78;
-  /* Acento (item ativo da sidebar). Default = verde Sonorum; a marca da escola
-     (Premium) sobrescreve via style inline no shell. */
   --ds-accent: var(--ds-green);
   --ds-accent-deep: var(--ds-green-deep);
-  --ds-canvas: #F2F4F7;
+  --ds-canvas: #f4f8f5;
   --ds-surface: #FFFFFF;
-  --ds-text: #2B2E34;
-  --ds-text-muted: #6B7480;
-  --ds-text-subtle: #94A0B0;
-  --ds-hairline: #E4E8EF;
+  --ds-text: #1c362e;
+  --ds-text-muted: #5c7568;
+  --ds-text-subtle: #7b9085;
+  --ds-hairline: #e3ece6;
   --ds-warning: #C77F00;
   --ds-warning-bg: #FFF4D6;
   --ds-danger: #DC2626;
   --ds-danger-bg: #FEE2E2;
 
   --font-display: var(--font-sans), system-ui, sans-serif;
-  --font-body: var(--font-poppins), system-ui, sans-serif;
+  /* Só Figtree no app (padrão da página de lançamento); a Poppins saiu. */
+  --font-body: var(--font-sans), system-ui, sans-serif;
 
   --r-sm: 0.5rem;
   --r-md: 0.875rem;
   --r-lg: 1.125rem;
   --r-xl: 1.5rem;
 
-  --shadow-soft: 0 8px 24px -10px rgb(31 58 95 / 0.10);
-  --shadow-card: 0 18px 40px -16px rgb(31 58 95 / 0.16);
+  --shadow-soft: 0 8px 24px -10px rgb(28 54 46 / 0.10);
+  --shadow-card: 0 18px 40px -16px rgb(28 54 46 / 0.14);
+
+  /* Item ativo da lateral. A cor da marca da escola pode trocar este valor (layout), mas está em backlog. */
+  --sn-nav-active: var(--sn-ink);
 
   font-family: var(--font-body);
   color: var(--ds-text);
-  background: var(--ds-canvas);
+  /* Fundo da página de lançamento: branco com radiais menta. */
+  background: var(--sn-stage);
+  background-attachment: fixed;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -52,227 +56,292 @@
   min-height: 0;
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+/* ── Lateral: painel de vidro flutuante ─────────────────────────────────── */
 .sidebar {
-  width: 16rem;
-  flex-shrink: 0;
-  background: var(--ds-panel-bg);
-  color: var(--ds-on-panel, #fff);
-  border-right: 1px solid color-mix(in oklab, var(--ds-on-panel, #fff) 12%, transparent);
+  position: sticky;
+  top: 16px;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  position: sticky;
-  top: 0;
-  transition: width 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  width: 15rem;
+  height: calc(100dvh - 32px);
+  margin: 16px 0 16px 16px;
+  border-radius: var(--sn-radius-xl);
+  background: var(--sn-glass);
+  border: var(--sn-glass-border);
+  box-shadow: var(--sn-glass-shadow);
+  -webkit-backdrop-filter: var(--sn-glass-blur);
+  backdrop-filter: var(--sn-glass-blur);
+  font-family: var(--sn-font);
+  color: var(--sn-ink);
+  transition: width 220ms var(--sn-ease);
 }
-.sidebarCollapsed {
-  width: 4.75rem;
-}
-.sidebarCollapsed .sidebarHeader {
-  justify-content: center;
-  padding: 1.5rem 0.5rem 1rem;
-}
+.sidebarCollapsed { width: 4.5rem; }
 
 .sidebarHeader {
-  padding: 1.5rem 1.25rem 1.25rem;
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 12px 18px 18px;
+}
+.sidebarCollapsed .sidebarHeader {
+  flex-direction: column;
+  padding: 18px 0 12px;
 }
 .sidebarBrand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.625rem;
-  text-decoration: none;
-  color: var(--ds-on-panel, #fff);
-}
-.sidebarBrandMark { width: 2rem; height: 2rem; object-fit: contain; }
-
-/* Variante "tile": fundo branco arredondado atrás do logo customizado. Garante
-   contraste universal pra logos do cliente (SVG vazado, PNG transparente, etc.).
-   Layout fica vertical: tile em cima, nome embaixo. */
-.sidebarBrandTile {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0.25rem;
-  border-radius: 0.75rem;
-  background: #fff;
-  box-shadow: 0 4px 12px -4px rgb(0 0 0 / 0.25);
-}
-.sidebarBrandTile .sidebarBrandMark { width: 100%; height: 100%; }
-
-.sidebarBrandWord {
-  font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ds-on-panel, #fff);
-}
-.sidebarBrandStack {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
+  color: var(--sn-ink);
+  text-decoration: none;
+}
+.sidebarBrandMark {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+.sidebarBrandStack { display: flex; flex-direction: column; min-width: 0; }
+.sidebarBrandWord {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sidebarSchool {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: color-mix(in oklab, var(--ds-on-panel, #fff) 72%, transparent);
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--sn-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ── Botão de recolher/expandir ──────────────────────────────────────────── */
+/* Botão redondo de recolher (e de fechar, no celular). */
 .collapseBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0.75rem 0.25rem;
-  padding: 0.4rem 0.75rem;
-  background: transparent;
-  border: none;
-  border-radius: var(--r-sm);
-  color: color-mix(in oklab, var(--ds-on-panel, #fff) 62%, transparent);
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
-}
-.collapseBtn:hover {
-  background: color-mix(in oklab, var(--ds-on-panel, #fff) 8%, transparent);
-  color: var(--ds-on-panel, #fff);
-}
-.sidebarCollapsed .collapseBtn {
-  justify-content: center;
-  margin: 0 0.5rem 0.25rem;
-  padding: 0.4rem;
-}
-.collapseChevron {
-  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sn-text-muted);
+  cursor: pointer;
+  transition: background-color var(--sn-duration) var(--sn-ease), color var(--sn-duration) var(--sn-ease);
 }
-.collapseChevronFlipped {
-  transform: rotate(180deg);
-}
+.collapseBtn:hover { background: var(--sn-mint-soft); color: var(--sn-ink); }
+.collapseChevron { transition: transform 220ms var(--sn-ease); }
+.collapseChevronFlipped { transform: rotate(180deg); }
 
 .sidebarNav {
   flex: 1;
-  overflow-y: auto;
-  padding: 0.5rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
-}
-.sidebarCollapsed .sidebarNav {
-  padding: 0.5rem 0.5rem;
+  gap: 2px;
+  padding: 4px 10px;
+  overflow-y: auto;
 }
 .sidebarLink {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--r-sm);
-  font-family: var(--font-body);
-  font-size: 0.8125rem;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: var(--sn-radius-pill);
+  font-size: 14px;
   font-weight: 500;
-  color: color-mix(in oklab, var(--ds-on-panel, #fff) 78%, transparent);
+  letter-spacing: -0.1px;
+  color: var(--sn-text-muted);
   text-decoration: none;
-  transition: background-color 150ms ease, color 150ms ease;
+  transition: background-color var(--sn-duration) var(--sn-ease), color var(--sn-duration) var(--sn-ease), box-shadow var(--sn-duration) var(--sn-ease);
 }
-.sidebarLinkIcon {
-  flex-shrink: 0;
-  opacity: 0.92;
-}
-.sidebarLinkLabel {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sidebarCollapsed .sidebarLink {
-  justify-content: center;
-  padding: 0.6rem 0;
-}
-.sidebarLink:hover {
-  background: color-mix(in oklab, var(--ds-on-panel, #fff) 8%, transparent);
-  color: var(--ds-on-panel, #fff);
-}
-.sidebarLinkActive {
-  background: var(--ds-accent);
-  color: #fff;
-  font-weight: 600;
-}
+.sidebarLinkIcon { flex-shrink: 0; }
+.sidebarLinkLabel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebarLink:hover { background: #ffffffb3; color: var(--sn-ink); }
+.sidebarLinkActive,
 .sidebarLinkActive:hover {
-  background: var(--ds-accent-deep);
+  background: var(--sn-nav-active);
   color: #fff;
+  box-shadow: 0 10px 24px -12px #1c362e99;
 }
+.sidebarCollapsed .sidebarNav { padding: 4px 12px; }
+.sidebarCollapsed .sidebarLink { justify-content: center; padding: 0; }
 
+/* Rodapé: avatar, nome e botão redondo de sair. */
 .sidebarFooter {
-  border-top: 1px solid color-mix(in oklab, var(--ds-on-panel, #fff) 12%, transparent);
-  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 10px 10px;
+  padding: 8px;
+  border-radius: var(--sn-radius-lg);
+  background: #ffffff8c;
 }
-.sidebarCollapsed .sidebarFooter {
-  padding: 0.75rem 0.5rem;
-}
-.sidebarCollapsed .sidebarSignOut {
-  padding: 0.5rem 0;
-}
-.sidebarUserLink {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--ds-on-panel, #fff);
+.sidebarCollapsed .sidebarFooter { flex-direction: column; margin: 8px 10px 12px; }
+.sidebarUser {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--sn-radius-pill);
+  color: var(--sn-ink);
   text-decoration: none;
-  margin: 0;
+}
+.sidebarAvatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--sn-mint-soft);
+  color: var(--sn-ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: background-color var(--sn-duration) var(--sn-ease);
+}
+.sidebarUser:hover .sidebarAvatar { background: var(--sn-mint-hover); }
+.sidebarUserText { display: flex; flex-direction: column; min-width: 0; }
+.sidebarUserName {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sidebarUserLink:hover { color: var(--ds-green-soft); }
-.sidebarRole {
-  margin: 0.125rem 0 0.75rem 0;
-  font-size: 0.625rem;
-  color: color-mix(in oklab, var(--ds-on-panel, #fff) 55%, transparent);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
+.sidebarRole { font-size: 12px; color: var(--sn-text-muted); }
 .sidebarSignOut {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.4375rem 0.875rem;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
   background: transparent;
-  border: 1px solid color-mix(in oklab, var(--ds-on-panel, #fff) 25%, transparent);
-  border-radius: var(--r-sm);
-  color: var(--ds-on-panel, #fff);
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 500;
+  color: var(--sn-text-muted);
   cursor: pointer;
-  transition: background-color 150ms ease, border-color 150ms ease;
+  transition: background-color var(--sn-duration) var(--sn-ease), color var(--sn-duration) var(--sn-ease);
 }
-.sidebarSignOut:hover {
-  background: color-mix(in oklab, var(--ds-on-panel, #fff) 10%, transparent);
-  border-color: color-mix(in oklab, var(--ds-on-panel, #fff) 40%, transparent);
+.sidebarSignOut:hover { background: var(--sn-danger-soft); color: var(--sn-danger); }
+
+/* ── Celular: barra de vidro no topo + gaveta ───────────────────────────── */
+.mobileHeader { display: none; }
+.mobileDialog {
+  position: fixed;
+  inset: 0 auto 0 0;
+  margin: 0;
+  padding: 0;
+  width: min(20rem, calc(100vw - 2rem));
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  border: 0;
+  border-radius: 0 var(--sn-radius-xl) var(--sn-radius-xl) 0;
+  background: linear-gradient(160deg, #ffffff, #f2f9f4);
+  color: var(--sn-ink);
+  font-family: var(--sn-font);
+  box-shadow: var(--sn-shadow-pop);
+}
+.mobileDialog::backdrop {
+  background: #1c362e33;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.mobilePanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.mobilePanel .sidebarNav { min-height: 0; }
+.mobilePanel .sidebarLink { min-height: 44px; }
+.mobileMenuButton:focus-visible,
+.mobileBrand:focus-visible,
+.sidebar a:focus-visible,
+.sidebar button:focus-visible,
+.mobileDialog a:focus-visible,
+.mobileDialog button:focus-visible {
+  outline: 2px solid var(--sn-green);
+  outline-offset: 2px;
+}
+@keyframes mobile-menu-enter {
+  from { opacity: 0; transform: translateX(-1rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mobileDialog[open] { animation: mobile-menu-enter 200ms var(--sn-ease); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .collapseChevron, .sidebarLink { transition: none; }
 }
 
 /* ── Conteúdo principal ──────────────────────────────────────────────────── */
 .main {
   flex: 1;
   min-width: 0;
-  padding: 1.75rem 2rem 2.5rem;
+  padding: 16px 24px 32px;
   overflow-x: hidden;
 }
 @media (max-width: 768px) {
-  .main { padding: 1.25rem 1rem 1.75rem; }
+  .shellMain { flex-direction: column; }
+  .sidebar { display: none; }
+  .mobileHeader {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+    background: #ffffffb3;
+    border-bottom: 1px solid var(--sn-hairline);
+    -webkit-backdrop-filter: var(--sn-glass-blur);
+    backdrop-filter: var(--sn-glass-blur);
+    font-family: var(--sn-font);
+  }
+  .mobileBrand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: var(--sn-ink);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+  }
+  .mobileBrand img { flex-shrink: 0; object-fit: contain; }
+  .mobileBrand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileMenuButton {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--sn-mint-soft);
+    color: var(--sn-ink);
+    cursor: pointer;
+    transition: background-color var(--sn-duration) var(--sn-ease);
+  }
+  .mobileMenuButton:hover { background: var(--sn-mint-hover); }
+  .main { width: 100%; padding: 16px 12px 28px; }
 }
 
 /* ── Page header ─────────────────────────────────────────────────────────── */
@@ -335,6 +404,64 @@
 }
 .impersonationStop:hover { background: color-mix(in oklab, #5a3a00 8%, transparent); }
 
+/* ── Grace Period & Expiration Banners ───────────────────────────────────── */
+.gracePeriodWarning {
+  background: var(--ds-warning-bg);
+  color: #5a3a00;
+  border-bottom: 1px solid color-mix(in oklab, var(--ds-warning) 30%, transparent);
+}
+.gracePeriodDanger {
+  background: var(--ds-danger-bg);
+  color: #7f1d1d;
+  border-bottom: 1px solid color-mix(in oklab, var(--ds-danger) 30%, transparent);
+}
+.gracePeriodInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.gracePeriodBtnWarning {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid color-mix(in oklab, #5a3a00 30%, transparent);
+  background: color-mix(in oklab, #5a3a00 10%, transparent);
+  border-radius: var(--r-sm);
+  color: #5a3a00;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  white-space: nowrap;
+}
+.gracePeriodBtnWarning:hover { background: color-mix(in oklab, #5a3a00 18%, transparent); }
+.gracePeriodBtnDanger {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid color-mix(in oklab, #7f1d1d 30%, transparent);
+  background: color-mix(in oklab, #7f1d1d 10%, transparent);
+  border-radius: var(--r-sm);
+  color: #7f1d1d;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  white-space: nowrap;
+}
+.gracePeriodBtnDanger:hover { background: color-mix(in oklab, #7f1d1d 18%, transparent); }
+
 /* ─────────────────────────────────────────────────────────────────────────
    PRIMITIVES — Button, Card, Badge, Table, Field, Submit
    Usados pelo SuperAdmin agora; admin/teacher/student migram depois.
@@ -363,7 +490,7 @@
 .btnPrimary {
   background: var(--color-brand-600, var(--ds-ink));
   color: #fff;
-  box-shadow: 0 8px 20px -10px rgb(31 58 95 / 0.5);
+  box-shadow: 0 8px 20px -10px rgb(28 54 46 / 0.45);
 }
 .btnPrimary:hover:not(:disabled) { background: var(--color-brand-700, var(--ds-ink-deep)); }
 .btnSecondary {
@@ -496,8 +623,6 @@
   border: 1px solid var(--ds-hairline);
   background: var(--ds-surface);
   border-radius: var(--r-md);
-  /* Figtree (display) nos campos: proporcional. Poppins (body) renderiza
-     visualmente maior e deixava os inputs desproporcionais. */
   font-family: var(--font-display);
   font-size: 0.875rem;
   color: var(--ds-text);

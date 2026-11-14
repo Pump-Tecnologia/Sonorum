@@ -1,14 +1,16 @@
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 
+import { GracePeriodBanner } from '@/components/billing/GracePeriodBanner'
 import { ImpersonationBanner } from '@/components/app/ImpersonationBanner'
 import { Sidebar } from '@/components/app/Sidebar'
 import { UpcomingLessonReminder } from '@/components/app/UpcomingLessonReminder'
 import styles from '@/components/app/app.module.css'
 import { FinanceVisibilityProvider } from '@/components/ui/FinanceVisibility'
 import { getImpersonatorId } from '@/lib/actions/impersonate'
+import { SCHOOL_BRAND_COLOR_ENABLED } from '@/lib/constants/branding'
 import { getCurrentUser } from '@/lib/auth/session'
-import { planFeatures } from '@/lib/constants/plans'
+import { effectivePlanFeatures, getPlanContext, isSoloExperience } from '@/lib/auth/plan'
 import { createClient } from '@/lib/supabase/server'
 
 interface Branding {
@@ -25,11 +27,11 @@ const getSchoolBranding = cache(async (schoolId: string | null): Promise<Brandin
   const supabase = await createClient()
   const { data } = await supabase
     .from('schools')
-    .select('custom_name, name, brand_primary, logo_path, plan_type, feature_overrides')
+    .select('custom_name, name, brand_primary, logo_path, plan_type, feature_overrides, expiration_date')
     .eq('id', schoolId)
     .single()
   if (!data) return null
-  const branded = planFeatures(data.plan_type, data.feature_overrides).branding
+  const branded = effectivePlanFeatures(data.plan_type, data.expiration_date, data.feature_overrides).branding
   return {
     name: data.custom_name || data.name || null,
     accent: branded ? data.brand_primary : null,
@@ -54,7 +56,6 @@ function accentVars(accent: string): Record<string, string> {
     '--color-brand-700': mix(82, 'black'),
     '--color-brand-800': mix(68, 'black'),
     '--color-brand-900': mix(55, 'black'),
-    // Destaque do item ativo da sidebar (sidebar continua navy fixa).
     '--ds-accent': accent,
     '--ds-accent-deep': mix(82, 'black'),
   }
@@ -63,21 +64,23 @@ function accentVars(accent: string): Record<string, string> {
 // Guarda da área autenticada. O middleware já bloqueia não-logados e roteia por
 // papel; aqui garantimos o perfil e montamos o shell com a sidebar.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [user, impersonatorId] = await Promise.all([getCurrentUser(), getImpersonatorId()])
+  const [user, impersonatorId, plan] = await Promise.all([
+    getCurrentUser(),
+    getImpersonatorId(),
+    getPlanContext(),
+  ])
   if (!user) redirect('/login')
 
   const branding = await getSchoolBranding(user.schoolId)
+  // Conta presa a 1 professor (Essencial, Solo, Solo Pro): a nav de "Professores"
+  // (gestão de equipe) não se aplica — ver isSingleTeacherAccount.
+  const soloAccount = isSoloExperience(plan)
 
-  // Marca = ACENTO + sidebar neutra. Sem personalização, a sidebar é o navy
-  // Sonorum. Ao personalizar, a sidebar vira um branco acizentado (neutro, não
-  // brifica o navy do Sonorum com a cor da escola) + texto escuro; a cor da
-  // marca aparece só como acento (brand-*, item ativo).
-  const shellStyle: Record<string, string> = branding?.accent
-    ? {
-        ...accentVars(branding.accent),
-        '--ds-panel-bg': '#D3D8E0', // cinza claro neutro (não whitelabel)
-        '--ds-on-panel': '#28323F', // texto escuro sobre painel claro
-      }
+  // Marca = ACENTO sobre a lateral de vidro (igual para todas as escolas). A cor
+  // da escola Premium aparece só no item ativo e nos tons brand-* — desligada
+  // por enquanto (SCHOOL_BRAND_COLOR_ENABLED, em backlog).
+  const shellStyle: Record<string, string> = SCHOOL_BRAND_COLOR_ENABLED && branding?.accent
+    ? { ...accentVars(branding.accent), '--sn-nav-active': branding.accent }
     : {}
 
   const isImpersonating = Boolean(impersonatorId) && impersonatorId !== user.id
@@ -86,6 +89,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <FinanceVisibilityProvider>
       <div className={styles.shell} style={shellStyle as React.CSSProperties}>
         {isImpersonating && <ImpersonationBanner asUserName={user.name} />}
+        {user.role === 'admin' && (
+          <GracePeriodBanner
+            inGracePeriod={plan.inGracePeriod}
+            graceDaysRemaining={plan.graceDaysRemaining}
+            isExpired={plan.isExpired}
+            expirationDate={plan.expirationDate}
+          />
+        )}
         <div className={styles.shellMain}>
           <Sidebar
             role={user.role}
@@ -95,10 +106,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             schoolName={branding?.branded ? branding.name : null}
             logoUrl={branding?.logoUrl ?? null}
             brandWord={branding?.branded ? (branding.name ?? 'Sonorum') : 'Sonorum'}
+            soloAccount={soloAccount}
           />
           <main className={styles.main}>{children}</main>
         </div>
-        {user.role === 'teacher' && <UpcomingLessonReminder />}
+        {user.isTeacher && <UpcomingLessonReminder />}
       </div>
     </FinanceVisibilityProvider>
   )

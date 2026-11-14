@@ -8,14 +8,19 @@ export const metadata: Metadata = { title: 'Entrar' }
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>
+  searchParams: Promise<{ next?: string; error?: string }>
 }) {
-  const { next } = await searchParams
+  const { next, error } = await searchParams
 
   return (
     <>
       <h1 className={styles.title}>Entrar</h1>
       <p className={styles.subtitle}>Acesse o painel da sua escola.</p>
+      {error === 'role' && (
+        <p role="alert" className={styles.alert}>
+          Não foi possível identificar seu perfil de acesso. Entre em contato com o suporte da sua escola.
+        </p>
+      )}
       <LoginForm next={next} />
     </>
   )

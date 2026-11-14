@@ -3,21 +3,21 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 
-// Paleta por instrumento/status: cada evento ganha um fundo suave (bg) e uma
-// cor de acento sólida (accent) usada na barra lateral e no texto da hora.
-interface EventPalette { bg: string; accent: string }
+// Tom do evento por status ou instrumento. As cores ficam no CSS da agenda
+// (schedule.module.css, [data-tone]); a API só diz qual tom usar. Aula
+// concluída mantém a cor do instrumento: o CSS apaga pelo data-status.
+type EventTone = 'missed' | 'late' | 'piano' | 'violao' | 'cordas' | 'canto' | 'bateria' | 'outro'
 
-function eventPalette(instrument: unknown, status: string): EventPalette {
-  if (status === 'completed') return { bg: '#ECFDF5', accent: '#059669' }
-  if (status === 'missed') return { bg: '#FEF2F2', accent: '#DC2626' }
-  if (status === 'late') return { bg: '#FFFBEB', accent: '#D97706' }
+function eventTone(instrument: unknown, status: string): EventTone {
+  if (status === 'missed') return 'missed'
+  if (status === 'late') return 'late'
   const instr = String(Array.isArray(instrument) ? instrument[0] : instrument ?? '').toLowerCase()
-  if (/piano|teclado/.test(instr)) return { bg: '#EFF6FF', accent: '#2563EB' }
-  if (/violão|guitarra/.test(instr)) return { bg: '#FFFBEB', accent: '#D97706' }
-  if (/violino|cordas/.test(instr)) return { bg: '#ECFDF5', accent: '#059669' }
-  if (/canto|voz/.test(instr)) return { bg: '#FDF2F8', accent: '#DB2777' }
-  if (/bateria|percussão/.test(instr)) return { bg: '#F5F3FF', accent: '#7C3AED' }
-  return { bg: '#EEF2FF', accent: '#4F46E5' }
+  if (/piano|teclado/.test(instr)) return 'piano'
+  if (/violão|guitarra/.test(instr)) return 'violao'
+  if (/violino|cordas/.test(instr)) return 'cordas'
+  if (/canto|voz/.test(instr)) return 'canto'
+  if (/bateria|percussão/.test(instr)) return 'bateria'
+  return 'outro'
 }
 
 export async function GET(request: NextRequest) {
@@ -51,16 +51,14 @@ export async function GET(request: NextRequest) {
   type UserRow = { name: string; instrument: unknown }
   const events = (data ?? []).map((l) => {
     const student = l.users as UserRow | null
-    const pal = eventPalette(student?.instrument, l.status)
     return {
       id: l.id,
       title: `${l.title} — ${student?.name ?? 'Aluno'}`,
       start: l.start_datetime,
       end: l.end_datetime,
-      backgroundColor: pal.bg,
-      borderColor: pal.accent,
-      textColor: '#1F2937',
       extendedProps: {
+        tone: eventTone(student?.instrument, l.status),
+        lesson_title: l.title,
         student_id: l.student_id,
         teacher_id: l.teacher_id,
         status: l.status,
@@ -68,7 +66,6 @@ export async function GET(request: NextRequest) {
         student_name: student?.name ?? '',
         instrument: student?.instrument,
         room: (l.room as { name: string } | null)?.name ?? '',
-        accent: pal.accent,
       },
     }
   })

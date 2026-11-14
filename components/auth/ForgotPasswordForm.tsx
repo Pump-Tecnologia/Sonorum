@@ -29,7 +29,11 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form action={action} className={styles.form}>
+    <form
+      action={action}
+      onReset={(event) => event.preventDefault()}
+      className={styles.form}
+    >
       <AuthField label="E-mail" htmlFor="email" error={fe.email}>
         <AuthInput
           id="email"

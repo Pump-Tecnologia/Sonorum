@@ -1,350 +1,273 @@
 /* ────────────────────────────────────────────────────────────────────────────
-   Sonorum — Agenda
-   Limpa a interface densa do FullCalendar para a estética do DS.
+   Sonorum — Agenda (padrão novo: página de lançamento)
+   Calendário em vidro sobre o fundo menta do app e aulas em tons por instrumento.
+   Tokens em app/globals.css (--sn-*); componentes em components/ds.
    ──────────────────────────────────────────────────────────────────────────── */
 
-.wrap {
-  --ds-ink: #1F3A5F;
-  --ds-ink-deep: #142844;
-  --ds-green: #63C08F;
-  --ds-green-deep: #4FAB78;
-  --ds-canvas: #F2F4F7;
-  --ds-surface: #FFFFFF;
-  --ds-text: #2B2E34;
-  --ds-text-muted: #6B7480;
-  --ds-hairline: #E4E8EF;
-
-  --font-display: var(--font-sans), system-ui, sans-serif;
-  --font-body: var(--font-poppins), system-ui, sans-serif;
+/* O fundo menta agora é da página inteira (shell); a agenda só ocupa o espaço. */
+.stage {
+  position: relative;
+  isolation: isolate;
+  padding: 16px 8px 8px;
+  color: var(--sn-ink);
+  font-family: var(--sn-font);
 }
 
+/* ── Cabeçalho ───────────────────────────────────────────────────────────── */
 .toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.875rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "heading create" "controls controls";
+  align-items: end;
+  gap: 24px 16px;
+  margin-bottom: 24px;
 }
+.heading { grid-area: heading; min-width: 0; }
+.kicker { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: -.1px; color: var(--sn-text-muted); }
+.period {
+  margin: 4px 0 0;
+  font-size: clamp(30px, 2rem + 1.4vw, 48px);
+  font-weight: 600;
+  letter-spacing: -.04em;
+  line-height: 1.05;
+  color: var(--sn-ink);
+}
+.period::first-letter { text-transform: uppercase; }
+.create { grid-area: create; }
+.controls { grid-area: controls; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.stepper { display: flex; align-items: center; gap: 8px; }
 
+/* ── Superfície do calendário ────────────────────────────────────────────── */
 .calendar {
-  background: var(--ds-surface);
-  border: 1px solid var(--ds-hairline);
-  border-radius: 1rem;
-  padding: 1rem;
-  box-shadow: 0 8px 24px -10px rgb(31 58 95 / 0.08);
+  padding: 8px 12px 12px;
+  border-radius: var(--sn-radius-xl);
+  background: var(--sn-glass);
+  border: var(--sn-glass-border);
+  box-shadow: var(--sn-glass-shadow);
+  -webkit-backdrop-filter: var(--sn-glass-blur);
+  backdrop-filter: var(--sn-glass-blur);
 }
 
-/* ── FullCalendar overrides (escopo via :global dentro do module) ────────── */
+/* ── FullCalendar (escopo via :global dentro do module) ──────────────────── */
 .calendar :global(.fc) {
-  font-family: var(--font-body);
-  --fc-border-color: color-mix(in oklab, var(--ds-hairline) 75%, transparent);
+  font-family: var(--sn-font);
+  color: var(--sn-ink);
+  --fc-border-color: var(--sn-hairline);
   --fc-page-bg-color: transparent;
-  --fc-neutral-bg-color: var(--ds-canvas);
-  --fc-today-bg-color: color-mix(in oklab, var(--ds-green) 6%, transparent);
-  --fc-now-indicator-color: var(--ds-green-deep);
-  --fc-event-text-color: var(--ds-ink);
+  --fc-neutral-bg-color: transparent;
+  --fc-today-bg-color: #7cc99b12;
+  --fc-now-indicator-color: var(--sn-green);
+  --fc-highlight-color: #7cc99b33;
+  --fc-list-event-hover-bg-color: #e4f2e880;
+  --fc-event-bg-color: transparent;
+  --fc-event-border-color: transparent;
 }
+.calendar :global(.fc-theme-standard .fc-scrollgrid),
+.calendar :global(.fc-theme-standard .fc-list) { border: 0; }
+.calendar :global(.fc-theme-standard th) { border-left: 0; border-right: 0; }
+.calendar :global(.fc-scrollgrid-section-header > th),
+.calendar :global(.fc-scrollgrid-section-body > td) { border: 0; }
+.calendar :global(.fc a) { color: inherit; text-decoration: none; }
 
-/* Toolbar superior — título e botões discretos */
-.calendar :global(.fc-toolbar.fc-header-toolbar) {
-  margin-bottom: 0.875rem;
-  align-items: center;
+/* Cabeçalho dos dias */
+.calendar :global(.fc-col-header-cell) { padding: 12px 0 10px; font-weight: 400; }
+.dayHead { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+.weekday { font-size: 12px; font-weight: 500; color: var(--sn-text-muted); }
+.dayNumber {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 4px;
+  border-radius: var(--sn-radius-pill);
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: -.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--sn-ink);
 }
-.calendar :global(.fc-toolbar-title) {
-  font-family: var(--font-display);
-  font-size: 1.125rem !important;
-  font-weight: 600;
-  color: var(--ds-ink);
-  letter-spacing: -0.01em;
-}
+.dayNumber[data-today] { color: #fff; background: var(--sn-ink); font-weight: 500; }
 
-/* Botões do header */
-.calendar :global(.fc .fc-button) {
-  background: var(--ds-surface);
-  border: 1px solid var(--ds-hairline);
-  color: var(--ds-text);
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.5rem;
-  box-shadow: none;
-  text-transform: none;
-}
-.calendar :global(.fc .fc-button:hover) {
-  background: var(--ds-canvas);
-  color: var(--ds-ink);
-  border-color: var(--ds-ink);
-}
-.calendar :global(.fc .fc-button-primary:focus),
-.calendar :global(.fc .fc-button-primary:not(:disabled):active:focus) {
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ds-ink) 18%, transparent);
-}
-.calendar :global(.fc .fc-button-primary:not(:disabled).fc-button-active),
-.calendar :global(.fc .fc-button-primary:not(:disabled):active) {
-  background: var(--color-brand-600, var(--ds-ink));
-  border-color: var(--color-brand-600, var(--ds-ink));
-  color: #fff;
-}
-.calendar :global(.fc .fc-today-button) {
-  background: var(--color-brand-600, var(--ds-ink));
-  color: #fff;
-  border-color: var(--color-brand-600, var(--ds-ink));
-}
-.calendar :global(.fc .fc-today-button:disabled) {
-  opacity: 0.5;
-  background: var(--ds-canvas);
-  color: var(--ds-text-muted);
-  border-color: var(--ds-hairline);
-}
-
-/* Cabeçalho dos dias da semana — só o necessário */
-.calendar :global(.fc-col-header-cell-cushion) {
-  font-family: var(--font-body);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ds-text-muted);
-  padding: 0.625rem 0.5rem;
-}
-
-/* Slots de hora — texto menor, tabs muted */
-.calendar :global(.fc .fc-timegrid-slot-label-cushion),
-.calendar :global(.fc .fc-list-day-cushion) {
-  font-family: var(--font-body);
-  font-size: 0.6875rem;
-  color: var(--ds-text-muted);
-}
-.calendar :global(.fc-timegrid-slot) { height: 2.25rem; }
-
-/* Eventos — chip com fundo tonal, barra de acento e conteúdo próprio.
-   O FC só fornece o fundo (backgroundColor); a estrutura vem do renderEvent. */
-.calendar :global(.fc-event) {
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0;
-  overflow: hidden;
-  font-family: var(--font-body);
-  cursor: pointer;
-  box-shadow: none;
-  transition: box-shadow 150ms ease, transform 150ms ease;
-}
-.calendar :global(.fc-timegrid-event:hover),
-.calendar :global(.fc-daygrid-event:hover) {
-  box-shadow: 0 6px 14px -6px rgb(20 40 68 / 0.28);
-  transform: translateY(-1px);
-}
-.calendar :global(.fc-timegrid-event .fc-event-main),
-.calendar :global(.fc-daygrid-event .fc-event-main) { padding: 0; }
-
-/* Conteúdo interno do evento (timeGrid/dayGrid) */
-.eventInner {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  height: 100%;
-  padding: 0.1875rem 0.4375rem;
-  border-radius: 0.375rem;
-}
-.eventTime {
-  font-size: 0.625rem;
-  font-weight: 700;
-  color: var(--accent, var(--ds-ink));
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-}
-.eventTitle {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--ds-ink);
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* Mês: evento é uma faixa fina — hora e título lado a lado */
-.calendar :global(.fc-daygrid-event) .eventInner {
-  flex-direction: row;
-  align-items: baseline;
-  gap: 0.375rem;
-  padding: 0.125rem 0.375rem;
-}
-.calendar :global(.fc-daygrid-event) .eventTitle { font-weight: 500; }
-
-.eventListTitle { font-weight: 600; color: var(--ds-ink); }
-
-/* Day grid (visão mês) */
+/* Mês */
+.calendar :global(.fc-daygrid-day-frame) { min-height: 112px; padding: 4px; }
+.calendar :global(.fc-daygrid-day-top) { flex-direction: row; }
 .calendar :global(.fc-daygrid-day-number) {
-  font-size: 0.75rem;
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: var(--sn-radius-pill);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--sn-ink);
+}
+.calendar :global(.fc-day-today .fc-daygrid-day-number) { color: #fff; background: var(--sn-ink); font-weight: 500; }
+.calendar :global(.fc-day-other .fc-daygrid-day-top) { opacity: .4; }
+.calendar :global(.fc-daygrid-event-harness) { margin-top: 3px; }
+.calendar :global(.fc-daygrid-event) { margin: 0 2px; border-radius: var(--sn-radius-sm); }
+.calendar :global(.fc-daygrid-dot-event:hover),
+.calendar :global(.fc-daygrid-dot-event.fc-event-mirror) { background: transparent; }
+.calendar :global(.fc-daygrid-more-link) {
+  margin: 4px 0 0 6px;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--ds-text);
-  padding: 0.375rem;
+  color: var(--sn-green);
+}
+.calendar :global(.fc-daygrid-more-link:hover) { background: transparent; color: var(--sn-ink); }
+
+/* Semana e dia */
+.calendar :global(.fc-timegrid-slot) { height: 60px; }
+.calendar :global(.fc-timegrid-slot-label) { vertical-align: top; border: 0; }
+.calendar :global(.fc-timegrid-slot-label-cushion) {
+  display: block;
+  margin-top: -9px;
+  padding: 0 12px 0 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--sn-text-subtle);
+  background: transparent;
+}
+/* A primeira hora não sobe para a linha: ficaria cortada pelo cabeçalho. */
+.calendar :global(.fc-timegrid-slots tr:first-child .fc-timegrid-slot-label-cushion) { margin-top: 2px; }
+.calendar :global(.fc-timegrid-axis) { border: 0; }
+.calendar :global(.fc-timegrid-col.fc-day-today) { background: var(--fc-today-bg-color); }
+.calendar :global(.fc-timegrid-event-harness-inset .fc-timegrid-event) { box-shadow: 0 0 0 2px #fff; }
+.calendar :global(.fc-timegrid-event) { border-radius: var(--sn-radius-md); }
+.calendar :global(.fc-timegrid-now-indicator-line) { border-width: 1.5px 0 0; }
+.calendar :global(.fc-timegrid-now-indicator-arrow) { border-color: var(--sn-green); border-top-color: transparent; border-bottom-color: transparent; }
+
+/* Evento (mês, semana e dia). O FullCalendar só posiciona; o desenho é nosso. */
+.calendar :global(.fc-event) { cursor: pointer; background: transparent; border: 0; box-shadow: none; }
+.calendar :global(.fc-event:focus-visible) { outline: 2px solid var(--sn-green); outline-offset: 2px; }
+.calendar :global(.fc-event .fc-event-main) { padding: 0; color: inherit; }
+
+.event,
+.monthEvent {
+  --tone-bg: #e9f4ed;
+  --tone-fg: #2f6b4f;
 }
 
-/* Lista (visão lista) */
-.calendar :global(.fc-list-day-cushion) {
-  background: var(--ds-canvas) !important;
-  padding: 0.5rem 0.875rem;
-}
-.calendar :global(.fc-list-event) { font-size: 0.8125rem; }
-.calendar :global(.fc-list-event:hover td) {
-  background: color-mix(in oklab, var(--ds-canvas) 80%, transparent);
-}
-
-/* Tira o "All-day" e bordas duplas */
-.calendar :global(.fc .fc-scrollgrid) {
-  border-color: color-mix(in oklab, var(--ds-hairline) 75%, transparent);
-}
-
-/* Popover "+N mais" (visão mês). Sem fundo sólido, os eventos da célula
-   apareciam por trás (efeito de texto duplicado/sobreposto). */
-.calendar :global(.fc-popover) {
-  background: var(--ds-surface);
-  border: 1px solid var(--ds-hairline);
-  border-radius: var(--r-md);
-  box-shadow: 0 18px 40px -16px rgb(20 40 68 / 0.3);
-  z-index: 30;
-  overflow: hidden;
-}
-.calendar :global(.fc-popover-header) {
-  background: var(--ds-canvas);
-  padding: 0.5rem 0.75rem;
-  font-weight: 600;
-  color: var(--ds-ink);
-}
-.calendar :global(.fc-popover-body) {
-  padding: 0.375rem 0.5rem;
+/* Semana e dia: card suave com a cor do instrumento. */
+.event {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  max-height: 60vh;
-  overflow-y: auto;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: var(--tone-bg);
+  border: 1px solid color-mix(in srgb, var(--tone-fg) 14%, transparent);
+  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--tone-fg) 60%, transparent);
+  overflow: hidden;
+  transition: transform var(--sn-duration) var(--sn-ease), box-shadow var(--sn-duration) var(--sn-ease);
 }
-/* No popover, evento ocupa a linha inteira (não a faixa fininha do mês) */
+.event:hover { transform: translateY(-1px); box-shadow: 0 12px 24px -12px color-mix(in srgb, var(--tone-fg) 70%, transparent); }
+.eventName { font-size: 13px; font-weight: 600; letter-spacing: -.1px; line-height: 1.25; color: var(--sn-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eventMeta { font-size: 11.5px; line-height: 1.3; font-variant-numeric: tabular-nums; color: var(--tone-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Mês: ponto colorido, hora e primeiro nome, sem caixa. */
+.monthEvent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--sn-ink);
+  transition: background-color var(--sn-duration) var(--sn-ease);
+}
+.monthEvent:hover { background: var(--tone-bg); }
+.monthDot { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--tone-fg); }
+.monthTime { flex-shrink: 0; font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--sn-text-muted); }
+.monthName { min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Aula concluída: mantém a cor do instrumento, mais apagada. */
+.event[data-status="completed"],
+.monthEvent[data-status="completed"] { opacity: .55; }
+.event[data-status="completed"] { box-shadow: none; }
+
+/* Tons por instrumento e status. Contraste do texto sobre o fundo ≥ 5:1. */
+.event[data-tone="piano"], .monthEvent[data-tone="piano"] { --tone-bg: #e8eef5; --tone-fg: #3b5f86; }
+.event[data-tone="violao"], .monthEvent[data-tone="violao"] { --tone-bg: #f6eedf; --tone-fg: #8a5a1c; }
+.event[data-tone="cordas"], .monthEvent[data-tone="cordas"] { --tone-bg: #e0f0ef; --tone-fg: #1f6d6a; }
+.event[data-tone="canto"], .monthEvent[data-tone="canto"] { --tone-bg: #f6e8ec; --tone-fg: #9a3f5e; }
+.event[data-tone="bateria"], .monthEvent[data-tone="bateria"] { --tone-bg: #eeeaf5; --tone-fg: #5e4a8a; }
+.event[data-tone="missed"], .monthEvent[data-tone="missed"] { --tone-bg: #f8e9e7; --tone-fg: #a23b2f; }
+.event[data-tone="late"], .monthEvent[data-tone="late"] { --tone-bg: #f8efdc; --tone-fg: #8a5a10; }
+
+/* Lista */
+.calendar :global(.fc-list-day > th) { border: 0; }
+.calendar :global(.fc-list-day-cushion) { padding: 20px 12px 8px; background: transparent; text-align: left; }
+.calendar :global(.fc-list-day-text),
+.calendar :global(.fc-list-day-side-text) { font-size: 14px; font-weight: 600; color: var(--sn-ink); text-transform: capitalize; }
+.calendar :global(.fc-list-day-side-text) { font-weight: 400; color: var(--sn-text-muted); }
+.calendar :global(.fc-list-event td) { padding: 6px 12px; border: 0; vertical-align: middle; }
+.calendar :global(.fc-list-event-graphic) { display: none; }
+.calendar :global(.fc-list-event-time) { width: 1%; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--sn-text-muted); white-space: nowrap; }
+.calendar :global(.fc-list-event:hover td) { background: transparent; }
+/* Lista: o mesmo card da semana, só com altura livre e um pouco mais de ar. */
+.eventInList { height: auto; padding: 10px 14px; }
+.eventInList .eventName { font-size: 14px; }
+.eventInList .eventMeta { font-size: 12px; }
+.calendar :global(.fc-list-empty) { padding: 48px 16px; background: transparent; }
+.calendar :global(.fc-list-empty-cushion) { margin: 0; font-size: 14px; color: var(--sn-text-muted); }
+
+/* "+N mais" no mês */
+.calendar :global(.fc-popover) {
+  border: var(--sn-glass-border);
+  border-radius: var(--sn-radius-lg);
+  background: #fffffff2;
+  box-shadow: var(--sn-shadow-pop);
+  overflow: hidden;
+  z-index: 30;
+}
+.calendar :global(.fc-popover-header) { padding: 12px 14px 6px; background: transparent; font-size: 13px; font-weight: 600; color: var(--sn-ink); }
+.calendar :global(.fc-popover-body) { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px 12px; max-height: 60vh; overflow-y: auto; }
 .calendar :global(.fc-popover .fc-daygrid-event) { margin: 0; white-space: normal; }
 
-/* ── Modal ──────────────────────────────────────────────────────────────── */
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgb(20 40 68 / 0.55);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-.modal {
-  width: 100%;
-  max-width: 32rem;
-  max-height: calc(100dvh - 2rem);
-  overflow-y: auto;
-  background: var(--ds-surface);
-  border-radius: 1.125rem;
-  padding: 1.5rem;
-  box-shadow: 0 30px 60px -20px rgb(20 40 68 / 0.35);
-}
-.modalSmall { max-width: 24rem; }
-.modalHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-.modalTitle {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 700;
-  color: var(--ds-ink);
-}
-/* Título do aluno como link (admin) — leva ao perfil. */
-.modalTitleLink {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 700;
-  color: var(--ds-ink);
-  text-decoration: none;
-}
-.modalTitleLink:hover {
-  color: var(--ds-green-deep);
-  text-decoration: underline;
-}
-.modalSubtitle {
-  margin: 0.125rem 0 0;
-  font-size: 0.75rem;
-  color: var(--ds-text-muted);
-}
-.modalClose {
-  background: transparent;
-  border: none;
-  color: var(--ds-text-muted);
-  font-size: 1.125rem;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-.modalClose:hover { color: var(--ds-ink); }
+/* ── Detalhe da aula ─────────────────────────────────────────────────────── */
+.titleLink { color: inherit; text-decoration: none; }
+.titleLink:hover { color: var(--sn-green); }
+.titleLink:focus-visible { outline: 2px solid var(--sn-green); outline-offset: 3px; border-radius: 4px; }
+.details { display: flex; flex-direction: column; gap: 14px; margin: 20px 0 0; }
+.details > div { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 12px; align-items: start; }
+.details dt { display: grid; place-items: center; height: 22px; color: var(--sn-green); }
+.details dt svg { width: 20px; height: 20px; }
+.details dd { margin: 0; font-size: 15px; line-height: 1.45; color: var(--sn-ink); }
+.capitalize::first-letter { text-transform: uppercase; }
+.cancelTrigger { margin-right: auto; color: var(--sn-danger); }
+.inlineError { margin: 16px 0 0; font-size: 13px; color: var(--sn-danger); }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-.modalFooter {
-  margin-top: 1.25rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
+/* ── Telas menores ───────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .stage { padding: 8px 4px 4px; }
+  /* Título na largura toda; "Nova aula" desce para a linha das setas. */
+  .toolbar {
+    grid-template-areas: "heading heading" "stepper create" "views views";
+    align-items: center;
+    gap: 16px 12px;
+    margin-bottom: 16px;
+  }
+  .period { font-size: 30px; }
+  .create { min-height: 40px; padding: 0 14px; }
+  .controls { display: contents; }
+  .stepper { grid-area: stepper; }
+  .controls > [role="group"] { grid-area: views; display: flex; }
+  .controls > [role="group"] > button { flex: 1; padding: 0 8px; }
+  .calendar { padding: 4px 6px 8px; border-radius: var(--sn-radius-lg); }
+  .calendar :global(.fc-daygrid-day-frame) { min-height: 72px; padding: 2px; }
+  .calendar :global(.fc-timegrid-slot-label-cushion) { padding-right: 6px; font-size: 11px; }
 }
 
-.recurrenceBox {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.875rem;
-  border: 1px dashed var(--ds-hairline);
-  border-radius: 0.875rem;
-}
-
-.checkRow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  color: var(--ds-text);
-}
-.checkRow input { accent-color: var(--ds-ink); }
-
-.detailRow {
-  display: flex;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-}
-.detailRow strong { font-weight: 600; color: var(--ds-ink); }
-.detailLabel { color: var(--ds-text-muted); }
-
-.linkInline {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--ds-ink);
-  text-decoration: none;
-}
-.linkInline:hover { color: var(--ds-green-deep); }
-.linkDanger {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #DC2626;
-}
-.linkDanger:hover { text-decoration: underline; }
-.linkDanger:disabled { opacity: 0.6; cursor: default; text-decoration: none; }
-
-/* Cancelamento em duas etapas: agrupa "Confirmar" + "Voltar" no rodapé. */
-.confirmGroup {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
+@media (prefers-reduced-motion: reduce) {
+  .calendar :global(.fc-event) { transition: none; }
+  .event, .monthEvent { transition: none; }
+  .event:hover { transform: none; }
 }

@@ -1,0 +1,197 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   Sonorum — componentes do padrão novo (página de lançamento)
+   Usa só os tokens --sn-* de app/globals.css. Cada tela migrada importa daqui.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Botão ───────────────────────────────────────────────────────────────── */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: var(--sn-radius-pill);
+  font-family: var(--sn-font);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -.1px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--sn-duration), color var(--sn-duration), box-shadow var(--sn-duration), transform var(--sn-duration) var(--sn-ease);
+}
+.button svg { width: 18px; height: 18px; flex: none; }
+.button:focus-visible,
+.iconButton:focus-visible,
+.segment:focus-visible { outline: 2px solid var(--sn-green); outline-offset: 3px; }
+.button:disabled { cursor: default; opacity: .55; transform: none; }
+
+.primary { color: #fff; background: var(--sn-ink); box-shadow: 0 10px 24px -12px #1c362e8c; }
+.primary:hover:not(:disabled) { background: var(--sn-ink-strong); transform: translateY(-1px); }
+.primary:active:not(:disabled) { transform: translateY(0); box-shadow: 0 4px 12px -8px #1c362e8c; }
+
+.soft { color: var(--sn-ink-soft); background: var(--sn-mint-soft); }
+.soft:hover:not(:disabled) { background: var(--sn-mint-hover); }
+
+.ghost { color: var(--sn-ink); background: transparent; }
+.ghost:hover:not(:disabled) { background: #ffffff99; }
+
+.danger { color: var(--sn-danger); background: var(--sn-danger-soft); }
+.danger:hover:not(:disabled) { background: #f3d9d5; }
+
+.small { min-height: 36px; padding: 0 14px; font-size: 13px; }
+
+/* ── Botão redondo só com ícone (seta, fechar) ───────────────────────────── */
+.iconButton {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--sn-ink-soft);
+  background: var(--sn-mint-soft);
+  cursor: pointer;
+  transition: background var(--sn-duration), transform var(--sn-duration) var(--sn-ease);
+}
+.iconButton svg { width: 20px; height: 20px; }
+.iconButton:hover { background: var(--sn-mint-hover); }
+.iconButton:active { transform: scale(.94); }
+.iconButtonQuiet { background: transparent; color: var(--sn-text-muted); }
+.iconButtonQuiet:hover { background: var(--sn-mint-soft); color: var(--sn-ink); }
+
+/* ── Seletor em pílula (Mês, Semana, Dia, Lista) ─────────────────────────── */
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: var(--sn-radius-pill);
+  background: var(--sn-glass);
+  border: var(--sn-glass-border);
+  box-shadow: var(--sn-glass-shadow);
+  -webkit-backdrop-filter: var(--sn-glass-blur);
+  backdrop-filter: var(--sn-glass-blur);
+}
+.segment {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--sn-radius-pill);
+  font-family: var(--sn-font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sn-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: background var(--sn-duration), color var(--sn-duration);
+}
+.segment:hover { color: var(--sn-ink); }
+.segment[aria-pressed="true"] { color: #fff; background: var(--sn-ink); }
+
+/* ── Superfície de vidro ─────────────────────────────────────────────────── */
+.glass {
+  background: var(--sn-glass);
+  border: var(--sn-glass-border);
+  box-shadow: var(--sn-glass-shadow);
+  -webkit-backdrop-filter: var(--sn-glass-blur);
+  backdrop-filter: var(--sn-glass-blur);
+  border-radius: var(--sn-radius-xl);
+}
+
+/* ── Status ──────────────────────────────────────────────────────────────── */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--sn-radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status-neutral { color: var(--sn-text-muted); background: #eef3ef; }
+.status-brand { color: var(--sn-ink-soft); background: var(--sn-mint-soft); }
+.status-success { color: #2f6b4f; background: #e9f4ed; }
+.status-warning { color: var(--sn-warning); background: var(--sn-warning-soft); }
+.status-danger { color: var(--sn-danger); background: var(--sn-danger-soft); }
+
+/* ── Janela (dialog nativo) ──────────────────────────────────────────────── */
+.dialog {
+  width: min(100% - 32px, 520px);
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sn-radius-xl);
+  color: var(--sn-ink);
+  font-family: var(--sn-font);
+  background: radial-gradient(ellipse at 100% 0%, #eef8f1 0%, transparent 55%), #fff;
+  box-shadow: var(--sn-shadow-pop);
+  overflow: auto;
+}
+.dialogSmall { width: min(100% - 32px, 400px); }
+.dialog::backdrop { background: #1c362e52; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.dialogBody { padding: 28px; }
+.dialogHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.dialogTitle { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.6px; line-height: 1.15; color: var(--sn-ink); }
+.dialogSubtitle { margin: 6px 0 0; font-size: 14px; color: var(--sn-text-muted); }
+.dialogFooter { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+@keyframes dialog-enter { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] { animation: dialog-enter 220ms var(--sn-ease); }
+}
+@media (max-width: 600px) {
+  .dialog { width: 100%; max-width: none; max-height: 92dvh; margin: auto 0 0; border-radius: var(--sn-radius-xl) var(--sn-radius-xl) 0 0; }
+  .dialogBody { padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); }
+  .dialogFooter > * { flex: 1; }
+}
+
+/* ── Campos ──────────────────────────────────────────────────────────────── */
+.form { display: flex; flex-direction: column; gap: 16px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.label { font-size: 13px; font-weight: 500; color: var(--sn-ink); }
+.hint { margin: 0; font-size: 12px; color: var(--sn-text-muted); }
+.error { margin: 0; font-size: 12px; color: var(--sn-danger); }
+.control {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 14px;
+  border: 1px solid var(--sn-hairline-strong);
+  border-radius: var(--sn-radius-md);
+  font-family: var(--sn-font);
+  font-size: 15px;
+  color: var(--sn-ink);
+  background: #ffffffcc;
+  outline: none;
+  transition: border-color var(--sn-duration), box-shadow var(--sn-duration), background var(--sn-duration);
+}
+.control::placeholder { color: var(--sn-placeholder); }
+.control:hover { border-color: #31594740; }
+.control:focus { border-color: var(--sn-green); box-shadow: var(--sn-focus-ring); background: #fff; }
+.control[aria-invalid="true"] { border-color: var(--sn-danger); }
+textarea.control { min-height: 84px; resize: vertical; line-height: 1.5; }
+select.control {
+  appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2350826a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+.alert { margin: 0 0 16px; padding: 12px 14px; border-radius: var(--sn-radius-md); font-size: 13px; color: var(--sn-danger); background: var(--sn-danger-soft); }
+
+/* ── Link de texto ───────────────────────────────────────────────────────── */
+.textLink { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: var(--sn-ink); text-decoration: none; }
+.textLink:hover { color: var(--sn-green); }
+.textLink:focus-visible { outline: 2px solid var(--sn-green); outline-offset: 3px; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .button, .iconButton, .segment, .control { transition: none; }
+}

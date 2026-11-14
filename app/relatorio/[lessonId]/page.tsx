@@ -1,4 +1,5 @@
 import { PrintButton } from '@/components/app/PrintButton'
+import { SCHOOL_BRAND_COLOR_ENABLED } from '@/lib/constants/branding'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Relatório de aula' }
@@ -40,7 +41,7 @@ export default async function ReportPage({ params }: { params: Promise<{ lessonI
     lesson.student_id ? admin.from('users').select('name').eq('id', lesson.student_id).maybeSingle() : Promise.resolve({ data: null }),
   ])
   const schoolName = school?.custom_name || school?.name || 'Escola'
-  const accent = school?.brand_primary || '#2b4c79'
+  const accent = (SCHOOL_BRAND_COLOR_ENABLED && school?.brand_primary) || '#25463c'
   const dateLabel = new Date(lesson.start_datetime).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
   const initialBpm = report.initial_bpm as number | null
   const reachedBpm = report.reached_bpm as number | null
@@ -76,7 +77,7 @@ export default async function ReportPage({ params }: { params: Promise<{ lessonI
               </div>
               <div className="mt-2 flex gap-1">
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <span key={n} className="h-2 flex-1 rounded-full" style={{ backgroundColor: n <= v ? accent : '#E4E8EF' }} />
+                  <span key={n} className="h-2 flex-1 rounded-full" style={{ backgroundColor: n <= v ? accent : '#e3ece6' }} />
                 ))}
               </div>
             </div>

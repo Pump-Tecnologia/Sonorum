@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 /* ── Sonorum design tokens ───────────────────────────────────────────────────
-   Marca: azul #2B4C79 (primary 600) · verde #7CC99B (accent 400) · branco.
-   Escala completa para permitir re-branding por escola (Premium) no futuro.    */
+   Marca: verde #25463c (brand 600) · menta #7CC99B (accent 400) · branco.
+   Mesma paleta da página de lançamento (tokens --sn-* abaixo).               */
 @theme {
-  --color-brand-50: #eff3f8;
-  --color-brand-100: #dae2ee;
-  --color-brand-200: #b5c4dc;
-  --color-brand-300: #8aa2c4;
-  --color-brand-400: #5b7ba6;
-  --color-brand-500: #3d5d8a;
-  --color-brand-600: #2b4c79;
-  --color-brand-700: #243f64;
-  --color-brand-800: #1e3350;
-  --color-brand-900: #182840;
-  --color-brand-950: #0f1a29;
+  --color-brand-50: #f2f9f4;
+  --color-brand-100: #e4f2e8;
+  --color-brand-200: #cde7d5;
+  --color-brand-300: #a6d4b6;
+  --color-brand-400: #6fa98a;
+  --color-brand-500: #3f6f5a;
+  --color-brand-600: #25463c;
+  --color-brand-700: #1c362e;
+  --color-brand-800: #172c26;
+  --color-brand-900: #11211c;
+  --color-brand-950: #0a1511;
 
   --color-accent-50: #eefaf2;
   --color-accent-100: #d6f2e0;
@@ -27,16 +27,58 @@
   --color-accent-800: #295c40;
   --color-accent-900: #234c36;
 
-  --color-canvas: #f6f8fb;
+  --color-canvas: #f4f8f5;
   --color-surface: #ffffff;
-  --color-surface-muted: #eef2f7;
-  --color-ink: #182840;
-  --color-ink-muted: #5b6b82;
-  --color-hairline: #dde4ee;
+  --color-surface-muted: #eef4f0;
+  --color-ink: #1c362e;
+  --color-ink-muted: #5c7568;
+  --color-hairline: #dfe9e3;
 
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 
-  --shadow-brand: 0 10px 30px -12px rgb(43 76 121 / 0.45);
+  --shadow-brand: 0 10px 30px -12px rgb(37 70 60 / 0.45);
+}
+
+/* ── Padrão novo (página de lançamento) ─────────────────────────────────────
+   Verde da marca, menta e superfícies de vidro. As telas migram uma a uma
+   para estes tokens (prefixo --sn-); os componentes ficam em components/ds.
+   Contrastes conferidos sobre branco: ink 10,4:1 · muted 5,0:1 · danger 6,6:1. */
+:root {
+  --sn-ink: #25463c;
+  --sn-ink-strong: #1c362e;
+  --sn-ink-soft: #315947;
+  --sn-green: #50826a;
+  --sn-mint: #7cc99b;
+  --sn-mint-soft: #e4f2e8;
+  --sn-mint-hover: #cde7d5;
+  --sn-text-muted: #5c7568;
+  --sn-text-subtle: #7b9085;
+  --sn-placeholder: #91a198;
+  --sn-hairline: #3159471a;
+  --sn-hairline-strong: #31594729;
+  --sn-danger: #a33a2e;
+  --sn-danger-soft: #f8e9e7;
+  --sn-warning: #8a5a10;
+  --sn-warning-soft: #f8efdc;
+
+  --sn-stage: radial-gradient(ellipse at 85% 100%, #dcefe1 0%, transparent 60%),
+    radial-gradient(ellipse at 0% 40%, #f0f8f2 0%, transparent 55%), #fff;
+  --sn-glass: linear-gradient(135deg, #ffffffb8, #ffffff5c);
+  --sn-glass-border: 1px solid #ffffffd9;
+  --sn-glass-shadow: inset 0 1px 0 #ffffffed, 0 12px 40px #345e450d;
+  --sn-glass-blur: blur(24px) saturate(135%);
+  --sn-shadow-pop: 0 30px 70px -24px #1c362e40;
+  --sn-focus-ring: 0 0 0 2px #7cc99b88;
+
+  --sn-radius-sm: 10px;
+  --sn-radius-md: 14px;
+  --sn-radius-lg: 20px;
+  --sn-radius-xl: 28px;
+  --sn-radius-pill: 999px;
+
+  --sn-font: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --sn-ease: cubic-bezier(.2, .7, .2, 1);
+  --sn-duration: 180ms;
 }
 
 html {
