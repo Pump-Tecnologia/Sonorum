@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { Card } from '@/components/ui/Card'
-import { getCurrentUser } from '@/lib/auth/session'
+import { requireCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Aula' }
@@ -18,14 +18,14 @@ const SCORE_LABELS: Record<string, string> = {
 
 export default async function StudentLessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
+  const user = await requireCurrentUser()
   const supabase = await createClient()
 
   const { data: lesson } = await supabase
     .from('lessons')
     .select('id, title, start_datetime, status, notes, goals, users!lessons_teacher_id_fkey(name), room:rooms(name)')
     .eq('id', id)
-    .eq('student_id', user!.id)
+    .eq('student_id', user.id)
     .maybeSingle()
 
   if (!lesson) notFound()

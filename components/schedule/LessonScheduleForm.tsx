@@ -52,7 +52,14 @@ export function LessonScheduleForm({
   }, [state.ok])
 
   return (
-    <form action={action} className="space-y-3">
+    <form
+      action={action}
+      // React resets action forms after submission. Keep the user's current
+      // selections: resetting to the previous props can undo a saved room or
+      // teacher when the user submits again.
+      onReset={(event) => event.preventDefault()}
+      className="space-y-3"
+    >
       <input type="hidden" name="lessonId" value={lessonId} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

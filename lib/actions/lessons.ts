@@ -9,6 +9,7 @@ import { removeLessonFromCalendars, syncLessonToCalendars } from '@/lib/calendar
 import { notify } from '@/lib/notifications/notify'
 import { RECURRENCE_PRESETS, presetWeeks } from '@/lib/constants/recurrence'
 import { CATEGORIES, CONTENT_TYPES } from '@/lib/constants/resources'
+import { isActiveTeacherOfSchool } from '@/lib/queries/teachers'
 import { localBrToServerISO } from '@/lib/timezone'
 
 export type LessonActionState = {
@@ -78,11 +79,13 @@ export async function createLesson(
   }
 
   const d = parsed.data
-  // Professor: teacher cria → vincula a si; admin → seleção obrigatória.
-  if (me.role === 'admin' && !d.teacherId) {
+  // Professor (role='teacher' ou admin que também dá aula, ver isTeacher em
+  // lib/auth/session.ts): vincula a si por padrão se não escolher outro na
+  // seleção. Admin que NÃO dá aula precisa selecionar obrigatoriamente.
+  if (!d.teacherId && !me.isTeacher) {
     return { ok: false, fieldErrors: { teacherId: 'Selecione o professor da aula.' } }
   }
-  const teacherId = me.role === 'teacher' ? me.id : (d.teacherId || null)
+  const teacherId = d.teacherId || (me.isTeacher ? me.id : null)
   const roomId = d.roomId || null
   const supabase = await createClient()
 
@@ -99,17 +102,15 @@ export async function createLesson(
   // Cross-tenant: aluno/professor/sala precisam ser da MESMA escola do user.
   // RLS protege o INSERT (school_id colado é o meu), mas sem essa checagem
   // dá pra criar uma aula apontando aluno/prof/sala de outra escola.
-  const [studentCheck, teacherCheck, roomCheck] = await Promise.all([
+  const [studentCheck, teacherOk, roomCheck] = await Promise.all([
     supabase.from('users').select('id').eq('id', d.studentId).eq('school_id', me.schoolId).eq('role', 'student').maybeSingle(),
-    teacherId
-      ? supabase.from('users').select('id').eq('id', teacherId).eq('school_id', me.schoolId).eq('role', 'teacher').maybeSingle()
-      : Promise.resolve({ data: 'skip' as const }),
+    teacherId ? isActiveTeacherOfSchool(supabase, teacherId, me.schoolId) : Promise.resolve(true),
     roomId
       ? supabase.from('rooms').select('id').eq('id', roomId).eq('school_id', me.schoolId).maybeSingle()
       : Promise.resolve({ data: 'skip' as const }),
   ])
   if (!studentCheck.data) return { ok: false, fieldErrors: { studentId: 'Aluno não encontrado na escola.' } }
-  if (teacherCheck.data === null) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
+  if (!teacherOk) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
   if (roomCheck.data === null) return { ok: false, fieldErrors: { roomId: 'Sala não encontrada na escola.' } }
 
   // Todas as ocorrências (aula principal + recorrência semanal por preset).
@@ -175,7 +176,7 @@ export async function createLesson(
 // Atualiza status / notas / notas privadas
 export async function updateLesson(formData: FormData) {
   const me = await getCurrentUser()
-  if (!me?.schoolId) return
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
 
   const lessonId = String(formData.get('lessonId') ?? '')
   const supabase = await createClient()
@@ -297,8 +298,8 @@ export async function updateLessonSchedule(
     if (!d.teacherId || d.teacherId === 'clear') {
       update.teacher_id = null
     } else {
-      const { data: t } = await supabase.from('users').select('id').eq('id', d.teacherId).eq('school_id', me.schoolId).eq('role', 'teacher').maybeSingle()
-      if (!t) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
+      const teacherOk = await isActiveTeacherOfSchool(supabase, d.teacherId, me.schoolId)
+      if (!teacherOk) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
       update.teacher_id = d.teacherId
     }
   }
@@ -478,12 +479,6 @@ export async function saveLessonPlan(
     .maybeSingle()
   if (!owned) return { ok: false, error: 'Aula não encontrada.' }
 
-  await supabase
-    .from('lessons')
-    .update({ goals: String(formData.get('goals') ?? '') || null })
-    .eq('id', lessonId)
-    .eq('school_id', me.schoolId)
-
   // Seções (sec.<id>) e campos (fld.<key>) são dinâmicos — vêm do blueprint da
   // categoria. Guardamos tudo num envelope em specific_data e espelhamos as
   // seções/campos canônicos nas colunas legadas (relatório e "Dar aula" leem delas).
@@ -498,8 +493,6 @@ export async function saveLessonPlan(
   const planNotes = String(formData.get('plan_notes') ?? '') || null
 
   const plan = {
-    school_id: me.schoolId,
-    lesson_id: lessonId,
     // espelho legado (subconjunto canônico)
     warmup: sections.warmup ?? null,
     repertoire: sections.repertoire ?? null,
@@ -509,8 +502,12 @@ export async function saveLessonPlan(
     // fonte completa (dinâmica)
     specific_data: { v: 1, blueprintKey, sections, fields },
   }
-  const { error } = await supabase.from('lesson_plans').upsert(plan, { onConflict: 'lesson_id' })
-  if (error) return { ok: false, error: 'Não foi possível salvar o planejamento.' }
+  const { data: saved, error } = await supabase.rpc('save_lesson_plan', {
+    p_lesson_id: lessonId,
+    p_goals: String(formData.get('goals') ?? '') || null,
+    p_plan: plan,
+  })
+  if (error || saved !== true) return { ok: false, error: 'Não foi possível salvar o planejamento.' }
 
   revalidatePath(`/lessons/${lessonId}/planner`)
   revalidatePath('/schedule')

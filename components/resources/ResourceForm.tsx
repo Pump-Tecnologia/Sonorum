@@ -37,7 +37,11 @@ export function ResourceForm({
 
   return (
     <Card>
-      <form action={action} className="max-w-2xl space-y-5">
+      <form
+        action={action}
+        onReset={(event) => event.preventDefault()}
+        className="max-w-2xl space-y-5"
+      >
         {isEdit && <input type="hidden" name="resourceId" value={resource!.id} />}
 
         {state.error && (

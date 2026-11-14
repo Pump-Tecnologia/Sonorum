@@ -1,3 +1,5 @@
+import { brDayBounds, dateInBR } from '@/lib/timezone'
+
 const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export function formatBRL(value: number | null | undefined): string {
@@ -5,14 +7,15 @@ export function formatBRL(value: number | null | undefined): string {
 }
 
 export function monthRange(ref = new Date()): { start: string; end: string } {
-  const start = new Date(ref.getFullYear(), ref.getMonth(), 1)
-  const end = new Date(ref.getFullYear(), ref.getMonth() + 1, 0)
-  const iso = (d: Date) => d.toISOString().slice(0, 10)
-  return { start: iso(start), end: iso(end) }
+  const [year, month] = dateInBR(ref).split('-').map(Number)
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  return {
+    start: `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`,
+    end: `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+  }
 }
 
 export function dayRange(ref = new Date()): { start: string; end: string } {
-  const start = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate(), 0, 0, 0)
-  const end = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate(), 23, 59, 59)
-  return { start: start.toISOString(), end: end.toISOString() }
+  const bounds = brDayBounds(ref)
+  return { start: bounds.startISO, end: bounds.endISO }
 }

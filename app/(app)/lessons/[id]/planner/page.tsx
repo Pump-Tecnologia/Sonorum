@@ -17,6 +17,7 @@ import { readPlanContent } from '@/lib/lesson-plan'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
 import { appBaseUrl } from '@/lib/payments'
+import { listActiveTeachers } from '@/lib/queries/teachers'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Aula' }
@@ -51,17 +52,24 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const supabase = await createClient()
   const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) notFound()
   const { features } = await getPlanContext()
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, series_id, student_id, users!lessons_student_id_fkey(name, instrument, instrument_category, phone)')
+    .select('id, title, start_datetime, end_datetime, status, notes, goals, room_id, teacher_id, series_id, student_id, users!lessons_student_id_fkey(name, instrument, instrument_category, phone)')
     .eq('id', id)
+    .eq('school_id', me.schoolId)
     .maybeSingle()
 
   if (!lesson) notFound()
 
-  const [{ data: plan }, { data: report }, { data: attached }, { data: rooms }, { data: teachers }, { data: templates }] = await Promise.all([
+  // Staff-only data is authorized by the database, never read through the
+  // student-readable lessons projection. Fail closed if the migration is missing.
+  const { data: privateNotes, error: privateNotesError } = await supabase.rpc('get_lesson_private_notes', { p_lesson_id: id })
+  if (privateNotesError) throw new Error('Não foi possível carregar as notas privadas da aula.')
+
+  const [{ data: plan }, { data: report }, { data: attached }, { data: rooms }, teachersList, { data: templates }] = await Promise.all([
     supabase.from('lesson_plans').select('*').eq('lesson_id', id).maybeSingle(),
     supabase.from('lesson_reports').select('*').eq('lesson_id', id).maybeSingle(),
     supabase
@@ -69,13 +77,13 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
       .select('id, section, pedagogical_resources(id, title, category, difficulty, instrument)')
       .eq('lesson_id', id),
     supabase.from('rooms').select('id, name').eq('active', true).order('name'),
-    me?.role === 'admin'
-      ? supabase.from('users').select('id, name').eq('role', 'teacher').eq('status', 'active').order('name')
-      : Promise.resolve({ data: [] }),
+    me?.role === 'admin' && me.schoolId
+      ? listActiveTeachers(supabase, me.schoolId)
+      : Promise.resolve([]),
     supabase.from('lesson_plan_templates').select('id, name, instrument_category, instrument').order('name'),
   ])
   const roomList = (rooms ?? []) as { id: string; name: string }[]
-  const teacherList = (teachers ?? []) as { id: string; name: string }[]
+  const teacherList = teachersList
   const templateList = (templates ?? []) as TemplateOption[]
 
   type ResourceRef = {
@@ -387,8 +395,8 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
           <Field label="Observações (visíveis ao aluno)" htmlFor="notes">
             <Textarea id="notes" name="notes" defaultValue={lesson.notes ?? ''} rows={4} />
           </Field>
-          <Field label="Notas privadas (só você vê)" htmlFor="private_notes">
-            <Textarea id="private_notes" name="private_notes" defaultValue={lesson.private_notes ?? ''} rows={4} />
+          <Field label="Notas privadas da equipe" htmlFor="private_notes" hint="Visíveis apenas a professores e administradores da escola.">
+            <Textarea id="private_notes" name="private_notes" defaultValue={privateNotes ?? ''} rows={4} />
           </Field>
           <button type="submit" className={PRIMARY_BTN}>Salvar anotações</button>
         </form>

@@ -1,4 +1,5 @@
 import type { Role } from '@/lib/constants/roles'
+import { TRANSCRIPTION_ENABLED } from '@/lib/constants/transcription'
 
 // Nome do ícone (mapeado em components/app/NavIcon.tsx).
 export type NavIconName =
@@ -24,6 +25,11 @@ export interface NavItem {
   icon: NavIconName
 }
 
+// Item da transcrição por IA: só aparece com a flag ligada.
+const TRANSCRIPTION_NAV: NavItem[] = TRANSCRIPTION_ENABLED
+  ? [{ label: 'Transcrição IA', href: '/resources/transcribe', icon: 'sparkles' }]
+  : []
+
 // Navegação da sidebar por papel. Espelha as áreas do app Laravel.
 export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   superadmin: [
@@ -40,7 +46,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Alunos', href: '/admin/students', icon: 'users' },
     { label: 'Recursos', href: '/resources', icon: 'folder' },
     { label: 'Modelos de aula', href: '/modelos', icon: 'book' },
-    { label: 'Transcrição IA', href: '/resources/transcribe', icon: 'sparkles' },
+    ...TRANSCRIPTION_NAV,
     { label: 'Planos', href: '/plans', icon: 'tag' },
     { label: 'Financeiro', href: '/financial', icon: 'wallet' },
     { label: 'Relatórios', href: '/admin/reports', icon: 'chart' },
@@ -51,7 +57,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Agenda', href: '/schedule', icon: 'calendar' },
     { label: 'Recursos', href: '/resources', icon: 'folder' },
     { label: 'Modelos de aula', href: '/modelos', icon: 'book' },
-    { label: 'Transcrição IA', href: '/resources/transcribe', icon: 'sparkles' },
+    ...TRANSCRIPTION_NAV,
   ],
   student: [
     { label: 'Dashboard', href: '/student', icon: 'home' },

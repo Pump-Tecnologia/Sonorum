@@ -23,7 +23,11 @@ export function EditTeacherForm({ teacher }: { teacher: TeacherData }) {
 
   return (
     <Card>
-      <form action={action} className="max-w-lg space-y-5">
+      <form
+        action={action}
+        onReset={(event) => event.preventDefault()}
+        className="max-w-lg space-y-5"
+      >
         <input type="hidden" name="teacherId" value={teacher.id} />
 
         {state.error && (
@@ -44,14 +48,7 @@ export function EditTeacherForm({ teacher }: { teacher: TeacherData }) {
           <Input id="instruments" name="instruments" defaultValue={(teacher.instruments ?? []).join(', ')} />
         </Field>
 
-        <Field
-          label="Nova senha (deixe em branco para não alterar)"
-          htmlFor="newPassword"
-          error={fe.newPassword}
-          hint="Mínimo de 8 caracteres"
-        >
-          <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" />
-        </Field>
+        <p className="text-xs text-ink-muted">Para redefinir a senha, envie ao professor um link pela ação “Redefinir senha” na lista de professores.</p>
 
         <SubmitButton pendingLabel="Salvando…">Salvar alterações</SubmitButton>
       </form>

@@ -1,13 +1,19 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { ImportForm } from '@/components/admin/ImportForm'
 import { Card } from '@/components/ui/Card'
+import { getPlanContext, isSoloExperience } from '@/lib/auth/plan'
 import { importTeachers } from '@/lib/actions/import'
 
 export const metadata = { title: 'Importar professores' }
 
-export default function ImportTeachersPage() {
+export default async function ImportTeachersPage() {
+  // Conta presa a 1 professor: importar vários não faz sentido.
+  const plan = await getPlanContext()
+  if (isSoloExperience(plan)) redirect('/profile')
+
   return (
     <>
       <PageHeader title="Importar professores" subtitle="Crie vários professores de uma vez" />

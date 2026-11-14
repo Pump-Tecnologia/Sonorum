@@ -5,6 +5,7 @@ import { GoogleCalendarConnect } from '@/components/app/GoogleCalendarConnect'
 import { DeleteAccountForm } from '@/components/profile/DeleteAccountForm'
 import { PasswordForm } from '@/components/profile/PasswordForm'
 import { ProfileForm } from '@/components/profile/ProfileForm'
+import { TeachingToggle } from '@/components/profile/TeachingToggle'
 import { Card } from '@/components/ui/Card'
 import { getCurrentUser } from '@/lib/auth/session'
 import { isGoogleCalendarEnabled } from '@/lib/calendar'
@@ -17,7 +18,12 @@ export default async function ProfilePage() {
   if (!me) redirect('/login')
 
   const supabase = await createClient()
-  const { data } = await supabase.from('users').select('phone').eq('id', me.id).single()
+  const [{ data }, { data: teacherRow }] = await Promise.all([
+    supabase.from('users').select('phone').eq('id', me.id).single(),
+    me.role === 'admin'
+      ? supabase.from('teachers').select('instruments').eq('user_id', me.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
   const gcalEnabled = isGoogleCalendarEnabled()
   const { data: gcalConn } = gcalEnabled
@@ -45,16 +51,31 @@ export default async function ProfilePage() {
           <PasswordForm />
         </Card>
 
+        {me.role === 'admin' && (
+          <Card className="lg:col-span-2">
+            <TeachingToggle isTeacher={me.isTeacher} instruments={teacherRow?.instruments as string[] | null} />
+          </Card>
+        )}
+
         <div className="lg:col-span-2">
           <GoogleCalendarConnect enabled={gcalEnabled} connected={Boolean(gcalConn)} />
         </div>
 
         <Card className="lg:col-span-2 border-red-200">
           <h2 className="mb-2 text-base font-semibold text-ink">Zona de perigo</h2>
-          <p className="mb-4 text-sm text-ink-muted">
-            Ao excluir sua conta, todos os seus dados serão removidos permanentemente.
-          </p>
-          <DeleteAccountForm />
+          {me.role === 'admin' ? (
+            <p className="text-sm text-ink-muted">
+              Como administrador da escola, a exclusão da conta e o cancelamento do cadastro devem ser solicitados
+              ao suporte (<a href="mailto:suporte@sonorum.com.br" className="font-semibold text-brand-600 hover:underline">suporte@sonorum.com.br</a>) para garantir a segurança e a exportação dos dados dos alunos.
+            </p>
+          ) : (
+            <>
+              <p className="mb-4 text-sm text-ink-muted">
+                Ao excluir sua conta, todos os seus dados serão removidos permanentemente.
+              </p>
+              <DeleteAccountForm />
+            </>
+          )}
         </Card>
       </div>
     </>

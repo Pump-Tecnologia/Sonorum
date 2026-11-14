@@ -1,14 +1,14 @@
 import { PageHeader } from '@/components/app/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
-import { getCurrentUser } from '@/lib/auth/session'
+import { requireCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { signedResourceUrls } from '@/lib/storage/resources'
 
 export const metadata = { title: 'Meus materiais' }
 
 export default async function StudentMaterialsPage() {
-  const user = await getCurrentUser()
+  const user = await requireCurrentUser()
   const supabase = await createClient()
 
   // Recursos pedagógicos das aulas passadas do aluno (mesma lógica do Laravel)
@@ -20,7 +20,7 @@ export default async function StudentMaterialsPage() {
         lessons!inner(student_id, start_datetime, status)
       )
     `)
-    .eq('lesson_pedagogical_resource.lessons.student_id', user!.id)
+    .eq('lesson_pedagogical_resource.lessons.student_id', user.id)
     .lte('lesson_pedagogical_resource.lessons.start_datetime', new Date().toISOString())
     .neq('lesson_pedagogical_resource.lessons.status', 'canceled')
     .order('created_at', { ascending: false })

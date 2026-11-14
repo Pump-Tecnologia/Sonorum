@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { LinkButton } from '@/components/ui/Button'
 import { StatCard } from '@/components/ui/StatCard'
 import { lessonStatus } from '@/lib/constants/lessons'
-import { getCurrentUser } from '@/lib/auth/session'
+import { requireCurrentUser } from '@/lib/auth/session'
 import { dayRange } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 
@@ -27,7 +27,7 @@ function ProgressBar({ value, total, tone }: { value: number; total: number; ton
 }
 
 export default async function TeacherDashboard() {
-  const user = await getCurrentUser()
+  const user = await requireCurrentUser()
   const supabase = await createClient()
   const today = dayRange()
   const now = new Date()
@@ -46,20 +46,20 @@ export default async function TeacherDashboard() {
     supabase
       .from('lessons')
       .select('id, title, start_datetime, end_datetime, status, goals, notes, users!lessons_student_id_fkey(name, instrument), room:rooms(name)')
-      .eq('teacher_id', user!.id)
+      .eq('teacher_id', user.id)
       .gte('start_datetime', today.start)
       .lte('start_datetime', today.end)
       .order('start_datetime'),
     supabase
       .from('lessons')
       .select('status, lesson_reports(id)')
-      .eq('teacher_id', user!.id)
+      .eq('teacher_id', user.id)
       .gte('start_datetime', weekStart.toISOString())
       .lt('start_datetime', weekEnd.toISOString()),
     supabase
       .from('lessons')
       .select('status, student_id')
-      .eq('teacher_id', user!.id)
+      .eq('teacher_id', user.id)
       .gte('start_datetime', monthStart),
   ])
 

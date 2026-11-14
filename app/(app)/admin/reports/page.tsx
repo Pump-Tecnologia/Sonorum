@@ -5,6 +5,7 @@ import { ReportDateRange } from '@/components/admin/ReportDateRange'
 import { WhatsAppNotifyButton } from '@/components/notifications/WhatsAppNotifyButton'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
+import { StatCard } from '@/components/ui/StatCard'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { sendLessonReport } from '@/lib/actions/notifications'
 import { getPlanContext } from '@/lib/auth/plan'
@@ -87,13 +88,35 @@ export default async function ReportsPage({
   }
 
   const avg = (r: ReportEmbed) => ((r.technique_score + r.theory_score + r.repertoire_score + r.practice_score) / 4).toFixed(1)
+  const sentCount = rows.filter((r) => sentSet.has(r.id)).length
+  const uniqueStudents = new Set(rows.map((r) => r.student_id)).size
+  const totalScoreSum = rows.reduce(
+    (acc, r) => acc + (r.rep!.technique_score + r.rep!.theory_score + r.rep!.repertoire_score + r.rep!.practice_score) / 4,
+    0,
+  )
+  const overallAvg = rows.length > 0 ? (totalScoreSum / rows.length).toFixed(1) : '—'
 
   return (
     <>
       <PageHeader
         title="Relatórios de aula"
-        subtitle="Envie o relatório de cada aula ao aluno"
+        subtitle="Acompanhe o desempenho pedagógico e envie feedbacks aos alunos"
       />
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Aulas avaliadas" value={rows.length} hint="Com relatório no período" />
+        <StatCard
+          label="Relatórios enviados"
+          value={sentCount}
+          hint={rows.length > 0 ? `${Math.round((sentCount / rows.length) * 100)}% de entrega` : 'Nenhum envio'}
+        />
+        <StatCard
+          label="Média geral"
+          value={overallAvg !== '—' ? `★ ${overallAvg}` : '—'}
+          hint="Média dos 4 pilares avaliados"
+        />
+        <StatCard label="Alunos acompanhados" value={uniqueStudents} hint="Com avaliação no período" />
+      </div>
 
       <div className="mb-4">
         <ReportDateRange from={from} to={to} />

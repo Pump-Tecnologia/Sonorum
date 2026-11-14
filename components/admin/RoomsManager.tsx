@@ -42,7 +42,13 @@ export function RoomsManager({ rooms }: { rooms: Room[] }) {
         </ul>
       )}
 
-      <form action={action} className="border-t border-hairline pt-4">
+      <form
+        action={action}
+        onReset={(event) => {
+          if (!state.ok) event.preventDefault()
+        }}
+        className="border-t border-hairline pt-4"
+      >
         {state.error && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
         {state.ok && <p className="mb-3 rounded-lg bg-accent-100 px-3 py-2 text-sm text-accent-800">Sala criada!</p>}
         <div className="flex flex-wrap items-end gap-3">

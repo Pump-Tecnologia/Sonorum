@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
@@ -8,6 +9,7 @@ import { SearchBox } from '@/components/admin/SearchBox'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
+import { getPlanContext, isSoloExperience } from '@/lib/auth/plan'
 import { deleteTeacher } from '@/lib/actions/teachers'
 import { createClient } from '@/lib/supabase/server'
 
@@ -26,6 +28,11 @@ export default async function TeachersPage({
 }: {
   searchParams: Promise<{ q?: string }>
 }) {
+  // Conta presa a 1 professor (Essencial, Solo, Solo Pro): não existe "equipe"
+  // pra gerenciar aqui — o instrumento próprio se edita em /profile.
+  const plan = await getPlanContext()
+  if (isSoloExperience(plan)) redirect('/profile')
+
   const { q } = await searchParams
   const term = (q ?? '').trim()
 

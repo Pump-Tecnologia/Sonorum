@@ -15,12 +15,11 @@ export function CreateStudentForm({ teachers }: { teachers: { id: string; name: 
   const [state, action] = useActionState(createStudent, initial)
   const fe = state.fieldErrors ?? {}
 
-  if (state.ok && state.tempPassword && state.createdEmail) {
+  if (state.ok && state.createdEmail) {
     return (
       <CreatePersonResult
         roleLabel="Aluno"
         email={state.createdEmail}
-        tempPassword={state.tempPassword}
         backHref="/admin/students"
         backLabel="Voltar para alunos"
       />
@@ -29,7 +28,11 @@ export function CreateStudentForm({ teachers }: { teachers: { id: string; name: 
 
   return (
     <Card>
-      <form action={action} className="max-w-2xl space-y-5">
+      <form
+        action={action}
+        onReset={(event) => event.preventDefault()}
+        className="max-w-2xl space-y-5"
+      >
         {state.error && (
           <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
             {state.error}

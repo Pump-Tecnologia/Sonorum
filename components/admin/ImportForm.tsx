@@ -10,13 +10,17 @@ type Action = (prev: ImportState, formData: FormData) => Promise<ImportState>
 const initial: ImportState = { ok: false }
 
 // Importação em lote por "colar" (uma pessoa por linha). Cada conta criada
-// recebe a senha de acesso por e-mail automaticamente.
+// recebe link de uso único para definir a senha.
 export function ImportForm({ action, help, placeholder }: { action: Action; help: string; placeholder: string }) {
   const [state, formAction] = useActionState(action, initial)
   const failures = state.failures ?? []
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form
+      action={formAction}
+      onReset={(event) => event.preventDefault()}
+      className="space-y-4"
+    >
       <p className="text-sm text-ink-muted">{help}</p>
 
       <textarea
@@ -27,7 +31,7 @@ export function ImportForm({ action, help, placeholder }: { action: Action; help
       />
 
       <p className="text-xs text-ink-muted">
-        Cada conta criada recebe a senha de acesso por e-mail. Máximo de 200 por importação.
+        Cada conta criada recebe um link de uso único para definir a senha. Máximo de 200 por importação.
       </p>
 
       {state.error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</p>}

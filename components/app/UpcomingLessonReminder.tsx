@@ -24,7 +24,7 @@ export function UpcomingLessonReminder() {
   const pathname = usePathname()
   const [lesson, setLesson] = useState<UpcomingLesson | null>(null)
   const [dismissedId, setDismissedId] = useState<string | null>(null)
-  const [, forceTick] = useState(0)
+  const [now, setNow] = useState<number | null>(null)
   const [pending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -40,18 +40,20 @@ export function UpcomingLessonReminder() {
     }
     void load()
     const poll = setInterval(load, POLL_MS)
-    const tick = setInterval(() => forceTick((n) => n + 1), 20_000)
+    const initialTick = setTimeout(() => setNow(Date.now()), 0)
+    const tick = setInterval(() => setNow(Date.now()), 20_000)
     return () => {
       active = false
       clearInterval(poll)
+      clearTimeout(initialTick)
       clearInterval(tick)
     }
   }, [])
 
-  if (!lesson || dismissedId === lesson.id) return null
+  if (!lesson || now === null || dismissedId === lesson.id) return null
   if (pathname === `/lessons/${lesson.id}/planner`) return null
 
-  const minsToStart = Math.round((new Date(lesson.start).getTime() - Date.now()) / 60000)
+  const minsToStart = Math.round((new Date(lesson.start).getTime() - now) / 60000)
   const inProgress = lesson.status === 'in_progress'
   if (!inProgress && minsToStart > 5) return null
 

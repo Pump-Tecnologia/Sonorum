@@ -20,10 +20,10 @@ export async function sendEmail(input: SendEmailInput): Promise<EmailResult> {
   if (!key) {
     // Modo dev: registra e marca como sucesso (sem provider configurado).
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
       console.log(`[email:mock] → ${input.to} · ${input.subject}`)
+      return { ok: true }
     }
-    return { ok: true }
+    return { ok: false, error: 'RESEND_API_KEY não está configurada.' }
   }
 
   try {

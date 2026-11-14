@@ -8,10 +8,12 @@ import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { StatCard } from '@/components/ui/StatCard'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { lessonStatus } from '@/lib/constants/lessons'
-import { getCurrentUser } from '@/lib/auth/session'
-import { getPlanContext } from '@/lib/auth/plan'
+import { requireCurrentUser } from '@/lib/auth/session'
+import { getPlanContext, isSoloExperience } from '@/lib/auth/plan'
 import { effectiveChargeStatus } from '@/lib/finance'
 import { dayRange, monthRange } from '@/lib/format'
+import { dateInBR } from '@/lib/timezone'
+import { listActiveTeachers } from '@/lib/queries/teachers'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Dashboard' }
@@ -26,17 +28,19 @@ function pctTrend(current: number, previous: number): string | undefined {
 }
 
 export default async function AdminDashboard() {
-  const user = await getCurrentUser()
+  const user = await requireCurrentUser()
   const supabase = await createClient()
   const plan = await getPlanContext()
+  // Conta presa a 1 professor (Essencial, Solo, Solo Pro): sem "equipe" —
+  // esconde stat/ranking que só fazem sentido comparando vários professores.
+  const soloAccount = isSoloExperience(plan)
 
   const today = dayRange()
   const month = monthRange()
   const now = new Date()
-  const lastMonth = monthRange(new Date(now.getFullYear(), now.getMonth() - 1, 1))
+  const [brYear, brMonth] = dateInBR(now).split('-').map(Number)
+  const lastMonth = monthRange(new Date(Date.UTC(brYear, brMonth - 2, 15, 12)))
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
-  const todayISO = now.toISOString().slice(0, 10)
-
   type TodayLessonRow = { id: string; start_datetime: string; status: string; users: { name: string } | null }
   type RetentionRow = { student_id: string; status: string; users: { name: string } | null }
   type ReportEmbed = { technique_score: number; theory_score: number; repertoire_score: number; practice_score: number }
@@ -47,11 +51,11 @@ export default async function AdminDashboard() {
   }
 
   const [
-    teachersCount, lessonsToday, chargesMonth, chargesLast, retentionLessons,
+    teacherList, lessonsToday, chargesMonth, chargesLast, retentionLessons,
     todayLessonsList, newStudentsMonth, newStudentsLast, studentsInstr,
-    teacherList, teacherMonthLessons, unassigned,
+    teacherMonthLessons, unassigned,
   ] = await Promise.all([
-    supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'teacher'),
+    user?.schoolId ? listActiveTeachers(supabase, user.schoolId) : Promise.resolve([]),
     supabase.from('lessons').select('id', { count: 'exact', head: true }).gte('start_datetime', today.start).lte('start_datetime', today.end),
     plan.features.financial
       ? supabase.from('charges').select('amount, status, due_date').gte('due_date', month.start).lte('due_date', month.end)
@@ -64,7 +68,6 @@ export default async function AdminDashboard() {
     supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'student').gte('created_at', month.start).lte('created_at', month.end + 'T23:59:59'),
     supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'student').gte('created_at', lastMonth.start).lte('created_at', lastMonth.end + 'T23:59:59'),
     supabase.from('users').select('instrument_category').eq('role', 'student'),
-    supabase.from('users').select('id, name').eq('role', 'teacher').order('name'),
     supabase.from('lessons').select('teacher_id, status, student_id, start_datetime, student:users!lessons_student_id_fkey(name), teacher:users!lessons_teacher_id_fkey(name), lesson_reports(technique_score, theory_score, repertoire_score, practice_score)').gte('start_datetime', month.start + 'T00:00:00').lte('start_datetime', month.end + 'T23:59:59'),
     supabase.from('lessons').select('id', { count: 'exact', head: true }).is('teacher_id', null).gte('start_datetime', now.toISOString()).neq('status', 'canceled'),
   ])
@@ -113,7 +116,7 @@ export default async function AdminDashboard() {
     }
     tStats.set(l.teacher_id, e)
   }
-  const teachers = ((teacherList.data ?? []) as { id: string; name: string }[]).map((t) => {
+  const teachers = teacherList.map((t) => {
     const s = tStats.get(t.id)
     return {
       id: t.id, name: t.name,
@@ -201,7 +204,9 @@ export default async function AdminDashboard() {
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link href="/admin/students"><StatCard label="Alunos" value={studentLimitLabel} hint={pctTrend(newThisMonth, newLastMonth) ?? `${newThisMonth} novo(s) este mês`} /></Link>
-        <Link href="/admin/teachers"><StatCard label="Professores" value={teachersCount.count ?? 0} /></Link>
+        {!soloAccount && (
+          <Link href="/admin/teachers"><StatCard label="Professores" value={teacherList.length} /></Link>
+        )}
         <Link href="/schedule"><StatCard label="Aulas hoje" value={lessonsToday.count ?? 0} /></Link>
         {plan.features.financial ? (
           <Link href="/financial"><StatCard label="Receita prevista (mês)" value={<MoneyValue value={expectedRevenue} />} hint={pctTrend(expectedRevenue, lastRevenue)} /></Link>
@@ -281,29 +286,31 @@ export default async function AdminDashboard() {
           )}
         </Card>
 
-        {/* Professores em destaque */}
-        <Card className="lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-ink">Professores em destaque (mês)</h2>
-            <LinkButton href="/admin/teachers" variant="ghost" size="sm">Ver todos →</LinkButton>
-          </div>
-          {teachers.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhum professor cadastrado.</p>
-          ) : (
-            <ul className="space-y-2">
-              {teachers.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
-                  <span className="font-medium text-ink">{t.name}</span>
-                  <div className="flex items-center gap-4 text-ink-muted">
-                    <span><span className="font-semibold text-ink">{t.completed}</span> aulas</span>
-                    <span><span className="font-semibold text-ink">{t.students}</span> alunos</span>
-                    {t.avg && <Badge tone={Number(t.avg) >= 4 ? 'success' : 'neutral'}>★ {t.avg}</Badge>}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        {/* Professores em destaque — só faz sentido comparando uma equipe */}
+        {!soloAccount && (
+          <Card className="lg:col-span-2">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-ink">Professores em destaque (mês)</h2>
+              <LinkButton href="/admin/teachers" variant="ghost" size="sm">Ver todos →</LinkButton>
+            </div>
+            {teachers.length === 0 ? (
+              <p className="text-sm text-ink-muted">Nenhum professor cadastrado.</p>
+            ) : (
+              <ul className="space-y-2">
+                {teachers.map((t) => (
+                  <li key={t.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
+                    <span className="font-medium text-ink">{t.name}</span>
+                    <div className="flex items-center gap-4 text-ink-muted">
+                      <span><span className="font-semibold text-ink">{t.completed}</span> aulas</span>
+                      <span><span className="font-semibold text-ink">{t.students}</span> alunos</span>
+                      {t.avg && <Badge tone={Number(t.avg) >= 4 ? 'success' : 'neutral'}>★ {t.avg}</Badge>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        )}
 
         {/* Risco de retenção */}
         <Card>
@@ -351,7 +358,10 @@ export default async function AdminDashboard() {
 
         {/* Produtividade dos professores */}
         <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Produtividade <span className="text-sm font-normal text-ink-muted">(professores, mês)</span></h2>
+          <h2 className="mb-4 text-base font-semibold text-ink">
+            {soloAccount ? 'Sua produtividade' : 'Produtividade'}{' '}
+            <span className="text-sm font-normal text-ink-muted">(mês)</span>
+          </h2>
           <Table>
             <Thead>
               <Tr><Th>Professor</Th><Th>Realizadas</Th><Th>Faltas</Th><Th>A lançar</Th><Th>Conclusão</Th></Tr>

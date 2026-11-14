@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState, useTransition } from 'react'
+import { useActionState, useState, useTransition } from 'react'
 
 import { Field, Input, Textarea } from '@/components/ui/Field'
 import {
@@ -162,12 +162,6 @@ function SectionEditor({
     setSearching(false)
   }
 
-  // Ao abrir o picker, já lista (navegável) pela categoria da seção + instrumento.
-  useEffect(() => {
-    if (picker) void fetchResources(query, category)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [picker])
-
   function attach(resourceId: string) {
     startTransition(async () => {
       const fd = new FormData()
@@ -225,7 +219,16 @@ function SectionEditor({
 
       {!picker && !creating && (
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => setPicker(true)} className={GHOST_BTN}>+ Anexar recurso</button>
+          <button
+            type="button"
+            onClick={() => {
+              setPicker(true)
+              void fetchResources(query, category)
+            }}
+            className={GHOST_BTN}
+          >
+            + Anexar recurso
+          </button>
           <button type="button" onClick={() => setCreating(true)} className={GHOST_BTN}>+ Criar da aula</button>
         </div>
       )}

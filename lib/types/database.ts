@@ -17,6 +17,9 @@ export type Database = {
       charges: {
         Row: {
           amount: number
+          asaas_charge_id: string | null
+          asaas_invoice_url: string | null
+          asaas_status: string | null
           created_at: string
           description: string | null
           due_date: string
@@ -33,6 +36,9 @@ export type Database = {
         }
         Insert: {
           amount: number
+          asaas_charge_id?: string | null
+          asaas_invoice_url?: string | null
+          asaas_status?: string | null
           created_at?: string
           description?: string | null
           due_date: string
@@ -49,6 +55,9 @@ export type Database = {
         }
         Update: {
           amount?: number
+          asaas_charge_id?: string | null
+          asaas_invoice_url?: string | null
+          asaas_status?: string | null
           created_at?: string
           description?: string | null
           due_date?: string
@@ -180,6 +189,39 @@ export type Database = {
           scope?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      impersonation_events: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          impersonator_id: string
+          impersonator_role: string
+          school_id: string | null
+          target_id: string
+          target_role: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          impersonator_id: string
+          impersonator_role: string
+          school_id?: string | null
+          target_id: string
+          target_role: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          impersonator_id?: string
+          impersonator_role?: string
+          school_id?: string | null
+          target_id?: string
+          target_role?: string
         }
         Relationships: []
       }
@@ -957,6 +999,11 @@ export type Database = {
       schools: {
         Row: {
           active_plan: string
+          asaas_account_id: string | null
+          asaas_api_key_enc: string | null
+          asaas_pass_fee: boolean
+          asaas_status: string
+          asaas_wallet_id: string | null
           brand_primary: string | null
           brand_secondary: string | null
           cnpj: string | null
@@ -978,6 +1025,11 @@ export type Database = {
         }
         Insert: {
           active_plan?: string
+          asaas_account_id?: string | null
+          asaas_api_key_enc?: string | null
+          asaas_pass_fee?: boolean
+          asaas_status?: string
+          asaas_wallet_id?: string | null
           brand_primary?: string | null
           brand_secondary?: string | null
           cnpj?: string | null
@@ -999,6 +1051,11 @@ export type Database = {
         }
         Update: {
           active_plan?: string
+          asaas_account_id?: string | null
+          asaas_api_key_enc?: string | null
+          asaas_pass_fee?: boolean
+          asaas_status?: string
+          asaas_wallet_id?: string | null
           brand_primary?: string | null
           brand_secondary?: string | null
           cnpj?: string | null
@@ -1326,12 +1383,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_lesson_plan: { Args: { p_lesson_id: string; p_goals: string | null; p_plan: Json }; Returns: boolean }
+      get_lesson_private_notes: { Args: { p_lesson_id: string }; Returns: string | null }
       current_school_id: { Args: never; Returns: string }
       current_user_role: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      approve_saas_payment: {
+        Args: { p_payment_id: string; p_provider_payment_id: string }
+        Returns: Json
+      }
+      replace_active_enrollment: {
+        Args: { p_custom_amount?: number | null; p_due_day: number; p_plan_id: string; p_student_id: string }
+        Returns: Json
+      }
+      consume_rate_limit: {
+        Args: { p_key_hash: string; p_limit: number; p_window_ms: number }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
 import { Badge } from '@/components/ui/Badge'
 import { updateSchoolSettings, type SettingsActionState } from '@/lib/actions/settings'
+import { SCHOOL_BRAND_COLOR_ENABLED } from '@/lib/constants/branding'
 import { PLAN_FEATURES } from '@/lib/constants/plans'
 
 interface SchoolData {
@@ -32,7 +33,7 @@ const PIX_KEY_TYPES = [
 
 const initial: SettingsActionState = { ok: false }
 
-const DEFAULT_PRIMARY = '#2B4C79'
+const DEFAULT_PRIMARY = '#25463C'
 
 export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; canBrand: boolean }) {
   const [state, action] = useActionState(updateSchoolSettings, initial)
@@ -42,7 +43,11 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
   return (
     <Card>
       <h2 className="mb-4 text-base font-semibold text-ink">Identidade</h2>
-        <form action={action} className="space-y-5">
+        <form
+          action={action}
+          onReset={(event) => event.preventDefault()}
+          className="space-y-5"
+        >
           {state.ok && (
             <p className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-medium text-accent-800">
               Configurações salvas!
@@ -74,6 +79,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
 
           {canBrand ? (
             <>
+              {SCHOOL_BRAND_COLOR_ENABLED && (
               <Field
                 label="Cor da marca"
                 htmlFor="brandPrimary"
@@ -90,6 +96,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
                   <Input id="brandPrimary" name="brandPrimary" value={primary} onChange={(e) => setPrimary(e.target.value)} placeholder={DEFAULT_PRIMARY} className="max-w-[180px] font-mono" />
                 </div>
               </Field>
+              )}
 
               <Field label="Logo (PNG, JPG, WEBP ou SVG · até 2MB)" htmlFor="logo" error={fe.logo}>
                 <input
@@ -111,6 +118,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
               </Field>
 
               {/* Preview do acento: botão + link */}
+              {SCHOOL_BRAND_COLOR_ENABLED && (
               <div className="flex items-center gap-3 rounded-xl border border-hairline bg-surface-muted/30 px-4 py-3">
                 <span className="inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style={{ backgroundColor: primary }}>
                   Botão
@@ -118,12 +126,13 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
                 <span className="text-sm font-semibold" style={{ color: primary }}>Link de exemplo</span>
                 <span className="text-xs text-ink-muted">← cor de acento</span>
               </div>
+              )}
             </>
           ) : (
             <div className="rounded-xl border border-dashed border-hairline bg-surface-muted/40 p-4">
-              <p className="text-sm font-medium text-ink">Logo e cores da marca — Premium</p>
+              <p className="text-sm font-medium text-ink">{SCHOOL_BRAND_COLOR_ENABLED ? 'Logo e cores da marca' : 'Logo da marca'} — Premium</p>
               <p className="mt-1 text-sm text-ink-muted">
-                Personalize a identidade da sua escola (logo e cores) no plano Premium.{' '}
+                Personalize a identidade da sua escola ({SCHOOL_BRAND_COLOR_ENABLED ? 'logo e cores' : 'logo e nome'}) no plano Premium.{' '}
                 <Link href="/upgrade" className="font-medium text-brand-600 hover:underline">Fazer upgrade</Link>
               </p>
             </div>

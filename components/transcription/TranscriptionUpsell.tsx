@@ -9,7 +9,7 @@ export function TranscriptionUpsell({ reason }: { reason: Exclude<TranscriptionA
   const number = process.env.NEXT_PUBLIC_WHATSAPP_SALES_NUMBER ?? ''
   const message = encodeURIComponent(
     reason === 'expired'
-      ? 'Olá! Quero renovar meu plano Premium no Sonorum para voltar a usar a transcrição de cifra por IA.'
+      ? 'Olá! Quero renovar meu plano no Sonorum para voltar a usar a transcrição de cifra por IA.'
       : 'Olá! Quero fazer upgrade para o plano Premium do Sonorum e liberar a transcrição de cifra por IA.',
   )
   const waLink = number ? `https://wa.me/${number}?text=${message}` : '#'
@@ -22,7 +22,7 @@ export function TranscriptionUpsell({ reason }: { reason: Exclude<TranscriptionA
       />
       <Card className="max-w-2xl border-brand-200 bg-brand-50/40">
         <h2 className="text-lg font-semibold text-ink">
-          {reason === 'expired' ? 'Seu plano Premium venceu' : 'Disponível no plano Premium'}
+          {reason === 'expired' ? 'Seu plano venceu' : 'Disponível no plano Premium'}
         </h2>
         <p className="mt-2 text-sm text-ink-muted">
           Envie um áudio e a IA gera um rascunho de cifra (acordes) automaticamente. Seu professor
@@ -34,7 +34,7 @@ export function TranscriptionUpsell({ reason }: { reason: Exclude<TranscriptionA
           <li>✓ Vira recurso reutilizável nas aulas</li>
         </ul>
         <a href={waLink} target="_blank" rel="noopener noreferrer" className="mt-6 inline-block">
-          <Button>{reason === 'expired' ? 'Renovar Premium no WhatsApp' : 'Fazer upgrade no WhatsApp'}</Button>
+          <Button>{reason === 'expired' ? 'Renovar plano no WhatsApp' : 'Fazer upgrade no WhatsApp'}</Button>
         </a>
       </Card>
     </>

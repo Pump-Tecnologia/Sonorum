@@ -15,12 +15,11 @@ export function CreateTeacherForm() {
   const [state, action] = useActionState(createTeacher, initial)
   const fe = state.fieldErrors ?? {}
 
-  if (state.ok && state.tempPassword && state.createdEmail) {
+  if (state.ok && state.createdEmail) {
     return (
       <CreatePersonResult
         roleLabel="Professor"
         email={state.createdEmail}
-        tempPassword={state.tempPassword}
         backHref="/admin/teachers"
         backLabel="Voltar para professores"
       />
@@ -29,7 +28,11 @@ export function CreateTeacherForm() {
 
   return (
     <Card>
-      <form action={action} className="max-w-lg space-y-5">
+      <form
+        action={action}
+        onReset={(event) => event.preventDefault()}
+        className="max-w-lg space-y-5"
+      >
         {state.error && (
           <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
             {state.error}

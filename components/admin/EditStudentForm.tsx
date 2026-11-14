@@ -36,7 +36,11 @@ export function EditStudentForm({ student }: { student: StudentData }) {
 
   return (
     <Card>
-      <form action={action} className="max-w-2xl space-y-5">
+      <form
+        action={action}
+        onReset={(event) => event.preventDefault()}
+        className="max-w-2xl space-y-5"
+      >
         <input type="hidden" name="studentId" value={student.id} />
 
         {state.error && (
@@ -100,14 +104,7 @@ export function EditStudentForm({ student }: { student: StudentData }) {
           <Textarea id="permanentNotes" name="permanentNotes" defaultValue={student.permanent_notes ?? ''} />
         </Field>
 
-        <Field
-          label="Nova senha (deixe em branco para não alterar)"
-          htmlFor="newPassword"
-          error={fe.newPassword}
-          hint="Mínimo de 8 caracteres"
-        >
-          <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" />
-        </Field>
+        <p className="text-xs text-ink-muted">Para redefinir a senha, envie ao aluno um link pela ação “Redefinir senha” na lista de alunos.</p>
 
         <SubmitButton pendingLabel="Salvando…">Salvar alterações</SubmitButton>
       </form>

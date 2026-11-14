@@ -117,9 +117,9 @@ export default async function StudentDetailPage({
             />
           ) : (
             <Card className="border-dashed">
-              <p className="text-sm font-medium text-ink">Matrícula</p>
+              <p className="text-sm font-medium text-ink">Matrícula e Mensalidade</p>
               <p className="mt-1 text-sm text-ink-muted">
-                Disponível a partir do plano Básico.{' '}
+                Disponível a partir do plano Solo ou Profissional.{' '}
                 <Link href="/upgrade" className="font-medium text-brand-600">
                   Fazer upgrade
                 </Link>

@@ -1,18 +1,28 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { EditTeacherForm } from '@/components/admin/EditTeacherForm'
-import { createAdminClient } from '@/lib/supabase/server'
+import { getPlanContext, isSoloExperience } from '@/lib/auth/plan'
+import { getCurrentUser } from '@/lib/auth/session'
+import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Editar professor' }
 
 export default async function EditTeacherPage({ params }: { params: Promise<{ id: string }> }) {
+  const me = await getCurrentUser()
+  if (me?.role !== 'admin' || !me.schoolId) notFound()
+
+  // Conta presa a 1 professor: edita nome/instrumentos/senha em /profile.
+  const plan = await getPlanContext()
+  if (isSoloExperience(plan)) redirect('/profile')
+
   const { id } = await params
-  const admin = await createAdminClient()
-  const { data: teacher } = await admin
+  const supabase = await createClient()
+  const { data: teacher } = await supabase
     .from('teachers')
     .select('id, user_id, instruments, users(name, email)')
     .eq('id', id)
+    .eq('school_id', me.schoolId)
     .maybeSingle()
 
   if (!teacher) notFound()

@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth/session'
 import { transcriptionAccess } from '@/lib/auth/plan'
 import { CATEGORIES, DIFFICULTIES } from '@/lib/constants/resources'
-import { TRANSCRIPTION_MONTHLY_CAP } from '@/lib/constants/transcription'
+import { TRANSCRIPTION_ENABLED, TRANSCRIPTION_MONTHLY_CAP } from '@/lib/constants/transcription'
 import { createClient } from '@/lib/supabase/server'
 import { deleteAudioFile, signedAudioUrl, uploadAudioFile } from '@/lib/storage/audio'
 import { getTranscriptionProvider } from '@/lib/transcription'
@@ -27,7 +27,9 @@ function fe(error: { flatten: () => { fieldErrors: Record<string, string[]> } })
   )
 }
 
+// Toda action passa por aqui: com a transcrição desligada, nenhuma executa.
 async function requireStaff() {
+  if (!TRANSCRIPTION_ENABLED) return null
   const me = await getCurrentUser()
   if (!me?.schoolId || !['admin', 'teacher', 'superadmin'].includes(me.role)) return null
   return me
@@ -50,7 +52,7 @@ export async function createTranscription(
   // Gate de plano (Premium ativo). Defesa no servidor — a UI já mostra upsell.
   const access = await transcriptionAccess()
   if (access === 'not_premium') return { ok: false, error: 'Transcrição por IA é exclusiva do plano Premium.' }
-  if (access === 'expired') return { ok: false, error: 'Seu plano Premium está vencido. Renove para continuar.' }
+  if (access === 'expired') return { ok: false, error: 'Seu plano está vencido. Renove para continuar.' }
 
   const parsed = uploadSchema.safeParse({
     title: formData.get('title'),
