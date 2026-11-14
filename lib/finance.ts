@@ -1,4 +1,5 @@
 import type { ChargeStatus } from '@/lib/types/app'
+import { dateInBR } from '@/lib/timezone'
 
 export type StatusTone = 'success' | 'warning' | 'danger' | 'neutral'
 
@@ -16,7 +17,7 @@ export function effectiveChargeStatus(
   dueDate: string | null,
   today: Date = new Date(),
 ): ChargeStatus {
-  if (status === 'pending' && dueDate && dueDate < today.toISOString().slice(0, 10)) {
+  if (status === 'pending' && dueDate && dueDate < dateInBR(today)) {
     return 'overdue'
   }
   return status as ChargeStatus

@@ -32,12 +32,14 @@ export function ChargeCreator({ students, defaultDue }: { students: StudentPlanO
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
-    if (state.ok) {
+    if (!state.ok) return
+    const reset = window.setTimeout(() => {
       formRef.current?.reset()
       setStudentId('')
       setAvulsa(false)
-    }
-  }, [state.ok])
+    }, 0)
+    return () => window.clearTimeout(reset)
+  }, [state])
 
   const fe = state.fieldErrors ?? {}
   const selected = students.find((s) => s.id === studentId) ?? null
@@ -47,7 +49,14 @@ export function ChargeCreator({ students, defaultDue }: { students: StudentPlanO
   }
 
   return (
-    <form ref={formRef} action={action} className="space-y-4">
+    <form
+      ref={formRef}
+      action={action}
+      onReset={(event) => {
+        if (!state.ok) event.preventDefault()
+      }}
+      className="space-y-4"
+    >
       {state.ok && (
         <p className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-medium text-accent-800">
           Cobrança gerada! Veja na lista do mês abaixo.

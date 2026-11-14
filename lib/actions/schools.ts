@@ -4,8 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { sendCredentialsEmail } from '@/lib/notifications/credentials'
 import { getCurrentUser } from '@/lib/auth/session'
-import { OVERRIDABLE_FEATURES } from '@/lib/constants/plans'
+import { OVERRIDABLE_FEATURES, planFeatures } from '@/lib/constants/plans'
 import { createUserWithProfile, generatePassword } from '@/lib/users/admin'
 import { provisionSchoolLibrary } from '@/lib/actions/resource-templates'
 
@@ -24,7 +25,7 @@ function parseFeatureOverrides(formData: FormData): Record<string, boolean> | nu
 const createSchoolSchema = z.object({
   name: z.string().min(2, 'Informe o nome da escola').max(255),
   adminEmail: z.string().email('E-mail inválido').max(255),
-  planType: z.enum(['free', 'professional', 'premium', 'enterprise']),
+  planType: z.enum(['free', 'solo_free', 'solo', 'solo_pro', 'professional', 'premium', 'enterprise']),
   monthlyPrice: z.coerce.number().min(0, 'Valor inválido'),
 })
 
@@ -32,7 +33,6 @@ export type SchoolActionState = {
   ok: boolean
   error?: string
   fieldErrors?: Record<string, string>
-  tempPassword?: string
   createdEmail?: string
 }
 
@@ -79,7 +79,8 @@ export async function createSchool(
     slug = `${base}-${i}`
   }
 
-  const studentLimit = planType === 'free' ? 5 : 999999
+  const schoolFeatures = planFeatures(planType)
+  const studentLimit = Number.isFinite(schoolFeatures.studentLimit) ? schoolFeatures.studentLimit : 999999
 
   const { data: school, error: schoolError } = await admin
     .from('schools')
@@ -116,16 +117,43 @@ export async function createSchool(
     }
   }
 
+  // Nas contas Solo o próprio admin também ocupa o único vínculo de professor.
+  if (['solo_free', 'solo', 'solo_pro'].includes(planType)) {
+    const { error: teacherError } = await admin.from('teachers').insert({
+      user_id: result.userId,
+      school_id: school.id,
+      status: 'active',
+    })
+    if (teacherError) {
+      await admin.auth.admin.deleteUser(result.userId)
+      await admin.from('schools').delete().eq('id', school.id)
+      return { ok: false, error: 'Não foi possível criar o perfil de professor da conta Solo.' }
+    }
+  }
+
+  const setupEmail = await sendCredentialsEmail({
+    admin,
+    to: adminEmail,
+    name: `Administrador ${name}`,
+    schoolName: name,
+    kind: 'new',
+  })
+  if (!setupEmail.ok) {
+    await admin.auth.admin.deleteUser(result.userId)
+    await admin.from('schools').delete().eq('id', school.id)
+    return { ok: false, error: 'Não foi possível enviar o link de definição de senha. A escola não foi criada.' }
+  }
+
   // Escola nasce com a biblioteca de recursos do catálogo (cópias editáveis).
   await provisionSchoolLibrary(school.id)
 
   revalidatePath('/superadmin')
-  return { ok: true, tempPassword, createdEmail: adminEmail }
+  return { ok: true, createdEmail: adminEmail }
 }
 
 const updateSchoolSchema = z.object({
   schoolId: z.string().uuid(),
-  planType: z.enum(['free', 'professional', 'premium', 'enterprise']),
+  planType: z.enum(['free', 'solo_free', 'solo', 'solo_pro', 'professional', 'premium', 'enterprise']),
   monthlyPrice: z.coerce.number().min(0, 'Valor inválido'),
   expirationDate: z.string().optional().or(z.literal('')),
 })
@@ -156,7 +184,8 @@ export async function updateSchool(
 
   const { schoolId, planType, monthlyPrice, expirationDate } = parsed.data
   const admin = await createAdminClient()
-  const studentLimit = planType === 'free' ? 5 : 999999
+  const schoolFeatures = planFeatures(planType)
+  const studentLimit = Number.isFinite(schoolFeatures.studentLimit) ? schoolFeatures.studentLimit : 999999
   const featureOverrides = parseFeatureOverrides(formData)
 
   const { error } = await admin

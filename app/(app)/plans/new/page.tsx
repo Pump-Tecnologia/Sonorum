@@ -1,14 +1,18 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
 import { CreatePlanForm } from '@/components/financial/PlanForm'
 import { Card } from '@/components/ui/Card'
-import { requireFeature } from '@/lib/auth/plan'
+import { getPlanContext } from '@/lib/auth/plan'
 
 export const metadata = { title: 'Novo plano' }
 
 export default async function NewPlanPage() {
-  await requireFeature('financial')
+  const plan = await getPlanContext()
+  if (!plan.features.financial) {
+    redirect('/plans')
+  }
 
   return (
     <>

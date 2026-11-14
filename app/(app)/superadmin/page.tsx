@@ -9,12 +9,13 @@ import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { Sparkline } from '@/components/ui/Sparkline'
 import { StatCard } from '@/components/ui/StatCard'
 import { monthRange } from '@/lib/format'
+import { dateInBR } from '@/lib/timezone'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Visão geral da rede' }
 
 const PLAN_LABEL: Record<string, string> = {
-  free: 'Essencial', basic: 'Básico', professional: 'Profissional', premium: 'Premium', enterprise: 'Sob medida',
+  free: 'Essencial', basic: 'Básico', solo_free: 'Solo Essencial', solo: 'Solo', solo_pro: 'Solo Pro', professional: 'Profissional', premium: 'Premium', enterprise: 'Sob medida',
 }
 
 function relTime(iso: string, now: Date): string {
@@ -36,7 +37,7 @@ export default async function SuperAdminDashboard() {
   const admin = await createAdminClient()
   const now = new Date()
   const month = monthRange(now)
-  const todayISO = now.toISOString().slice(0, 10)
+  const todayISO = dateInBR(now)
 
   const [schoolsRes, studentsRes, chargesRes, lessonsMonth] = await Promise.all([
     admin.from('schools').select('id, name, custom_name, plan_type, monthly_price, expiration_date, created_at, users!inner(id, name, role)').eq('users.role', 'admin').order('created_at', { ascending: false }),

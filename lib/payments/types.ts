@@ -1,5 +1,5 @@
 // Abstração de gateway de pagamento (Escola → Sonorum, assinatura do SaaS).
-// Provider plugável: mock (dev, sem credencial) | mercadopago (real).
+// Provider plugável: mock (dev, sem credencial) | asaas (real).
 
 export type PaymentStatus = 'approved' | 'pending' | 'rejected' | 'cancelled' | 'refunded' | 'unknown'
 
@@ -26,6 +26,7 @@ export interface ProviderPayment {
   status: PaymentStatus
   externalReference: string | null
   amount: number | null
+  subscriptionId?: string | null
 }
 
 export type SubscriptionStatus = 'authorized' | 'pending' | 'paused' | 'cancelled' | 'unknown'

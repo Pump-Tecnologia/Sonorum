@@ -11,13 +11,15 @@ import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { StatCard } from '@/components/ui/StatCard'
 import { Card } from '@/components/ui/Card'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
-import { requireFeature } from '@/lib/auth/plan'
+import { LockedFeatureCard } from '@/components/billing/LockedFeatureCard'
+import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
 import { monthRange } from '@/lib/format'
 import { effectiveChargeStatus } from '@/lib/finance'
 import { waLink } from '@/lib/notifications/whatsapp'
 import { appBaseUrl } from '@/lib/payments'
 import { createClient } from '@/lib/supabase/server'
+import { dateInBR } from '@/lib/timezone'
 import { generateMonthlyCharges } from '@/lib/actions/charges'
 import { notifyCharge } from '@/lib/actions/notifications'
 
@@ -28,15 +30,43 @@ export default async function FinancialPage({
 }: {
   searchParams: Promise<{ month?: string }>
 }) {
-  await requireFeature('financial')
-  const user = await getCurrentUser()
+  const [user, plan] = await Promise.all([getCurrentUser(), getPlanContext()])
   if (!user?.schoolId) redirect('/admin')
   const schoolId = user.schoolId
 
+  if (!plan.features.financial) {
+    return (
+      <>
+        <PageHeader
+          title="Financeiro"
+          subtitle="Controle de mensalidades, cobranças e inadimplência"
+        />
+        <LockedFeatureCard
+          title="Módulo Financeiro e Cobranças"
+          subtitle="Automatize a gestão de mensalidades da sua escola"
+          description="Controle com facilidade quem pagou, quem está pendente e quem está inadimplente. Emita cobranças via Pix e Boletos com baixa automática, envie lembretes por WhatsApp e tenha total visibilidade da saúde financeira do seu negócio."
+          benefits={[
+            'Emissão de Pix (QR Code e Copia e Cola) e boletos automatizados via Asaas',
+            'Baixa automática do pagamento no sistema assim que o aluno pagar',
+            'Disparo de lembretes e mensagens de cobrança para WhatsApp e E-mail',
+            'Visão em tempo real de faturamento pago, pendente e inadimplência total',
+            'Descontos automáticos de pontualidade e regras personalizadas por aluno',
+          ]}
+          planRequirement="Disponível a partir do plano Solo (R$ 49,90/mês) ou Profissional (R$ 99/mês)."
+          isExpired={plan.isExpired}
+          inGracePeriod={plan.inGracePeriod}
+          graceDaysRemaining={plan.graceDaysRemaining}
+        />
+      </>
+    )
+  }
+
   const { month: monthParam } = await searchParams
   const today = new Date()
-  const month = monthParam ?? `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-  const range = monthRange(new Date(`${month}-01`))
+  const currentMonth = dateInBR(today).slice(0, 7)
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam ?? '') ? monthParam! : currentMonth
+  // Meio-dia UTC evita que o date-only seja interpretado como mês anterior em BRT.
+  const range = monthRange(new Date(`${month}-15T12:00:00Z`))
   const base = appBaseUrl()
 
   const supabase = await createClient()
@@ -123,7 +153,7 @@ export default async function FinancialPage({
     <>
       <PageHeader
         title="Financeiro"
-        subtitle={new Date(`${month}-01`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+        subtitle={new Date(`${month}-15T12:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', month: 'long', year: 'numeric' })}
         action={
           <div className="flex items-center gap-3">
             <FinanceToggle />

@@ -9,6 +9,7 @@ import { AppSubmit } from '@/components/app/AppSubmit'
 import styles from '@/components/app/app.module.css'
 import { updateSchool, type SchoolActionState } from '@/lib/actions/schools'
 import { OVERRIDABLE_FEATURES, type OverridableFeature } from '@/lib/constants/plans'
+import { TRANSCRIPTION_ENABLED } from '@/lib/constants/transcription'
 
 interface SchoolEditData {
   id: string
@@ -52,6 +53,9 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
           <AppField label="Plano" htmlFor="planType" error={fe.planType}>
             <AppSelect id="planType" name="planType" defaultValue={school.planType}>
               <option value="free">Essencial (grátis)</option>
+              <option value="solo_free">Solo Essencial (grátis)</option>
+              <option value="solo">Solo</option>
+              <option value="solo_pro">Solo Pro</option>
               <option value="professional">Profissional</option>
               <option value="premium">Premium</option>
               <option value="enterprise">Sob medida</option>
@@ -92,7 +96,10 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
             Padrão = segue o plano. Use para liberar ou bloquear um recurso só nesta escola (ex.: Sob medida).
           </p>
           <div className={`${styles.formRow} ${styles.formRow2}`}>
-            {OVERRIDABLE_FEATURES.map((key) => (
+            {(TRANSCRIPTION_ENABLED
+              ? OVERRIDABLE_FEATURES
+              : OVERRIDABLE_FEATURES.filter((k) => k !== 'transcription')
+            ).map((key) => (
               <AppField key={key} label={FEATURE_LABELS[key]} htmlFor={`ov_${key}`}>
                 <AppSelect
                   id={`ov_${key}`}

@@ -4,6 +4,7 @@ import { formatBRL } from '@/lib/format'
 import { buildPixPayload } from '@/lib/payments/pix'
 import { pixQrSvg } from '@/lib/payments/pix-qr'
 import { createAdminClient } from '@/lib/supabase/server'
+import { dateInBR } from '@/lib/timezone'
 
 export const metadata = { title: 'Pagamento PIX' }
 
@@ -72,7 +73,7 @@ export default async function PagarPage({
     )
   }
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = dateInBR()
   const amount = amountForPayment(
     Number(charge.amount),
     charge.early_pay_amount != null ? Number(charge.early_pay_amount) : null,
