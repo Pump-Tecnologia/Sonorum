@@ -6,15 +6,6 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Supabase (Auth
 
 ---
 
-## ⚠️ Caminho com acento + Turbopack
-
-O Turbopack do Next 16 dá panic quando o caminho do projeto contém caracteres não-ASCII (este projeto vive em `.../Projetos de Código/`, com o `ó`). Por isso os scripts locais usam **webpack** (`next dev --webpack` / `next build --webpack`).
-
-- **Na Vercel o caminho é ASCII**, então o build padrão (Turbopack) funciona normalmente lá — sem mudança necessária.
-- Para reativar o Turbopack localmente, mova o repo para um caminho sem acentos (ex.: `~/dev/sonorum-app`) e remova os `--webpack` dos scripts.
-
----
-
 ## Setup
 
 ### 1. Dependências
@@ -25,11 +16,7 @@ npm install
 
 ### 2. Projeto Supabase (sa-east-1 / São Paulo)
 
-No dashboard do Supabase, crie um projeto novo na região **South America (São Paulo)** e rode, na ordem, no SQL Editor:
-
-1. `supabase/migrations/0001_schema.sql` — tabelas + índices
-2. `supabase/migrations/0002_rls.sql` — Row Level Security (substitui os middlewares de tenant/role do Laravel)
-3. `supabase/migrations/0003_auth_hook.sql` — sync `auth.users` → `public.users` + Custom Access Token Hook
+No dashboard do Supabase, crie um projeto na região **South America (São Paulo)** e aplique **todos os arquivos de `supabase/migrations/`, em ordem numérica**, até a migration mais recente do repositório. Não pare em `0003`: as migrations posteriores incluem políticas de storage, membership Solo, webhooks e permissões por coluna necessárias pela aplicação.
 
 Depois, **ative o hook**: Authentication → Hooks → *Custom Access Token* → selecione `public.custom_access_token_hook`. Sem isso, `role` e `school_id` não entram no JWT e o roteamento por papel não funciona.
 
@@ -39,7 +26,7 @@ Depois, **ative o hook**: Authentication → Hooks → *Custom Access Token* →
 cp .env.example .env.local
 ```
 
-Preencha com as keys do projeto novo (Settings → API): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_ID`, além de R2, Resend e WhatsApp.
+Preencha com as keys do projeto (Settings → API): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_ID`, `NEXT_PUBLIC_APP_URL`, além dos provedores que serão usados. Em produção, defina `PAYMENTS_PROVIDER=mercadopago` ou `PAYMENTS_PROVIDER=asaas` e configure as credenciais e segredo do webhook correspondentes. O provider `mock` é apenas para desenvolvimento.
 
 ### 4. Tipos do banco
 
@@ -50,7 +37,7 @@ npm run types:gen   # sobrescreve lib/types/database.ts (stub) com os tipos reai
 ### 5. Rodar
 
 ```bash
-npm run dev   # http://localhost:3000
+npm run dev   # http://localhost:3100
 ```
 
 ---
@@ -82,15 +69,15 @@ supabase/migrations → schema, RLS, auth hook
 | Sessões PHP | Supabase Auth (JWT em cookie httpOnly via `@supabase/ssr`) |
 | `TenantScope` / `BelongsToSchool` | RLS por `school_id` em cada tabela |
 | Middlewares de role | RLS + roteamento por papel no `proxy.ts` |
-| `EnsureSchoolIsActive` | (a aplicar nas policies — ver TODO) |
+| Vencimento do plano | Recursos e limites gratuitos após `expiration_date`; dados existentes são preservados |
 
 `role` e `school_id` ficam em **`app_metadata`** (só service-role escreve) → sem escalonamento de privilégio pelo cliente.
 
 ---
 
-## Status da migração
+## Estado deste checkout
 
-- ✅ **Fase 1** — Setup, clients Supabase, proxy, schema, RLS, auth hook
-- ✅ **Fase 2** — Auth (login, registro com criação de escola, reset de senha)
-- ✅ **Fase 3** — Layouts (marketing, shell autenticado com sidebar por papel)
-- ⬜ Fases 4–10 — SuperAdmin, Admin, Agenda, Teacher/Student, Financeiro, LP completa, deploy e migração de dados
+- Os fluxos de Super Admin, Admin, Professor e Aluno, agenda, conteúdo, financeiro, assinaturas e integrações estão implementados no app; consulte `docs/roteiro-fluxos-lancamento.md` para o estado por jornada e pendências externas.
+- `npm run lint` e `npm run build` passaram localmente em 2026-10-23. Isso não valida o runtime do Supabase, gateways, envio de e-mail, Google Calendar ou deploy.
+- A captura mais recente confirmou `true` nos checks SQL do Auth Hook e das migrations `0031`–`0035`. O próximo passo é ativar `public.custom_access_token_hook` em Authentication → Auth Hooks (Beta) → Custom Access Token e validar os claims em uma sessão nova.
+- Não haverá staging por enquanto. O `.env.local` aponta para um Supabase hospedado sem identificação de ambiente; os scripts `scripts/smoke-*.mjs` criam e removem dados e não devem ser executados até confirmar o destino.

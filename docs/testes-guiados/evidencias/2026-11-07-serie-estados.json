@@ -1,0 +1,674 @@
+{
+  "tag": "series33-0028dbb38e",
+  "initial": [
+    {
+      "id": "48e8880f-4f15-4acc-be89-51859608e689",
+      "title": "QA33 — série semanal",
+      "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+      "start_datetime": "2026-11-10T13:00:00+00:00",
+      "end_datetime": "2026-11-10T14:00:00+00:00",
+      "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+      "status": "scheduled"
+    },
+    {
+      "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+      "title": "QA33 — série semanal",
+      "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+      "start_datetime": "2026-11-17T13:00:00+00:00",
+      "end_datetime": "2026-11-17T14:00:00+00:00",
+      "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+      "status": "scheduled"
+    },
+    {
+      "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+      "title": "QA33 — série semanal",
+      "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+      "start_datetime": "2026-11-24T13:00:00+00:00",
+      "end_datetime": "2026-11-24T14:00:00+00:00",
+      "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+      "status": "scheduled"
+    },
+    {
+      "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+      "title": "QA33 — série semanal",
+      "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+      "start_datetime": "2026-12-01T13:00:00+00:00",
+      "end_datetime": "2026-12-01T14:00:00+00:00",
+      "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+      "status": "scheduled"
+    },
+    {
+      "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+      "title": "QA33 — série semanal",
+      "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+      "start_datetime": "2026-12-08T13:00:00+00:00",
+      "end_datetime": "2026-12-08T14:00:00+00:00",
+      "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+      "status": "scheduled"
+    }
+  ],
+  "history": [
+    {
+      "stage": "shift",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T14:00:00+00:00",
+          "end_datetime": "2026-11-18T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T14:00:00+00:00",
+          "end_datetime": "2026-11-25T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T14:00:00+00:00",
+          "end_datetime": "2026-12-02T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T14:00:00+00:00",
+          "end_datetime": "2026-12-09T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "repeated-save",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T14:00:00+00:00",
+          "end_datetime": "2026-11-18T15:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T14:00:00+00:00",
+          "end_datetime": "2026-11-25T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T14:00:00+00:00",
+          "end_datetime": "2026-12-02T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T14:00:00+00:00",
+          "end_datetime": "2026-12-09T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "shift",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T14:00:00+00:00",
+          "end_datetime": "2026-11-18T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T14:00:00+00:00",
+          "end_datetime": "2026-11-25T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T14:00:00+00:00",
+          "end_datetime": "2026-12-02T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T14:00:00+00:00",
+          "end_datetime": "2026-12-09T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "local-conflict",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T14:00:00+00:00",
+          "end_datetime": "2026-11-18T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T14:00:00+00:00",
+          "end_datetime": "2026-11-25T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T14:00:00+00:00",
+          "end_datetime": "2026-12-02T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T14:00:00+00:00",
+          "end_datetime": "2026-12-09T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "e376f5db-4141-403b-8732-bc7edff76037",
+          "title": "QA33 controle de conflito",
+          "series_id": null,
+          "start_datetime": "2026-12-09T16:00:00+00:00",
+          "end_datetime": "2026-12-09T17:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "prod-initial",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T14:00:00+00:00",
+          "end_datetime": "2026-11-18T15:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T14:00:00+00:00",
+          "end_datetime": "2026-11-25T15:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T14:00:00+00:00",
+          "end_datetime": "2026-12-02T15:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T14:00:00+00:00",
+          "end_datetime": "2026-12-09T15:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "e376f5db-4141-403b-8732-bc7edff76037",
+          "title": "QA33 controle de conflito",
+          "series_id": null,
+          "start_datetime": "2026-12-09T16:00:00+00:00",
+          "end_datetime": "2026-12-09T17:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "prod-fixed",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T14:00:00+00:00",
+          "end_datetime": "2026-11-18T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T14:00:00+00:00",
+          "end_datetime": "2026-11-25T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T14:00:00+00:00",
+          "end_datetime": "2026-12-02T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T14:00:00+00:00",
+          "end_datetime": "2026-12-09T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "e376f5db-4141-403b-8732-bc7edff76037",
+          "title": "QA33 controle de conflito",
+          "series_id": null,
+          "start_datetime": "2026-12-09T16:00:00+00:00",
+          "end_datetime": "2026-12-09T17:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "prod-repeat",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T14:00:00+00:00",
+          "end_datetime": "2026-11-18T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T14:00:00+00:00",
+          "end_datetime": "2026-11-25T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T14:00:00+00:00",
+          "end_datetime": "2026-12-02T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T14:00:00+00:00",
+          "end_datetime": "2026-12-09T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "e376f5db-4141-403b-8732-bc7edff76037",
+          "title": "QA33 controle de conflito",
+          "series_id": null,
+          "start_datetime": "2026-12-09T16:00:00+00:00",
+          "end_datetime": "2026-12-09T17:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "prod-conflict",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T14:00:00+00:00",
+          "end_datetime": "2026-11-18T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T14:00:00+00:00",
+          "end_datetime": "2026-11-25T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T14:00:00+00:00",
+          "end_datetime": "2026-12-02T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T14:00:00+00:00",
+          "end_datetime": "2026-12-09T15:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "e376f5db-4141-403b-8732-bc7edff76037",
+          "title": "QA33 controle de conflito",
+          "series_id": null,
+          "start_datetime": "2026-12-09T16:00:00+00:00",
+          "end_datetime": "2026-12-09T17:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "corrected",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T15:00:00+00:00",
+          "end_datetime": "2026-11-18T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T15:00:00+00:00",
+          "end_datetime": "2026-11-25T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T15:00:00+00:00",
+          "end_datetime": "2026-12-02T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T15:00:00+00:00",
+          "end_datetime": "2026-12-09T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "e376f5db-4141-403b-8732-bc7edff76037",
+          "title": "QA33 controle de conflito",
+          "series_id": null,
+          "start_datetime": "2026-12-09T16:00:00+00:00",
+          "end_datetime": "2026-12-09T17:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "corrected-repeat",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T15:00:00+00:00",
+          "end_datetime": "2026-11-18T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T15:00:00+00:00",
+          "end_datetime": "2026-11-25T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T15:00:00+00:00",
+          "end_datetime": "2026-12-02T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T15:00:00+00:00",
+          "end_datetime": "2026-12-09T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "e376f5db-4141-403b-8732-bc7edff76037",
+          "title": "QA33 controle de conflito",
+          "series_id": null,
+          "start_datetime": "2026-12-09T16:00:00+00:00",
+          "end_datetime": "2026-12-09T17:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "stage": "canceled",
+      "rows": [
+        {
+          "id": "48e8880f-4f15-4acc-be89-51859608e689",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-10T13:00:00+00:00",
+          "end_datetime": "2026-11-10T14:00:00+00:00",
+          "room_id": "9ad38bce-3d0f-4828-9ae1-83afb2554d33",
+          "status": "scheduled"
+        },
+        {
+          "id": "2545b5e4-0fbb-4cdb-a7a2-3eb100b529c3",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-18T15:00:00+00:00",
+          "end_datetime": "2026-11-18T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        },
+        {
+          "id": "4d22eede-476a-4df7-a9f8-1d0a66785b7b",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-11-25T15:00:00+00:00",
+          "end_datetime": "2026-11-25T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "canceled"
+        },
+        {
+          "id": "3577a70d-734c-411a-b64e-0422da3a9f5a",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-02T15:00:00+00:00",
+          "end_datetime": "2026-12-02T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "canceled"
+        },
+        {
+          "id": "41a61352-269f-4a7d-af95-83a76ecc1cce",
+          "title": "QA33 — série semanal",
+          "series_id": "9e7f151b-b8b7-46a0-874f-8aca2766894c",
+          "start_datetime": "2026-12-09T15:00:00+00:00",
+          "end_datetime": "2026-12-09T16:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "canceled"
+        },
+        {
+          "id": "e376f5db-4141-403b-8732-bc7edff76037",
+          "title": "QA33 controle de conflito",
+          "series_id": null,
+          "start_datetime": "2026-12-09T16:00:00+00:00",
+          "end_datetime": "2026-12-09T17:00:00+00:00",
+          "room_id": "074268d8-d673-4cc1-925c-3275cf454aa0",
+          "status": "scheduled"
+        }
+      ]
+    }
+  ]
+}
