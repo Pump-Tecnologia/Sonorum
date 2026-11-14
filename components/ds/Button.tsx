@@ -45,13 +45,15 @@ interface SubmitButtonProps {
   children: React.ReactNode
   pendingLabel?: string
   variant?: ButtonVariant
+  size?: ButtonSize
+  className?: string
 }
 
 /** Botão de envio que se desativa e troca o texto enquanto a action roda. */
-export function SubmitButton({ children, pendingLabel = 'Aguarde…', variant = 'primary' }: SubmitButtonProps) {
+export function SubmitButton({ children, pendingLabel = 'Aguarde…', variant = 'primary', size = 'md', className }: SubmitButtonProps) {
   const { pending } = useFormStatus()
   return (
-    <button type="submit" className={buttonClass(variant, 'md')} disabled={pending} aria-busy={pending}>
+    <button type="submit" className={buttonClass(variant, size, className)} disabled={pending} aria-busy={pending}>
       {pending ? pendingLabel : children}
     </button>
   )

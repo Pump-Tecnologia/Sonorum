@@ -216,3 +216,12 @@ select.control {
 .menuItem:hover:not(:disabled) { background: var(--sn-mint-soft); }
 .menuItem:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
 .menuItem:disabled { cursor: wait; opacity: .6; }
+.menuItemDanger { color: var(--sn-danger); }
+.menuItemDanger:hover:not(:disabled) { background: var(--sn-danger-soft); }
+
+/* Botão suave em pílula para componentes antigos que só aceitam className
+   (ex.: WhatsAppNotifyButton). Regras sem layer vencem as utilitárias do Tailwind. */
+.heroSoftButton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px; border: 0; border-radius: var(--sn-radius-pill); background: var(--sn-mint-soft); color: var(--sn-ink-soft); font-family: var(--sn-font); font-size: 15px; font-weight: 500; cursor: pointer; transition: background-color var(--sn-duration) var(--sn-ease); }
+.heroSoftButton:hover:not(:disabled) { background: var(--sn-mint-hover); border-color: transparent; }
+.heroSoftButton:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
+.heroSoftButton svg { width: 16px; height: 16px; }

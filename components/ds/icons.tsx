@@ -22,3 +22,6 @@ export const IconRepeat = (p: IconProps) => <Base {...p}><path d="M4 11V9a3 3 0 
 export const IconSearch = (p: IconProps) => <Base {...p}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></Base>
 export const IconMore = (p: IconProps) => <Base {...p}><circle cx="5.5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="18.5" cy="12" r="1" fill="currentColor" stroke="none" /></Base>
 export const IconUpload = (p: IconProps) => <Base {...p}><path d="M12 15V4" /><path d="m7.5 8.5 4.5-4.5 4.5 4.5" /><path d="M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15" /></Base>
+export const IconCheck = (p: IconProps) => <Base {...p}><path d="m5 12.5 4.5 4.5L19 7.5" /></Base>
+export const IconArrowLeft = (p: IconProps) => <Base {...p}><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></Base>
+export const IconTrash = (p: IconProps) => <Base {...p}><path d="M4.5 7h15" /><path d="M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" /><path d="M6.5 7l1 12.5a1 1 0 0 0 1 .9h7a1 1 0 0 0 1-.9l1-12.5" /></Base>

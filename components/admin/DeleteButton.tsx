@@ -15,12 +15,15 @@ export function DeleteButton({
   label = 'Excluir',
   confirmText = 'Tem certeza? Esta ação não pode ser desfeita.',
   className,
+  buttonClassName,
 }: {
   action: Action
   hidden: Record<string, string>
   label?: string
   confirmText?: string
   className?: string
+  /** Substitui o estilo padrão do botão (ex.: item do menu "⋯"). */
+  buttonClassName?: string
 }) {
   // Confirmação em duas etapas inline (sem window.confirm): 1º clique arma, 2º envia.
   const [armed, setArmed] = useState(false)
@@ -37,7 +40,7 @@ export function DeleteButton({
   }
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
 
-  const baseClass = cn(
+  const baseClass = buttonClassName ?? cn(
     'inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 active:bg-red-100',
     className,
   )
