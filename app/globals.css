@@ -61,6 +61,16 @@
   --sn-warning: #8a5a10;
   --sn-warning-soft: #f8efdc;
 
+  /* Tons por instrumento (agenda, avatares). Texto sobre o fundo ≥ 5:1. */
+  --sn-tone-piano-bg: #e8eef5; --sn-tone-piano-fg: #3b5f86;
+  --sn-tone-violao-bg: #f6eedf; --sn-tone-violao-fg: #8a5a1c;
+  --sn-tone-cordas-bg: #e0f0ef; --sn-tone-cordas-fg: #1f6d6a;
+  --sn-tone-canto-bg: #f6e8ec; --sn-tone-canto-fg: #9a3f5e;
+  --sn-tone-bateria-bg: #eeeaf5; --sn-tone-bateria-fg: #5e4a8a;
+  --sn-tone-outro-bg: #e9f4ed; --sn-tone-outro-fg: #2f6b4f;
+  --sn-tone-missed-bg: #f8e9e7; --sn-tone-missed-fg: #a23b2f;
+  --sn-tone-late-bg: #f8efdc; --sn-tone-late-fg: #8a5a10;
+
   --sn-stage: radial-gradient(ellipse at 85% 100%, #dcefe1 0%, transparent 60%),
     radial-gradient(ellipse at 0% 40%, #f0f8f2 0%, transparent 55%), #fff;
   --sn-glass: linear-gradient(135deg, #ffffffb8, #ffffff5c);

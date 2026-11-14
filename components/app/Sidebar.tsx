@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 import styles from '@/components/app/app.module.css'
 import { NavIcon } from '@/components/app/NavIcon'
+import { initialsOf } from '@/components/ds/Avatar'
 import { signOut } from '@/lib/auth/actions'
 import { cn } from '@/lib/cn'
 import { NAV_BY_ROLE, ROLE_LABEL } from '@/lib/constants/nav'
@@ -15,15 +16,6 @@ import type { Role } from '@/lib/constants/roles'
 const LOGO = '/brand/logo-vazado.png'
 const STORAGE_KEY = 'sonorum:sidebar-collapsed'
 const STORAGE_EVENT = 'sonorum:sidebar-storage'
-
-// Iniciais para o avatar: primeira letra do primeiro e do último nome.
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  const first = parts[0][0] ?? ''
-  const last = parts.length > 1 ? parts[parts.length - 1][0] ?? '' : ''
-  return (first + last).toUpperCase()
-}
 
 function subscribeCollapsed(callback: () => void) {
   window.addEventListener('storage', callback)
@@ -185,7 +177,7 @@ export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum'
           title={compact ? `${name} · ${ROLE_LABEL[role]}` : undefined}
           aria-label={compact ? `Perfil de ${name}` : undefined}
         >
-          <span className={styles.sidebarAvatar} aria-hidden="true">{initials(name)}</span>
+          <span className={styles.sidebarAvatar} aria-hidden="true">{initialsOf(name)}</span>
           {!compact && (
             <span className={styles.sidebarUserText}>
               <span className={styles.sidebarUserName}>{name}</span>

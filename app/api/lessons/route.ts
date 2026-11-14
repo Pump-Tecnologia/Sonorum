@@ -2,22 +2,17 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
+import { instrumentTone, type InstrumentTone } from '@/lib/constants/instrument-tone'
 
 // Tom do evento por status ou instrumento. As cores ficam no CSS da agenda
 // (schedule.module.css, [data-tone]); a API só diz qual tom usar. Aula
 // concluída mantém a cor do instrumento: o CSS apaga pelo data-status.
-type EventTone = 'missed' | 'late' | 'piano' | 'violao' | 'cordas' | 'canto' | 'bateria' | 'outro'
+type EventTone = InstrumentTone | 'missed' | 'late'
 
 function eventTone(instrument: unknown, status: string): EventTone {
   if (status === 'missed') return 'missed'
   if (status === 'late') return 'late'
-  const instr = String(Array.isArray(instrument) ? instrument[0] : instrument ?? '').toLowerCase()
-  if (/piano|teclado/.test(instr)) return 'piano'
-  if (/violão|guitarra/.test(instr)) return 'violao'
-  if (/violino|cordas/.test(instr)) return 'cordas'
-  if (/canto|voz/.test(instr)) return 'canto'
-  if (/bateria|percussão/.test(instr)) return 'bateria'
-  return 'outro'
+  return instrumentTone(instrument)
 }
 
 export async function GET(request: NextRequest) {

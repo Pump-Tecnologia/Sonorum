@@ -19,3 +19,6 @@ export const IconClock = (p: IconProps) => <Base {...p}><circle cx="12" cy="12" 
 export const IconDoor = (p: IconProps) => <Base {...p}><path d="M5 20.5h14" /><path d="M7 20.5V4.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16" /><circle cx="14" cy="12.5" r=".6" fill="currentColor" stroke="none" /></Base>
 export const IconNote = (p: IconProps) => <Base {...p}><path d="M6 3.5h9l3 3v14H6z" /><path d="M9 11h6M9 14.5h6M9 18h3" /></Base>
 export const IconRepeat = (p: IconProps) => <Base {...p}><path d="M4 11V9a3 3 0 0 1 3-3h12" /><path d="m16 3 3 3-3 3" /><path d="M20 13v2a3 3 0 0 1-3 3H5" /><path d="m8 21-3-3 3-3" /></Base>
+export const IconSearch = (p: IconProps) => <Base {...p}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4.2-4.2" /></Base>
+export const IconMore = (p: IconProps) => <Base {...p}><circle cx="5.5" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /><circle cx="18.5" cy="12" r="1" fill="currentColor" stroke="none" /></Base>
+export const IconUpload = (p: IconProps) => <Base {...p}><path d="M12 15V4" /><path d="m7.5 8.5 4.5-4.5 4.5 4.5" /><path d="M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15" /></Base>

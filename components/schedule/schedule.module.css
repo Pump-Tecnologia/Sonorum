@@ -144,8 +144,8 @@
 
 .event,
 .monthEvent {
-  --tone-bg: #e9f4ed;
-  --tone-fg: #2f6b4f;
+  --tone-bg: var(--sn-tone-outro-bg);
+  --tone-fg: var(--sn-tone-outro-fg);
 }
 
 /* Semana e dia: card suave com a cor do instrumento. */
@@ -193,13 +193,13 @@
 .event[data-status="completed"] { box-shadow: none; }
 
 /* Tons por instrumento e status. Contraste do texto sobre o fundo ≥ 5:1. */
-.event[data-tone="piano"], .monthEvent[data-tone="piano"] { --tone-bg: #e8eef5; --tone-fg: #3b5f86; }
-.event[data-tone="violao"], .monthEvent[data-tone="violao"] { --tone-bg: #f6eedf; --tone-fg: #8a5a1c; }
-.event[data-tone="cordas"], .monthEvent[data-tone="cordas"] { --tone-bg: #e0f0ef; --tone-fg: #1f6d6a; }
-.event[data-tone="canto"], .monthEvent[data-tone="canto"] { --tone-bg: #f6e8ec; --tone-fg: #9a3f5e; }
-.event[data-tone="bateria"], .monthEvent[data-tone="bateria"] { --tone-bg: #eeeaf5; --tone-fg: #5e4a8a; }
-.event[data-tone="missed"], .monthEvent[data-tone="missed"] { --tone-bg: #f8e9e7; --tone-fg: #a23b2f; }
-.event[data-tone="late"], .monthEvent[data-tone="late"] { --tone-bg: #f8efdc; --tone-fg: #8a5a10; }
+.event[data-tone="piano"], .monthEvent[data-tone="piano"] { --tone-bg: var(--sn-tone-piano-bg); --tone-fg: var(--sn-tone-piano-fg); }
+.event[data-tone="violao"], .monthEvent[data-tone="violao"] { --tone-bg: var(--sn-tone-violao-bg); --tone-fg: var(--sn-tone-violao-fg); }
+.event[data-tone="cordas"], .monthEvent[data-tone="cordas"] { --tone-bg: var(--sn-tone-cordas-bg); --tone-fg: var(--sn-tone-cordas-fg); }
+.event[data-tone="canto"], .monthEvent[data-tone="canto"] { --tone-bg: var(--sn-tone-canto-bg); --tone-fg: var(--sn-tone-canto-fg); }
+.event[data-tone="bateria"], .monthEvent[data-tone="bateria"] { --tone-bg: var(--sn-tone-bateria-bg); --tone-fg: var(--sn-tone-bateria-fg); }
+.event[data-tone="missed"], .monthEvent[data-tone="missed"] { --tone-bg: var(--sn-tone-missed-bg); --tone-fg: var(--sn-tone-missed-fg); }
+.event[data-tone="late"], .monthEvent[data-tone="late"] { --tone-bg: var(--sn-tone-late-bg); --tone-fg: var(--sn-tone-late-fg); }
 
 /* Lista */
 .calendar :global(.fc-list-day > th) { border: 0; }
