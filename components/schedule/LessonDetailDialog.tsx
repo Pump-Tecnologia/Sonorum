@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import { Button, LinkButton } from '@/components/ds/Button'
 import { Dialog, DialogFooter } from '@/components/ds/Dialog'
 import { IconArrowRight, IconClock, IconDoor, IconNote } from '@/components/ds/icons'
 import { StatusPill } from '@/components/ds/StatusPill'
+import { RescheduleForm } from '@/components/schedule/RescheduleForm'
 import styles from '@/components/schedule/schedule.module.css'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { cancelLesson } from '@/lib/actions/lessons'
@@ -21,6 +22,10 @@ export interface SelectedLesson {
   studentName: string
   studentId: string
   room: string
+  roomId: string
+  seriesId: string
+  /** Horário sugerido ao arrastar a aula; abre direto em "Remarcar". */
+  proposal?: { start: string; end: string }
 }
 
 const TZ = 'America/Sao_Paulo'
@@ -35,11 +40,14 @@ interface LessonDetailDialogProps {
   lesson: SelectedLesson
   canManage: boolean
   isAdmin: boolean
+  rooms: ReadonlyArray<{ id: string; name: string }>
   onClose: () => void
   onChanged: () => void
 }
 
-export function LessonDetailDialog({ lesson, canManage, isAdmin, onClose, onChanged }: LessonDetailDialogProps) {
+export function LessonDetailDialog({ lesson, canManage, isAdmin, rooms, onClose, onChanged }: LessonDetailDialogProps) {
+  const canReschedule = canManage && lesson.status === 'scheduled'
+  const [rescheduling, setRescheduling] = useState(Boolean(lesson.proposal) && canReschedule)
   // Cancelamento em duas etapas (sem window.confirm): 1º clique arma, 2º executa.
   const [confirming, setConfirming] = useState(false)
   const [canceling, setCanceling] = useState(false)
@@ -49,6 +57,8 @@ export function LessonDetailDialog({ lesson, canManage, isAdmin, onClose, onChan
   const title = isAdmin && lesson.studentId
     ? <Link href={`/admin/students/${lesson.studentId}`} className={styles.titleLink}>{lesson.studentName}</Link>
     : lesson.studentName
+
+  const handleSaved = useCallback(() => onChanged(), [onChanged])
 
   async function handleCancel() {
     setCanceling(true)
@@ -63,6 +73,20 @@ export function LessonDetailDialog({ lesson, canManage, isAdmin, onClose, onChan
     } finally {
       setCanceling(false)
     }
+  }
+
+  if (rescheduling) {
+    return (
+      <Dialog open onClose={onClose} title={title} subtitle="Remarcar aula" size="sm">
+        <RescheduleForm
+          lesson={{ id: lesson.id, start: lesson.start, end: lesson.end, roomId: lesson.roomId, inSeries: Boolean(lesson.seriesId) }}
+          rooms={rooms}
+          proposal={lesson.proposal}
+          onBack={() => setRescheduling(false)}
+          onSaved={handleSaved}
+        />
+      </Dialog>
+    )
   }
 
   return (
@@ -102,6 +126,9 @@ export function LessonDetailDialog({ lesson, canManage, isAdmin, onClose, onChan
           ) : (
             <Button variant="ghost" className={styles.cancelTrigger} onClick={() => setConfirming(true)}>Cancelar aula</Button>
           )
+        )}
+        {!confirming && canReschedule && (
+          <Button variant="soft" onClick={() => setRescheduling(true)}>Remarcar</Button>
         )}
         {!confirming && (
           <LinkButton href={`/lessons/${lesson.id}/planner`}>

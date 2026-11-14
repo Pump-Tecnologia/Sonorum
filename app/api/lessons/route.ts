@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, student_id, teacher_id, users!lessons_student_id_fkey(name, instrument), room:rooms(name)')
+    .select('id, title, start_datetime, end_datetime, status, notes, student_id, teacher_id, room_id, series_id, users!lessons_student_id_fkey(name, instrument), room:rooms(name)')
 
   // Aulas canceladas saem da agenda — o registro continua no banco (histórico),
   // mas não polui o calendário. Quem precisa do histórico usa relatórios/planner.
@@ -48,6 +48,9 @@ export async function GET(request: NextRequest) {
 
   const { data } = await query.order('start_datetime')
 
+  // Só a equipe arrasta aulas, e só as que ainda vão acontecer.
+  const canManage = me.role === 'admin' || me.role === 'teacher'
+
   type UserRow = { name: string; instrument: unknown }
   const events = (data ?? []).map((l) => {
     const student = l.users as UserRow | null
@@ -56,6 +59,8 @@ export async function GET(request: NextRequest) {
       title: `${l.title} — ${student?.name ?? 'Aluno'}`,
       start: l.start_datetime,
       end: l.end_datetime,
+      startEditable: canManage && l.status === 'scheduled',
+      durationEditable: false,
       extendedProps: {
         tone: eventTone(student?.instrument, l.status),
         lesson_title: l.title,
@@ -66,6 +71,8 @@ export async function GET(request: NextRequest) {
         student_name: student?.name ?? '',
         instrument: student?.instrument,
         room: (l.room as { name: string } | null)?.name ?? '',
+        room_id: l.room_id ?? '',
+        series_id: l.series_id ?? '',
       },
     }
   })

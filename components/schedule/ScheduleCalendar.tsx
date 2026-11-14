@@ -7,7 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import ptBrLocale from '@fullcalendar/core/locales/pt-br'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DatesSetArg, DateSelectArg, DayHeaderContentArg, EventClickArg, EventContentArg } from '@fullcalendar/core'
+import type { DatesSetArg, DateSelectArg, DayHeaderContentArg, EventClickArg, EventContentArg, EventDropArg, EventApi } from '@fullcalendar/core'
 
 import { LessonDetailDialog, type SelectedLesson } from '@/components/schedule/LessonDetailDialog'
 import { NewLessonDialog, type Person } from '@/components/schedule/NewLessonDialog'
@@ -25,7 +25,28 @@ interface LessonProps {
   status?: string
   notes?: string
   room?: string
+  room_id?: string
+  series_id?: string
   instrument?: unknown
+}
+
+// Dados da aula para a janela de detalhe (e de remarcar).
+function toSelected(event: EventApi, proposal?: SelectedLesson['proposal']): SelectedLesson {
+  const props = event.extendedProps as LessonProps
+  return {
+    id: event.id,
+    title: props.lesson_title ?? event.title,
+    start: event.startStr,
+    end: event.endStr,
+    status: props.status ?? 'scheduled',
+    notes: props.notes ?? '',
+    studentName: props.student_name || event.title,
+    studentId: props.student_id ?? '',
+    room: props.room ?? '',
+    roomId: props.room_id ?? '',
+    seriesId: props.series_id ?? '',
+    proposal,
+  }
 }
 
 function firstInstrument(value: unknown): string {
@@ -137,18 +158,15 @@ export function ScheduleCalendar({ students, teachers, rooms, role, userId }: Sc
   }
 
   function handleEventClick(info: EventClickArg) {
-    const props = info.event.extendedProps as LessonProps
-    setSelected({
-      id: info.event.id,
-      title: props.lesson_title ?? info.event.title,
-      start: info.event.startStr,
-      end: info.event.endStr,
-      status: props.status ?? 'scheduled',
-      notes: props.notes ?? '',
-      studentName: props.student_name || info.event.title,
-      studentId: props.student_id ?? '',
-      room: props.room ?? '',
-    })
+    setSelected(toSelected(info.event))
+  }
+
+  // Arrastar não salva direto: a aula volta ao lugar e abre "Remarcar" com o
+  // horário novo, para confirmar a sala e, numa série, se vale para as próximas.
+  function handleEventDrop(info: EventDropArg) {
+    const proposal = { start: info.event.startStr, end: info.event.endStr }
+    info.revert()
+    setSelected(toSelected(info.event, proposal))
   }
 
   const handleCreated = useCallback(() => {
@@ -181,6 +199,8 @@ export function ScheduleCalendar({ students, teachers, rooms, role, userId }: Sc
           selectable={canManage}
           select={handleSelect}
           eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
+          snapDuration="00:15:00"
           eventContent={renderEvent}
           datesSet={handleDatesSet}
           events="/api/lessons"
@@ -218,10 +238,11 @@ export function ScheduleCalendar({ students, teachers, rooms, role, userId }: Sc
 
       {selected && (
         <LessonDetailDialog
-          key={selected.id}
+          key={`${selected.id}-${selected.proposal?.start ?? ''}`}
           lesson={selected}
           canManage={canManage}
           isAdmin={role === 'admin'}
+          rooms={rooms}
           onClose={() => setSelected(null)}
           onChanged={() => {
             setSelected(null)

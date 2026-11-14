@@ -12,6 +12,15 @@ export function dateInBR(date: Date = new Date()): string {
   return `${get('year')}-${get('month')}-${get('day')}`
 }
 
+// Hora do dia em Brasília, no formato HH:mm.
+export function timeInBR(date: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date)
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? ''
+  return `${get('hour')}:${get('minute')}`
+}
+
 export function brMonthBounds(year: number, month: number): { startISO: string; endISO: string } | null {
   if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null
   const start = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01T00:00:00`

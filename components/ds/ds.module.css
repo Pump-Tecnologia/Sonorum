@@ -135,7 +135,7 @@
   box-shadow: var(--sn-shadow-pop);
   overflow: auto;
 }
-.dialogSmall { width: min(100% - 32px, 400px); }
+.dialogSmall { width: min(100% - 32px, 440px); }
 .dialog::backdrop { background: #1c362e52; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .dialogBody { padding: 28px; }
 .dialogHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }

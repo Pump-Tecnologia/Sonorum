@@ -242,6 +242,18 @@
 .details dd { margin: 0; font-size: 15px; line-height: 1.45; color: var(--sn-ink); }
 .capitalize::first-letter { text-transform: uppercase; }
 .cancelTrigger { margin-right: auto; color: var(--sn-danger); }
+
+/* Remarcar: formulário dentro da janela da aula */
+.rescheduleForm { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
+.scope { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.scopeLegend { grid-column: 1 / -1; padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--sn-ink); }
+.scopeOption { position: relative; display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border-radius: var(--sn-radius-pill); background: var(--sn-mint-soft); color: var(--sn-ink-soft); font-size: 14px; font-weight: 500; text-align: center; cursor: pointer; transition: background-color var(--sn-duration) var(--sn-ease), color var(--sn-duration) var(--sn-ease); }
+.scopeOption:hover { background: var(--sn-mint-hover); }
+.scopeOption input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.scopeOption:has(input:checked) { background: var(--sn-ink); color: #fff; }
+.scopeOption:has(input:focus-visible) { box-shadow: var(--sn-focus-ring); }
+@media (max-width: 420px) { .scope { grid-template-columns: 1fr; } }
+
 .inlineError { margin: 16px 0 0; font-size: 13px; color: var(--sn-danger); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 

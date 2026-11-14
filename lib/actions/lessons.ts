@@ -10,7 +10,7 @@ import { notify } from '@/lib/notifications/notify'
 import { RECURRENCE_PRESETS, presetWeeks } from '@/lib/constants/recurrence'
 import { CATEGORIES, CONTENT_TYPES } from '@/lib/constants/resources'
 import { isActiveTeacherOfSchool } from '@/lib/queries/teachers'
-import { localBrToServerISO } from '@/lib/timezone'
+import { addDaysToBRDate, dateInBR, diffInBRDays, localBrToServerISO, timeInBR } from '@/lib/timezone'
 
 export type LessonActionState = {
   ok: boolean
@@ -306,13 +306,22 @@ export async function updateLessonSchedule(
 
   if (Object.keys(update).length === 0) return { ok: true }
 
-  // Propagação p/ futuras ocorrências da série: aplica o MESMO delta de
-  // tempo em todas as aulas com mesmo series_id cujo start_datetime >= esta.
-  // Sala/professor são aplicados como valores absolutos (todas viram o
-  // mesmo). Conflito de sala é checado por ocorrência.
+  // "Esta aula e as próximas", como no Google Agenda: cada aula seguinte da
+  // série anda o mesmo número de dias que esta e passa a ter o horário e a
+  // duração novos. Não usa a diferença de horário desta aula, que pode já ter
+  // sido remarcada sozinha antes. Sala/professor viram o mesmo valor em todas.
+  // Conflito de sala é checado por ocorrência.
   if (d.apply === 'future' && lesson.series_id) {
-    const startDeltaMs = update.start_datetime ? new Date(update.start_datetime).getTime() - new Date(lesson.start_datetime).getTime() : 0
-    const endDeltaMs = update.end_datetime ? new Date(update.end_datetime).getTime() - new Date(lesson.end_datetime).getTime() : 0
+    const timeChanged = Boolean(update.start_datetime || update.end_datetime)
+    const dayDelta = diffInBRDays(dateInBR(new Date(lesson.start_datetime)), dateInBR(new Date(nextStart)))
+    const newStartTime = update.start_datetime ? timeInBR(new Date(nextStart)) : null
+    const durationMs = new Date(nextEnd).getTime() - new Date(nextStart).getTime()
+    const shifted = (s: { start_datetime: string; end_datetime: string }) => {
+      if (!timeChanged) return { start: s.start_datetime, end: s.end_datetime }
+      const day = addDaysToBRDate(dateInBR(new Date(s.start_datetime)), dayDelta)
+      const start = new Date(localBrToServerISO(`${day}T${newStartTime ?? timeInBR(new Date(s.start_datetime))}`))
+      return { start: start.toISOString(), end: new Date(start.getTime() + durationMs).toISOString() }
+    }
 
     const { data: siblings } = await supabase
       .from('lessons')
@@ -325,10 +334,9 @@ export async function updateLessonSchedule(
     // Pré-checa conflito de sala em todas as futuras (com horário novo).
     if (nextRoom) {
       for (const s of siblings ?? []) {
-        const newStart = new Date(new Date(s.start_datetime).getTime() + startDeltaMs).toISOString()
-        const newEnd = new Date(new Date(s.end_datetime).getTime() + endDeltaMs).toISOString()
+        const { start: newStart, end: newEnd } = shifted(s)
         if (await roomHasConflict(supabase, nextRoom, newStart, newEnd, s.id)) {
-          const when = new Date(newStart).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          const when = new Date(newStart).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' })
           return { ok: false, fieldErrors: { roomId: `Conflito de sala em ${when}.` } }
         }
       }
@@ -338,8 +346,11 @@ export async function updateLessonSchedule(
     // tem horário próprio + delta). Lote de UPDATEs.
     for (const s of siblings ?? []) {
       const sibUpdate: LessonUpdate = { ...update }
-      if (update.start_datetime) sibUpdate.start_datetime = new Date(new Date(s.start_datetime).getTime() + startDeltaMs).toISOString()
-      if (update.end_datetime) sibUpdate.end_datetime = new Date(new Date(s.end_datetime).getTime() + endDeltaMs).toISOString()
+      if (timeChanged) {
+        const { start, end } = shifted(s)
+        sibUpdate.start_datetime = start
+        sibUpdate.end_datetime = end
+      }
       await supabase.from('lessons').update(sibUpdate).eq('id', s.id).eq('school_id', me.schoolId)
     }
   } else {
