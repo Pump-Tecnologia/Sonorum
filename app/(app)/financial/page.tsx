@@ -2,28 +2,41 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
+import { CopyButton } from '@/components/cobrancas/CopyButton'
+import { LockedFeatureCard } from '@/components/billing/LockedFeatureCard'
+import { Avatar } from '@/components/ds/Avatar'
+import { IconChevronLeft, IconChevronRight } from '@/components/ds/icons'
+import { MoreMenu } from '@/components/ds/MoreMenu'
+import dsStyles from '@/components/ds/ds.module.css'
 import { ChargeCreator, type StudentPlanOption } from '@/components/financial/ChargeCreator'
 import { ChargeStatusForm } from '@/components/financial/ChargeStatusForm'
-import { MonthPicker } from '@/components/financial/MonthPicker'
-import { CopyButton } from '@/components/cobrancas/CopyButton'
+import styles from '@/components/financial/financial.module.css'
 import { WhatsAppNotifyButton } from '@/components/notifications/WhatsAppNotifyButton'
 import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
-import { StatCard } from '@/components/ui/StatCard'
-import { Card } from '@/components/ui/Card'
-import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
-import { LockedFeatureCard } from '@/components/billing/LockedFeatureCard'
+import { generateMonthlyCharges } from '@/lib/actions/charges'
+import { notifyCharge } from '@/lib/actions/notifications'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
-import { monthRange } from '@/lib/format'
+import { instrumentTone } from '@/lib/constants/instrument-tone'
 import { effectiveChargeStatus } from '@/lib/finance'
+import { monthRange } from '@/lib/format'
 import { waLink } from '@/lib/notifications/whatsapp'
 import { appBaseUrl } from '@/lib/payments'
 import { createClient } from '@/lib/supabase/server'
 import { dateInBR } from '@/lib/timezone'
-import { generateMonthlyCharges } from '@/lib/actions/charges'
-import { notifyCharge } from '@/lib/actions/notifications'
 
 export const metadata = { title: 'Financeiro' }
+
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/
+
+// Mês vizinho no formato YYYY-MM (delta = -1 anterior, +1 próximo).
+function shiftMonth(month: string, delta: number): string {
+  const [y, m] = month.split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1 + delta, 15))
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+const dayMonth = (ymd: string) => new Date(`${ymd}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 
 export default async function FinancialPage({
   searchParams,
@@ -64,16 +77,17 @@ export default async function FinancialPage({
   const { month: monthParam } = await searchParams
   const today = new Date()
   const currentMonth = dateInBR(today).slice(0, 7)
-  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam ?? '') ? monthParam! : currentMonth
+  const month = MONTH_RE.test(monthParam ?? '') ? monthParam! : currentMonth
   // Meio-dia UTC evita que o date-only seja interpretado como mês anterior em BRT.
   const range = monthRange(new Date(`${month}-15T12:00:00Z`))
   const base = appBaseUrl()
+  const monthTitle = new Date(`${month}-15T12:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', month: 'long', year: 'numeric' })
 
   const supabase = await createClient()
 
   const [{ data: school }, { data: studentRows }, { data: enrollRows }, { data: chargeRows }, { data: openRows }] = await Promise.all([
     supabase.from('schools').select('pix_key').eq('id', schoolId).maybeSingle(),
-    supabase.from('users').select('id, name, phone').eq('school_id', schoolId).eq('role', 'student').order('name'),
+    supabase.from('users').select('id, name, phone, instrument').eq('school_id', schoolId).eq('role', 'student').order('name'),
     supabase
       .from('enrollments')
       .select('student_id, custom_amount, plan:plans(name, amount, billing_type)')
@@ -95,10 +109,11 @@ export default async function FinancialPage({
 
   const hasPix = Boolean(school?.pix_key)
 
-  // Mapas auxiliares: nome/telefone do aluno + plano ativo (p/ o criador).
-  const students = (studentRows ?? []) as { id: string; name: string; phone: string | null }[]
+  // Mapas auxiliares: nome/telefone/instrumento do aluno + plano ativo (p/ o criador).
+  const students = (studentRows ?? []) as { id: string; name: string; phone: string | null; instrument: unknown }[]
   const studentName = new Map(students.map((s) => [s.id, s.name]))
   const studentPhone = new Map(students.map((s) => [s.id, s.phone]))
+  const studentTone = new Map(students.map((s) => [s.id, instrumentTone(s.instrument)]))
 
   type EnrollRow = { student_id: string; custom_amount: number | null; plan: { name: string; amount: number; billing_type: string } | null }
   const planByStudent = new Map<string, { name: string; billingType: string; unit: number }>()
@@ -150,164 +165,152 @@ export default async function FinancialPage({
   const dueDefault = `${month}-${String(Math.min(10, new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate())).padStart(2, '0')}`
 
   return (
-    <>
-      <PageHeader
-        title="Financeiro"
-        subtitle={new Date(`${month}-15T12:00:00Z`).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', month: 'long', year: 'numeric' })}
-        action={
-          <div className="flex items-center gap-3">
-            <FinanceToggle />
-            <MonthPicker month={month} />
-          </div>
-        }
-      />
+    <section className={styles.page} aria-labelledby="financial-title">
+      <header className={styles.header}>
+        <div>
+          <h1 id="financial-title" className={styles.kicker}>Financeiro</h1>
+          <p className={styles.title} aria-live="polite">{monthTitle}</p>
+        </div>
+        <nav className={styles.headerActions} aria-label="Mês">
+          <Link href={`/financial?month=${shiftMonth(month, -1)}`} className={styles.stepButton} aria-label="Mês anterior" title="Mês anterior"><IconChevronLeft /></Link>
+          <Link href={`/financial?month=${shiftMonth(month, 1)}`} className={styles.stepButton} aria-label="Próximo mês" title="Próximo mês"><IconChevronRight /></Link>
+          <Link href="/financial" className={styles.todayLink} aria-disabled={month === currentMonth || undefined}>Mês atual</Link>
+          <FinanceToggle className={styles.eyeButton} />
+        </nav>
+      </header>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Pago" value={<MoneyValue value={paid} />} />
-        <StatCard label="Pendente" value={<MoneyValue value={pending} />} />
-        <StatCard label="Atrasado" value={<MoneyValue value={overdue} />} />
+      <div className={styles.stats}>
+        <div className={`${styles.stat} ${styles.statPaid}`}>
+          <p className={styles.statLabel}>Recebido</p>
+          <p className={styles.statValue}><MoneyValue value={paid} /></p>
+        </div>
+        <div className={`${styles.stat} ${styles.statPending}`}>
+          <p className={styles.statLabel}>A receber</p>
+          <p className={styles.statValue}><MoneyValue value={pending} /></p>
+        </div>
+        <div className={`${styles.stat} ${styles.statOverdue}`}>
+          <p className={styles.statLabel}>Em atraso</p>
+          <p className={styles.statValue}><MoneyValue value={overdue} /></p>
+        </div>
       </div>
 
-      <Card className="mb-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-ink">Nova cobrança</h2>
-          <form action={generateMonthlyCharges}>
-            <input type="hidden" name="month" value={month} />
-            <button type="submit" className="text-sm text-ink-muted hover:text-brand-600">
-              Gerar do mês inteiro (todos os planos) →
-            </button>
-          </form>
-        </div>
-        {!hasPix && (
-          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            Configure sua chave PIX em{' '}
-            <Link href="/admin/settings" className="font-semibold underline">Configurações</Link>{' '}
-            para gerar o link de pagamento das cobranças.
-          </p>
-        )}
-        <ChargeCreator students={studentOptions} defaultDue={dueDefault} />
-      </Card>
+      <div className={styles.grid}>
+        {/* Cobranças do mês */}
+        <section className={styles.panel} aria-labelledby="charges-title">
+          <div className={styles.panelHead}>
+            <h2 id="charges-title" className={styles.panelTitle}>Cobranças do mês</h2>
+            {charges.length > 0 && <p className={styles.panelHint}>{charges.length} {charges.length === 1 ? 'cobrança' : 'cobranças'}</p>}
+          </div>
 
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Aluno</Th>
-            <Th>Plano / descrição</Th>
-            <Th>Vencimento</Th>
-            <Th>Valor</Th>
-            <Th>Status</Th>
-            <Th className="text-right">Cobrar</Th>
-          </Tr>
-        </Thead>
-        <tbody>
-          {charges.length === 0 && <EmptyRow colSpan={6}>Nenhuma cobrança neste mês.</EmptyRow>}
-          {charges.map((c) => {
-            const sid = c.student_id ?? c.enrollment?.student_id ?? null
-            const name = c.enrollment?.student?.name ?? (sid ? studentName.get(sid) : null) ?? '—'
-            const planOrDesc = c.enrollment?.plan?.name ?? c.description ?? '—'
-            const eff = effectiveChargeStatus(c.status, c.due_date, today)
-            const payUrl = `${base}/pagar/${c.id}`
-            const dueLabel = new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR')
-            const phone = sid ? studentPhone.get(sid) : null
-            const waMsg = `Olá ${name}! Cobrança de ${planOrDesc}, vence em ${dueLabel}. Pague pelo PIX: ${payUrl}`
-            const waUrl = waLink(phone, waMsg)
-            const payable = c.status !== 'paid' && c.status !== 'cancelled'
-            return (
-              <Tr key={c.id}>
-                <Td className="font-medium">{name}</Td>
-                <Td className="text-ink-muted">{planOrDesc}</Td>
-                <Td className="text-ink-muted">{dueLabel}</Td>
-                <Td className="font-semibold">
-                  {c.status === 'paid' && c.paid_amount != null ? (
-                    <MoneyValue value={Number(c.paid_amount)} />
-                  ) : (
-                    <>
-                      <MoneyValue value={Number(c.amount)} />
-                      {c.early_pay_amount != null && (
-                        <span className="ml-1 block text-xs font-normal text-accent-700">
-                          <MoneyValue value={Number(c.early_pay_amount)} /> até o venc.
+          {charges.length === 0 ? (
+            <p className={styles.empty}>Nenhuma cobrança neste mês.</p>
+          ) : (
+            <ul className={styles.list}>
+              {charges.map((c) => {
+                const sid = c.student_id ?? c.enrollment?.student_id ?? null
+                const name = c.enrollment?.student?.name ?? (sid ? studentName.get(sid) : null) ?? '—'
+                const planOrDesc = c.enrollment?.plan?.name ?? c.description ?? 'Cobrança'
+                const eff = effectiveChargeStatus(c.status, c.due_date, today)
+                const payUrl = `${base}/pagar/${c.id}`
+                const dueLabel = new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR')
+                const phone = sid ? studentPhone.get(sid) : null
+                const waMsg = `Olá ${name}! Cobrança de ${planOrDesc}, vence em ${dueLabel}. Pague pelo PIX: ${payUrl}`
+                const waUrl = waLink(phone, waMsg)
+                const payable = c.status !== 'paid' && c.status !== 'cancelled'
+                const showMenu = payable && hasPix
+                return (
+                  <li key={c.id} className={styles.charge}>
+                    <div className={styles.who}>
+                      <Avatar name={name} tone={sid ? studentTone.get(sid) : undefined} />
+                      <div className={styles.whoText}>
+                        <span className={styles.name}>
+                          {sid ? <Link href={`/admin/students/${sid}`} className={styles.nameLink}>{name}</Link> : name}
                         </span>
+                        <span className={styles.meta}>{planOrDesc} · vence {dayMonth(c.due_date)}</span>
+                      </div>
+                    </div>
+                    <div className={styles.money}>
+                      <span className={styles.amount}>
+                        <MoneyValue value={c.status === 'paid' && c.paid_amount != null ? Number(c.paid_amount) : Number(c.amount)} />
+                      </span>
+                      {c.status !== 'paid' && c.early_pay_amount != null && (
+                        <span className={styles.early}><MoneyValue value={Number(c.early_pay_amount)} /> até o vencimento</span>
                       )}
-                    </>
-                  )}
-                </Td>
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <ChargeStatusForm chargeId={c.id} currentStatus={c.status} />
-                    {eff === 'overdue' && c.status === 'pending' && (
-                      <span className="text-xs font-semibold text-red-600">⚠ vencida</span>
-                    )}
-                  </div>
-                </Td>
-                <Td className="text-right">
-                  {payable && (
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      {hasPix && waUrl && (
-                        <a
-                          href={waUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
-                          title={`Enviar cobrança a ${name} no WhatsApp`}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.7 1.2 2.9.1.2 2 3 4.8 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.5-.3ZM12 3a9 9 0 0 0-7.6 13.7L3 21l4.5-1.2A9 9 0 1 0 12 3Zm0 16.3a7.3 7.3 0 0 1-3.7-1l-.3-.2-2.6.7.7-2.6-.2-.3a7.3 7.3 0 1 1 6.1 3.4Z" />
-                          </svg>
-                          WhatsApp
-                        </a>
-                      )}
-                      <WhatsAppNotifyButton
-                        action={notifyCharge}
-                        hidden={{ chargeId: c.id, kind: eff === 'overdue' ? 'charge.overdue' : 'charge.due_soon' }}
-                        label="Lembrar"
-                      />
-                      {hasPix && (
-                        <CopyButton
-                          value={payUrl}
-                          label="Copiar PIX"
-                          className="rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300"
+                      <ChargeStatusForm chargeId={c.id} currentStatus={eff === 'overdue' && c.status === 'pending' ? 'overdue' : c.status} />
+                    </div>
+                    <div className={styles.actions}>
+                      {payable && (
+                        <WhatsAppNotifyButton
+                          action={notifyCharge}
+                          hidden={{ chargeId: c.id, kind: eff === 'overdue' ? 'charge.overdue' : 'charge.due_soon' }}
+                          label="Lembrar"
+                          title="Envia o lembrete por e-mail e WhatsApp"
+                          className={styles.remind}
                         />
                       )}
+                      {showMenu && (
+                        <MoreMenu label={`Mais ações para a cobrança de ${name}`}>
+                          {waUrl && (
+                            <a href={waUrl} target="_blank" rel="noopener noreferrer" className={styles.menuLink}>Enviar no WhatsApp</a>
+                          )}
+                          <CopyButton value={payUrl} label="Copiar link de pagamento" className={dsStyles.menuItem} />
+                        </MoreMenu>
+                      )}
                     </div>
-                  )}
-                </Td>
-              </Tr>
-            )
-          })}
-        </tbody>
-      </Table>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
 
-      <section className="mt-10">
-        <div className="mb-3 flex items-baseline justify-between gap-3">
-          <h2 className="text-base font-semibold text-ink">
-            Inadimplência <span className="text-sm font-normal text-ink-muted">(em aberto, todos os meses)</span>
-          </h2>
-          <span className="text-sm font-bold text-red-600"><MoneyValue value={overdueTotal} /></span>
+        <div className={styles.side}>
+          {/* Nova cobrança */}
+          <section className={styles.panel} aria-labelledby="new-charge-title">
+            <div className={styles.panelHead}>
+              <h2 id="new-charge-title" className={styles.panelTitle}>Nova cobrança</h2>
+              <form action={generateMonthlyCharges}>
+                <input type="hidden" name="month" value={month} />
+                <button type="submit" className={styles.bulk} title="Gera as cobranças do mês para todos os alunos com plano">Gerar o mês inteiro</button>
+              </form>
+            </div>
+            {!hasPix && (
+              <p className={`${styles.warn} ${styles.spaced}`}>
+                Cadastre a chave Pix em <Link href="/admin/settings">Configurações</Link> para as cobranças terem link de pagamento.
+              </p>
+            )}
+            <ChargeCreator students={studentOptions} defaultDue={dueDefault} />
+          </section>
+
+          {/* Em atraso (todos os meses) */}
+          <section className={styles.panel} aria-labelledby="debtors-title">
+            <div className={styles.panelHead}>
+              <h2 id="debtors-title" className={styles.panelTitle}>Em atraso</h2>
+              {debtors.length > 0 && <span className={styles.debtTotal}><MoneyValue value={overdueTotal} /></span>}
+            </div>
+            {debtors.length === 0 ? (
+              <p className={styles.empty}>Ninguém em atraso.</p>
+            ) : (
+              <div>
+                {debtors.map((d) => (
+                  <div key={d.id} className={styles.debtor}>
+                    <div className={styles.who}>
+                      <Avatar name={d.name} tone={studentTone.get(d.id)} />
+                      <div className={styles.whoText}>
+                        <Link href={`/admin/students/${d.id}`} className={`${styles.name} ${styles.nameLink}`}>{d.name}</Link>
+                        <span className={styles.meta}>
+                          {d.count} {d.count === 1 ? 'cobrança' : 'cobranças'} · desde {dayMonth(d.oldest)}
+                        </span>
+                      </div>
+                    </div>
+                    <span className={styles.debtAmount}><MoneyValue value={d.total} /></span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
-        <Table>
-          <Thead>
-            <Tr>
-              <Th>Aluno</Th>
-              <Th>Cobranças vencidas</Th>
-              <Th>Mais antiga</Th>
-              <Th className="text-right">Total devido</Th>
-            </Tr>
-          </Thead>
-          <tbody>
-            {debtors.length === 0 && <EmptyRow colSpan={4}>Nenhum aluno em atraso. 🎉</EmptyRow>}
-            {debtors.map((d) => (
-              <Tr key={d.id}>
-                <Td className="font-medium">
-                  <Link href={`/admin/students/${d.id}`} className="text-brand-700 hover:underline">{d.name}</Link>
-                </Td>
-                <Td>{d.count}</Td>
-                <Td className="text-ink-muted">{new Date(d.oldest + 'T12:00:00').toLocaleDateString('pt-BR')}</Td>
-                <Td className="text-right font-semibold text-red-600"><MoneyValue value={d.total} /></Td>
-              </Tr>
-            ))}
-          </tbody>
-        </Table>
-      </section>
-    </>
+      </div>
+    </section>
   )
 }

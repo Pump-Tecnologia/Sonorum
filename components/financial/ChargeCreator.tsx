@@ -2,8 +2,9 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
-import { Field, Input } from '@/components/ui/Field'
+import { SubmitButton } from '@/components/ds/Button'
+import { Field, FieldRow, Input, Select } from '@/components/ds/Field'
+import styles from '@/components/financial/financial.module.css'
 import { createCharge, type CreateChargeState } from '@/lib/actions/charges'
 import { formatBRL } from '@/lib/format'
 
@@ -18,13 +19,12 @@ const initial: CreateChargeState = { ok: false }
 
 function billingLabel(p: { billingType: string; unit: number }): string {
   return p.billingType === 'per_class'
-    ? `Por aula · ${formatBRL(p.unit)}/aula × aulas do mês`
-    : `Mensalidade · ${formatBRL(p.unit)}/mês`
+    ? `Por aula: ${formatBRL(p.unit)} × aulas do mês`
+    : `Mensalidade: ${formatBRL(p.unit)} por mês`
 }
 
 // Criação de cobrança plano-primeiro: ao escolher o aluno, traz o tipo de
-// cobrança do plano dele. "Cobrança avulsa" (checkbox) sobrescreve com valor
-// e descrição manuais.
+// cobrança do plano dele. "Cobrança avulsa" sobrescreve com valor e descrição.
 export function ChargeCreator({ students, defaultDue }: { students: StudentPlanOption[]; defaultDue: string }) {
   const [state, action] = useActionState(createCharge, initial)
   const [studentId, setStudentId] = useState('')
@@ -45,7 +45,7 @@ export function ChargeCreator({ students, defaultDue }: { students: StudentPlanO
   const selected = students.find((s) => s.id === studentId) ?? null
 
   if (students.length === 0) {
-    return <p className="text-sm text-ink-muted">Cadastre um aluno primeiro para gerar cobranças.</p>
+    return <p className={styles.empty}>Cadastre um aluno primeiro para gerar cobranças.</p>
   }
 
   return (
@@ -55,79 +55,55 @@ export function ChargeCreator({ students, defaultDue }: { students: StudentPlanO
       onReset={(event) => {
         if (!state.ok) event.preventDefault()
       }}
-      className="space-y-4"
+      className={styles.creator}
     >
-      {state.ok && (
-        <p className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-medium text-accent-800">
-          Cobrança gerada! Veja na lista do mês abaixo.
-        </p>
-      )}
-      {state.error && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{state.error}</p>
-      )}
+      {state.ok && <p className={styles.ok} role="status">Cobrança criada. Ela já aparece na lista do mês.</p>}
+      {state.error && <p className={styles.warn} role="alert">{state.error}</p>}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Aluno" htmlFor="studentId" error={fe.studentId}>
-          <select
-            id="studentId"
-            name="studentId"
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-            required
-            className="w-full rounded-lg border border-hairline bg-surface px-3 py-2 text-sm"
-          >
-            <option value="" disabled>Selecione…</option>
-            {students.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-        </Field>
+      <Field label="Aluno" htmlFor="studentId" error={fe.studentId}>
+        <Select id="studentId" name="studentId" value={studentId} onChange={(e) => setStudentId(e.target.value)} required invalid={!!fe.studentId}>
+          <option value="" disabled>Selecione…</option>
+          {students.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </Select>
+      </Field>
 
-        <Field label="Vencimento" htmlFor="dueDate" error={fe.dueDate}>
-          <Input id="dueDate" name="dueDate" type="date" defaultValue={defaultDue} required />
-        </Field>
-      </div>
+      <Field label="Vencimento" htmlFor="dueDate" error={fe.dueDate}>
+        <Input id="dueDate" name="dueDate" type="date" defaultValue={defaultDue} required invalid={!!fe.dueDate} />
+      </Field>
 
       {/* Resumo do plano (cobrança padrão) quando NÃO é avulsa */}
       {!avulsa && selected && (
         selected.plan ? (
-          <div className="rounded-xl border border-brand-200 bg-brand-50/50 p-3 text-sm">
-            <span className="font-medium text-ink">Plano {selected.plan.name}</span>
-            <span className="block text-ink-muted">{billingLabel(selected.plan)}</span>
-          </div>
+          <p className={styles.planNote}><strong>Plano {selected.plan.name}</strong>{billingLabel(selected.plan)}</p>
         ) : (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            Este aluno não tem matrícula ativa. Marque <strong>Cobrança avulsa</strong> abaixo ou matricule-o em um plano.
-          </div>
+          <p className={styles.warn}>Este aluno não tem matrícula ativa. Marque “Cobrança avulsa” ou matricule-o num plano.</p>
         )
       )}
 
-      <label className="flex items-start gap-2.5 rounded-xl border border-hairline bg-surface-muted/30 p-3 text-sm">
-        <input
-          type="checkbox"
-          name="avulsa"
-          checked={avulsa}
-          onChange={(e) => setAvulsa(e.target.checked)}
-          className="mt-0.5 h-4 w-4 accent-brand-600"
-        />
+      <label className={styles.toggle}>
+        <input type="checkbox" name="avulsa" checked={avulsa} onChange={(e) => setAvulsa(e.target.checked)} />
         <span>
-          <span className="font-medium text-ink">Cobrança avulsa</span>
-          <span className="block text-xs text-ink-muted">Valor e descrição manuais, sem usar o plano do aluno.</span>
+          Cobrança avulsa
+          <small>Valor e descrição à mão, sem usar o plano do aluno.</small>
         </span>
       </label>
 
       {avulsa && (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <FieldRow>
           <Field label="Valor (R$)" htmlFor="amount" error={fe.amount}>
-            <Input id="amount" name="amount" type="number" step="0.01" min="0.01" placeholder="0,00" required={avulsa} />
+            <Input id="amount" name="amount" type="number" step="0.01" min="0.01" inputMode="decimal" placeholder="0,00" required={avulsa} invalid={!!fe.amount} />
           </Field>
-          <Field label="Descrição (opcional)" htmlFor="description" error={fe.description}>
-            <Input id="description" name="description" placeholder="Ex.: Material didático" maxLength={120} />
+          <Field label="Descrição" htmlFor="description" error={fe.description} hint="Opcional">
+            <Input id="description" name="description" placeholder="Ex.: Material" maxLength={120} />
           </Field>
-        </div>
+        </FieldRow>
       )}
 
-      <SubmitButton pendingLabel="Gerando…">Gerar cobrança</SubmitButton>
+      <div>
+        <SubmitButton pendingLabel="Criando…">Criar cobrança</SubmitButton>
+      </div>
     </form>
   )
 }

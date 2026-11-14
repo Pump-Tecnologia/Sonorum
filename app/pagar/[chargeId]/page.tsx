@@ -1,4 +1,5 @@
 import { CopyButton } from '@/components/cobrancas/CopyButton'
+import styles from '@/components/financial/financial.module.css'
 import { amountForPayment } from '@/lib/finance'
 import { formatBRL } from '@/lib/format'
 import { buildPixPayload } from '@/lib/payments/pix'
@@ -21,7 +22,7 @@ export default async function PagarPage({
 
   const { data: charge } = await admin
     .from('charges')
-    .select('id, amount, early_pay_amount, paid_amount, due_date, status, description, school_id, student_id, enrollment:enrollments(student_id)')
+    .select('id, amount, early_pay_amount, paid_amount, due_date, status, description, school_id, student_id, enrollment:enrollments(student_id, plan:plans(name))')
     .eq('id', chargeId)
     .maybeSingle()
 
@@ -43,7 +44,7 @@ export default async function PagarPage({
     )
   }
 
-  const enr = charge.enrollment as { student_id: string } | null
+  const enr = charge.enrollment as { student_id: string; plan: { name: string } | null } | null
   const studentId = charge.student_id ?? enr?.student_id ?? null
   let studentName = ''
   if (studentId) {
@@ -58,7 +59,8 @@ export default async function PagarPage({
     return (
       <PagarShell schoolName={schoolName}>
         <Message
-          title="Pagamento confirmado ✓"
+          done
+          title="Pagamento confirmado"
           body={`Esta cobrança${studentName ? ` de ${studentName}` : ''} já consta como paga. Obrigado!`}
         />
       </PagarShell>
@@ -93,52 +95,52 @@ export default async function PagarPage({
 
   return (
     <PagarShell schoolName={schoolName}>
-      <div className="text-center">
-        <p className="text-sm text-ink-muted">{charge.description || 'Cobrança'}</p>
-        {studentName && <p className="mt-1 text-sm text-ink-muted">Aluno: {studentName}</p>}
-        <p className="mt-4 text-4xl font-bold text-ink">{formatBRL(amount)}</p>
-        <p className="mt-1 text-sm text-ink-muted">Vencimento: {dueLabel}</p>
+      <p className={styles.payWhat}>{charge.description || enr?.plan?.name || 'Mensalidade'}{studentName ? ` · ${studentName}` : ''}</p>
+      <p className={styles.payAmount}>{formatBRL(amount)}</p>
+      <span className={styles.payDue}>Vence em {dueLabel}</span>
+
+      <div className={styles.qr} dangerouslySetInnerHTML={{ __html: qrSvg }} role="img" aria-label="QR Code Pix" />
+
+      <p className={styles.copyLabel}>Ou use o Pix copia e cola</p>
+      <div className={styles.copyRow}>
+        <p className={styles.copyCode}>{payload}</p>
+        <CopyButton value={payload} label="Copiar" className={styles.copyButton} />
       </div>
 
-      <div className="mx-auto mt-6 w-[240px]" dangerouslySetInnerHTML={{ __html: qrSvg }} aria-label="QR Code PIX" />
+      <ol className={styles.steps}>
+        <li>Abra o app do seu banco e entre em Pix.</li>
+        <li>Leia o QR Code ou cole o código copiado.</li>
+        <li>Confira o valor e confirme.</li>
+      </ol>
 
-      <p className="mt-4 text-center text-xs font-medium uppercase tracking-wide text-ink-muted">
-        PIX copia e cola
-      </p>
-      <p className="mt-2 break-all rounded-lg border border-hairline bg-surface-muted/40 p-3 text-center font-mono text-[11px] leading-relaxed text-ink">
-        {payload}
-      </p>
-
-      <div className="mt-4 flex justify-center">
-        <CopyButton value={payload} label="Copiar código PIX" />
-      </div>
-
-      <p className="mt-6 text-center text-xs text-ink-muted">
-        Abra o app do seu banco → PIX → Pix Copia e Cola, cole o código e confirme. O pagamento vai
-        direto para {schoolName}.
-      </p>
+      <p className={styles.payFoot}>O pagamento vai direto para {schoolName}.</p>
     </PagarShell>
   )
 }
 
 function PagarShell({ children, schoolName }: { children: React.ReactNode; schoolName?: string }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-surface-muted px-4 py-10">
-      <div className="w-full max-w-md rounded-3xl border border-hairline bg-surface p-8 shadow-sm">
-        {schoolName && (
-          <p className="mb-6 text-center text-base font-semibold text-brand-700">{schoolName}</p>
-        )}
+    <main className={styles.payStage}>
+      <div className={styles.payCard}>
+        {schoolName && <p className={styles.paySchool}>{schoolName}</p>}
         {children}
       </div>
     </main>
   )
 }
 
-function Message({ title, body }: { title: string; body: string }) {
+function Message({ title, body, done = false }: { title: string; body: string; done?: boolean }) {
   return (
-    <div className="text-center">
-      <h1 className="text-lg font-semibold text-ink">{title}</h1>
-      <p className="mt-2 text-sm text-ink-muted">{body}</p>
+    <div>
+      <span className={styles.payIcon} aria-hidden="true">
+        {done ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 8v4.5M12 15.8v.2" /></svg>
+        )}
+      </span>
+      <h1 className={styles.payMessageTitle}>{title}</h1>
+      <p className={styles.payMessageBody}>{body}</p>
     </div>
   )
 }

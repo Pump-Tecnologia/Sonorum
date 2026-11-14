@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 
+import styles from '@/components/financial/financial.module.css'
 import { updateChargeStatus } from '@/lib/actions/charges'
 import { PAYMENT_METHODS } from '@/lib/finance'
 
 interface Props {
   chargeId: string
+  /** Status efetivo (uma pendente vencida já chega como "overdue"). */
   currentStatus: string
 }
 
@@ -18,29 +20,31 @@ const STATUS_OPTS = [
 ]
 
 const TONE: Record<string, string> = {
-  pending: 'text-amber-700',
-  paid: 'text-accent-700',
-  overdue: 'text-red-700',
-  cancelled: 'text-ink-muted',
+  pending: styles['status-pending'],
+  paid: styles['status-paid'],
+  overdue: styles['status-overdue'],
+  cancelled: styles['status-cancelled'],
 }
 
+// Pílula de status que também troca o status: "Pago" pede o método antes de
+// enviar; os demais enviam na hora.
 export function ChargeStatusForm({ chargeId, currentStatus }: Props) {
   const [status, setStatus] = useState(currentStatus)
-  const showMethod = status === 'paid'
+  const showMethod = status === 'paid' && currentStatus !== 'paid'
 
   return (
-    <form action={updateChargeStatus} className="flex items-center gap-2">
+    <form action={updateChargeStatus} className={styles.statusPick}>
       <input type="hidden" name="chargeId" value={chargeId} />
       <select
         name="status"
         value={status}
+        aria-label="Status da cobrança"
         onChange={(e) => {
           const next = e.target.value
           setStatus(next)
-          // 'Pago' espera o método antes de enviar; os demais submetem na hora.
           if (next !== 'paid') e.currentTarget.form?.requestSubmit()
         }}
-        className={`rounded-lg border border-hairline bg-surface px-2 py-1 text-xs font-semibold ${TONE[status] ?? ''}`}
+        className={`${styles.statusSelect} ${TONE[status] ?? ''}`}
       >
         {STATUS_OPTS.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -49,21 +53,12 @@ export function ChargeStatusForm({ chargeId, currentStatus }: Props) {
 
       {showMethod && (
         <>
-          <select
-            name="paymentMethod"
-            defaultValue={PAYMENT_METHODS[0]}
-            className="rounded-lg border border-hairline bg-surface px-2 py-1 text-xs"
-          >
+          <select name="paymentMethod" defaultValue={PAYMENT_METHODS[0]} aria-label="Forma de pagamento" className={styles.methodSelect}>
             {PAYMENT_METHODS.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
-          <button
-            type="submit"
-            className="rounded-lg bg-accent-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-accent-700"
-          >
-            Confirmar
-          </button>
+          <button type="submit" className={styles.confirm}>Confirmar</button>
         </>
       )}
     </form>
