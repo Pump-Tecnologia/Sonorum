@@ -138,14 +138,14 @@ export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum'
         <button
           type="button"
           onClick={mobile ? closeMobile : toggle}
-          className={styles.collapseBtn}
+          className={mobile ? styles.mobileCloseBtn : styles.collapseBtn}
           aria-label={mobile ? 'Fechar menu' : compact ? 'Expandir menu' : 'Recolher menu'}
           title={mobile ? 'Fechar menu' : compact ? 'Expandir menu' : 'Recolher menu'}
           aria-expanded={mobile ? undefined : !compact}
         >
           <svg
-            width="18"
-            height="18"
+            width={mobile ? 18 : 14}
+            height={mobile ? 18 : 14}
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
