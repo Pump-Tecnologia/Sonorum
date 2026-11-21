@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { requireCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getStudentLessonTeachers } from '@/lib/data/student-lesson-teachers'
 import { studentLessonFilters } from '@/lib/queries/student-lesson-filters'
 
 export const metadata = { title: 'Minha agenda' }
@@ -16,7 +17,7 @@ export default async function StudentSchedulePage() {
   const now = new Date().toISOString()
   const filters = studentLessonFilters(now)
 
-  const [upcomingRes, historyRes] = await Promise.all([
+  const [upcomingRes, historyRes, teachers] = await Promise.all([
     supabase
       .from('lessons')
       .select('id, title, start_datetime, end_datetime, status, users!lessons_teacher_id_fkey(name)')
@@ -32,9 +33,9 @@ export default async function StudentSchedulePage() {
       .neq('status', 'in_progress')
       .order('start_datetime', { ascending: false })
       .limit(20),
+    getStudentLessonTeachers(supabase),
   ])
 
-  type TeacherRow = { name: string }
   const upcoming = upcomingRes.data ?? []
   const history = historyRes.data ?? []
 
@@ -60,7 +61,7 @@ export default async function StudentSchedulePage() {
                           weekday: 'short', day: '2-digit', month: 'short',
                           hour: '2-digit', minute: '2-digit',
                         })}
-                        {(l.users as TeacherRow | null)?.name && ` · ${(l.users as TeacherRow).name}`}
+                        {teachers.get(l.id) && ` com ${teachers.get(l.id)}`}
                       </p>
                     </div>
                     <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
@@ -88,7 +89,7 @@ export default async function StudentSchedulePage() {
                       })}
                     </p>
                     <p className="mt-1 break-words text-sm text-ink-muted">
-                      Professor: {(l.users as TeacherRow | null)?.name ?? '—'}
+                      Professor: {teachers.get(l.id) ?? '—'}
                     </p>
                     <div className="mt-4 flex items-center justify-between gap-3">
                       <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
@@ -121,7 +122,7 @@ export default async function StudentSchedulePage() {
                       })}
                     </span>
                   </Td>
-                  <Td className="text-ink-muted">{(l.users as TeacherRow | null)?.name ?? '—'}</Td>
+                  <Td className="text-ink-muted">{teachers.get(l.id) ?? '—'}</Td>
                   <Td>
                     <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
                   </Td>

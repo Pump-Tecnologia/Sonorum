@@ -6,6 +6,7 @@ import { lessonStatus } from '@/lib/constants/lessons'
 import { toggleGoal } from '@/lib/actions/student-detail'
 import { requireCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
+import { getStudentLessonTeachers } from '@/lib/data/student-lesson-teachers'
 import { studentLessonFilters } from '@/lib/queries/student-lesson-filters'
 
 export const metadata = { title: 'Dashboard' }
@@ -16,7 +17,7 @@ export default async function StudentDashboard() {
   const now = new Date().toISOString()
   const filters = studentLessonFilters(now)
 
-  const [nextRes, lastRes, goalsRes] = await Promise.all([
+  const [nextRes, lastRes, goalsRes, teachers] = await Promise.all([
     supabase
       .from('lessons')
       .select('id, title, start_datetime, end_datetime, status, users!lessons_teacher_id_fkey(name)')
@@ -40,12 +41,12 @@ export default async function StudentDashboard() {
       .select('id, text, completed')
       .eq('student_id', user.id)
       .order('created_at', { ascending: false }),
+    getStudentLessonTeachers(supabase),
   ])
 
   const nextLesson = nextRes.data
   const lastLesson = lastRes.data
   const goals = goalsRes.data ?? []
-  type TeacherRow = { name: string }
 
   return (
     <>
@@ -65,9 +66,9 @@ export default async function StudentDashboard() {
                   hour: '2-digit', minute: '2-digit',
                 })}
               </p>
-              {(nextLesson.users as TeacherRow | null)?.name && (
+              {teachers.get(nextLesson.id) && (
                 <p className="mt-1 text-sm text-ink-muted">
-                  Professor: {(nextLesson.users as TeacherRow).name}
+                  Professor: {teachers.get(nextLesson.id)}
                 </p>
               )}
             </div>

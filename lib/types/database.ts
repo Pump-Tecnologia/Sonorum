@@ -1385,6 +1385,7 @@ export type Database = {
     Functions: {
       save_lesson_plan: { Args: { p_lesson_id: string; p_goals: string | null; p_plan: Json }; Returns: boolean }
       get_lesson_private_notes: { Args: { p_lesson_id: string }; Returns: string | null }
+      student_lesson_teachers: { Args: never; Returns: { lesson_id: string; teacher_name: string }[] }
       current_school_id: { Args: never; Returns: string }
       current_user_role: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }

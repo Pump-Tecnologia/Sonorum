@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { Card } from '@/components/ui/Card'
 import { requireCurrentUser } from '@/lib/auth/session'
+import { getStudentLessonTeachers } from '@/lib/data/student-lesson-teachers'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Aula' }
@@ -36,8 +37,8 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
     .eq('lesson_id', id)
     .maybeSingle()
 
-  type TeacherRow = { name: string }
-  const teacher = lesson.users as TeacherRow | null
+  const teachers = await getStudentLessonTeachers(supabase)
+  const teacher = { name: teachers.get(id) }
   const room = lesson.room as { name: string } | null
 
   return (
