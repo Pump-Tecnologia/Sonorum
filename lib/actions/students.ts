@@ -10,6 +10,7 @@ import { effectivePlanFeatures } from '@/lib/auth/plan'
 import { isActiveTeacherOfSchool } from '@/lib/queries/teachers'
 import { sendCredentialsEmail } from '@/lib/notifications/credentials'
 import { createUserWithProfile, generatePassword } from '@/lib/users/admin'
+import { planLimitMessage, studentCount } from '@/lib/plan-limit-messages'
 
 const createStudentSchema = z.object({
   name: z.string().min(2, 'Informe o nome').max(255),
@@ -58,7 +59,7 @@ export async function createStudent(
     if ((count ?? 0) >= features.studentLimit) {
       return {
         ok: false,
-        error: `Limite de ${features.studentLimit} alunos atingido no plano ${features.label}. Faça upgrade para alunos ilimitados.`,
+        error: planLimitMessage(features.label, studentCount(features.studentLimit)),
       }
     }
   }

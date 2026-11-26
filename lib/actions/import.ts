@@ -8,6 +8,7 @@ import { sendCredentialsEmail } from '@/lib/notifications/credentials'
 import { rateLimit, RATE_LIMIT_MESSAGE } from '@/lib/security/rate-limit'
 import { createAdminClient } from '@/lib/supabase/server'
 import { createUserWithProfile, generatePassword } from '@/lib/users/admin'
+import { teacherCount } from '@/lib/plan-limit-messages'
 
 export type ImportState = {
   ok: boolean
@@ -130,7 +131,7 @@ export async function importTeachers(_prev: ImportState, formData: FormData): Pr
     if (!r.name || r.name.length < 2) { failures.push({ line: i + 1, value: r.name || '(vazio)', reason: 'nome inválido' }); continue }
     if (!EMAIL_RE.test(r.email)) { failures.push({ line: i + 1, value: r.email || r.name, reason: 'e-mail inválido' }); continue }
     if (created >= remaining) {
-      failures.push({ line: i + 1, value: r.email, reason: `limite de ${features.teacherLimit} professor(es) do plano ${features.label} atingido` })
+      failures.push({ line: i + 1, value: r.email, reason: `limite de ${teacherCount(features.teacherLimit)} do plano ${features.label} atingido` })
       continue
     }
 
@@ -147,7 +148,7 @@ export async function importTeachers(_prev: ImportState, formData: FormData): Pr
     if (teacherError) {
       await admin.auth.admin.deleteUser(res.userId)
       const reason = teacherError.message.includes('teacher_limit_reached')
-        ? `limite de ${features.teacherLimit} professor(es) do plano ${features.label} atingido`
+        ? `limite de ${teacherCount(features.teacherLimit)} do plano ${features.label} atingido`
         : 'falha ao criar perfil de professor'
       failures.push({ line: i + 1, value: r.email, reason })
       continue

@@ -60,7 +60,7 @@ export async function createUserWithProfile({
   if (profileError) {
     await admin.auth.admin.deleteUser(created.user.id)
     const error = profileError.message.includes('student_limit_reached')
-      ? 'Limite de alunos do plano atingido. Faça upgrade para adicionar mais alunos.'
+      ? 'O plano chegou ao limite de alunos. Veja os planos para cadastrar mais.'
       : 'Não foi possível finalizar o perfil do usuário.'
     return { ok: false, error }
   }

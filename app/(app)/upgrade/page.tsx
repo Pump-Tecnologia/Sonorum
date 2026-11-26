@@ -13,7 +13,7 @@ import { formatBRL } from '@/lib/format'
 import { dateInBR } from '@/lib/timezone'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata = { title: 'Planos' }
+export const metadata = { title: 'Planos do Sonorum' }
 
 const TRANSCRIPTION_LINE = 'Transcrição de cifra por IA'
 
