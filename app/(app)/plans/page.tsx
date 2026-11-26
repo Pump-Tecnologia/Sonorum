@@ -10,7 +10,7 @@ import { getPlanContext } from '@/lib/auth/plan'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 
-export const metadata = { title: 'Planos' }
+export const metadata = { title: 'Planos de mensalidade' }
 
 export default async function PlansPage() {
   const [user, plan] = await Promise.all([getCurrentUser(), getPlanContext()])

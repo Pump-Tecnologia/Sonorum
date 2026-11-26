@@ -8,6 +8,7 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { effectivePlanFeatures } from '@/lib/auth/plan'
 import { sendCredentialsEmail } from '@/lib/notifications/credentials'
 import { createUserWithProfile, generatePassword } from '@/lib/users/admin'
+import { planLimitMessage, teacherCount } from '@/lib/plan-limit-messages'
 
 const instrumentsSchema = z.object({ instruments: z.string().optional() })
 
@@ -66,7 +67,7 @@ export async function createTeacher(
     if ((count ?? 0) >= features.teacherLimit) {
       return {
         ok: false,
-        error: `Limite de ${features.teacherLimit} professor(es) no plano ${features.label}. Faça upgrade para professores ilimitados.`,
+        error: planLimitMessage(features.label, teacherCount(features.teacherLimit)),
       }
     }
   }
@@ -103,7 +104,7 @@ export async function createTeacher(
   if (teacherError) {
     await admin.auth.admin.deleteUser(result.userId)
     if (teacherError.message.includes('teacher_limit_reached')) {
-      return { ok: false, error: `Limite de ${features.teacherLimit} professor(es) no plano ${features.label} atingido.` }
+      return { ok: false, error: planLimitMessage(features.label, teacherCount(features.teacherLimit), false) }
     }
     return { ok: false, error: 'Não foi possível criar o perfil de professor.' }
   }
@@ -157,7 +158,7 @@ export async function enableSelfTeaching(_formData: FormData): Promise<ToggleTea
     if ((count ?? 0) >= features.teacherLimit) {
       return {
         ok: false,
-        error: `Limite de ${features.teacherLimit} professor(es) no plano ${features.label}. Faça upgrade para professores ilimitados.`,
+        error: planLimitMessage(features.label, teacherCount(features.teacherLimit)),
       }
     }
   }
@@ -169,7 +170,7 @@ export async function enableSelfTeaching(_formData: FormData): Promise<ToggleTea
   })
   if (error) {
     if (error.message.includes('teacher_limit_reached')) {
-      return { ok: false, error: `Limite de ${features.teacherLimit} professor(es) no plano ${features.label} atingido.` }
+      return { ok: false, error: planLimitMessage(features.label, teacherCount(features.teacherLimit), false) }
     }
     return { ok: false, error: 'Não foi possível ativar o modo professor.' }
   }
