@@ -3,6 +3,8 @@
 import { useActionState } from 'react'
 
 import { SubmitButton } from '@/components/auth/SubmitButton'
+import { InfoButton } from '@/components/ds/InfoButton'
+import { Field, Textarea } from '@/components/ui/Field'
 import type { ImportState } from '@/lib/actions/import'
 
 type Action = (prev: ImportState, formData: FormData) => Promise<ImportState>
@@ -21,31 +23,22 @@ export function ImportForm({ action, help, placeholder }: { action: Action; help
       onReset={(event) => event.preventDefault()}
       className="space-y-4"
     >
-      <p className="text-sm text-ink-muted">{help}</p>
+      <Field label="Uma pessoa por linha" htmlFor="import-rows" hint={help}>
+        <Textarea id="import-rows" name="rows" rows={10} placeholder={placeholder} className="font-mono text-sm" />
+      </Field>
 
-      <textarea
-        name="rows"
-        rows={10}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-hairline bg-surface p-3 font-mono text-sm text-ink placeholder:text-ink-muted/60 focus:border-brand-400 focus:outline-2 focus:outline-offset-2 focus:outline-brand-500"
-      />
-
-      <p className="text-xs text-ink-muted">
-        Cada conta criada recebe um link de uso único para definir a senha. Máximo de 200 por importação.
-      </p>
-
-      {state.error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</p>}
+      {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
 
       {state.ok && (
-        <div className="space-y-3 rounded-xl border border-hairline bg-surface-muted/30 p-4">
-          <p className="text-sm font-semibold text-ink">
-            {state.created} conta(s) criada(s){failures.length > 0 && ` · ${failures.length} com erro`}
+        <div className="space-y-2 rounded-(--sn-radius-lg) bg-(--sn-mint-soft) p-4 text-(--sn-ink-soft)" role="status">
+          <p className="m-0 text-[15px] font-medium">
+            {state.created === 1 ? '1 conta criada' : `${state.created} contas criadas`}{failures.length > 0 && `, ${failures.length} com erro`}
           </p>
           {failures.length > 0 && (
-            <ul className="space-y-1 text-xs text-ink-muted">
+            <ul className="m-0 space-y-1 pl-0 text-sm">
               {failures.map((f, i) => (
-                <li key={i}>
-                  Linha {f.line}: <span className="font-medium text-ink">{f.value}</span> — {f.reason}
+                <li key={i} className="list-none">
+                  Linha {f.line}: <strong className="font-medium">{f.value}</strong> ({f.reason})
                 </li>
               ))}
             </ul>
@@ -53,7 +46,12 @@ export function ImportForm({ action, help, placeholder }: { action: Action; help
         </div>
       )}
 
-      <SubmitButton fullWidth={false} pendingLabel="Importando…">Importar</SubmitButton>
+      <div className="flex items-center gap-2">
+        <SubmitButton fullWidth={false} pendingLabel="Importando…">Importar</SubmitButton>
+        <InfoButton label="Sobre a importação">
+          Cada conta criada recebe um link de uso único para definir a senha. Até 200 pessoas por importação.
+        </InfoButton>
+      </div>
     </form>
   )
 }

@@ -29,7 +29,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Configurações" subtitle="Identidade, salas e plano da escola" />
+      <PageHeader title="Configurações" />
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Form principal */}
         <div className="lg:col-span-2">

@@ -68,11 +68,12 @@ function renderEvent(arg: EventContentArg) {
 
   // Lista: o mesmo card da semana; a hora já aparece na coluna ao lado.
   if (arg.view.type.startsWith('list')) {
-    const meta = [instrument || props.lesson_title, props.room].filter(Boolean).join(' · ')
+    const what = instrument || props.lesson_title
     return (
       <div className={`${styles.event} ${styles.eventInList}`} data-tone={tone} data-status={status}>
         <span className={styles.eventName}>{name}</span>
-        {meta && <span className={styles.eventMeta}>{meta}</span>}
+        {what && <span className={styles.eventMeta}>{what}</span>}
+        {props.room && <span className={styles.eventMeta}>{props.room}</span>}
       </div>
     )
   }
@@ -88,12 +89,12 @@ function renderEvent(arg: EventContentArg) {
     )
   }
 
-  // Semana e dia: nome em cima; embaixo, hora de início e instrumento (ou sala).
+  // Semana e dia: nome em cima; embaixo, instrumento (ou sala) e hora de início.
   const detail = instrument || props.room
   return (
     <div className={styles.event} data-tone={tone} data-status={status}>
       <span className={styles.eventName}>{name}</span>
-      <span className={styles.eventMeta}>{detail ? `${start} · ${detail}` : start}</span>
+      <span className={styles.eventMeta}>{detail ? `${detail} às ${start}` : start}</span>
     </div>
   )
 }

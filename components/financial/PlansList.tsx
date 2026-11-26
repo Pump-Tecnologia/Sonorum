@@ -8,7 +8,9 @@ import { EditPlanForm, type Plan } from '@/components/financial/PlanForm'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Field, Input } from '@/components/ui/Field'
+import { IconPlus } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
+import { Field, Input, Select } from '@/components/ui/Field'
 import { deletePlan } from '@/lib/actions/plans'
 import { enrollStudent, type EnrollActionState } from '@/lib/actions/enrollments'
 import { billingTypeLabel } from '@/lib/finance'
@@ -36,25 +38,19 @@ function EnrollInline({ planId, perClass, students, onDone }: { planId: string; 
   }, [state.ok, onDone])
 
   if (students.length === 0) {
-    return <p className="mt-3 text-sm text-ink-muted">Cadastre um aluno primeiro para matricular.</p>
+    return <p className="mt-3 text-sm text-(--sn-text-muted)">Cadastre um aluno primeiro para matricular.</p>
   }
 
   return (
-    <form action={action} className="mt-3 space-y-3 rounded-xl border border-hairline bg-surface-muted/40 p-3">
+    <form action={action} className="sn-subpanel mt-3 space-y-3">
       <input type="hidden" name="planId" value={planId} />
-      {state.error && <p className="text-sm font-medium text-red-600">{state.error}</p>}
+      {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
       <div className="grid gap-3 sm:grid-cols-[1fr_6.5rem_9.5rem]">
         <Field label="Aluno" htmlFor={`enr-student-${planId}`} error={fe.studentId}>
-          <select
-            id={`enr-student-${planId}`}
-            name="studentId"
-            defaultValue=""
-            required
-            className="w-full rounded-lg border border-hairline bg-surface px-3 py-2 text-sm"
-          >
+          <Select id={`enr-student-${planId}`} name="studentId" defaultValue="" required>
             <option value="" disabled>Selecione…</option>
             {students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          </Select>
         </Field>
         <Field label="Vencimento" htmlFor={`enr-due-${planId}`} error={fe.dueDay} hint="dia do mês">
           <Input id={`enr-due-${planId}`} name="dueDay" type="number" min="1" max="31" placeholder="10" required />
@@ -64,9 +60,9 @@ function EnrollInline({ planId, perClass, students, onDone }: { planId: string; 
         </Field>
       </div>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-ink-muted">Substitui a matrícula ativa anterior do aluno.</p>
+        <InfoButton label="Sobre a matrícula">Se o aluno já tem uma matrícula ativa, ela é substituída por esta.</InfoButton>
         <div className="flex shrink-0 items-center gap-2">
-          <button type="button" onClick={onDone} className="text-sm font-medium text-ink-muted hover:text-ink">Cancelar</button>
+          <button type="button" onClick={onDone} className="sn-btn sn-btn-sm sn-btn-ghost">Cancelar</button>
           <SubmitButton fullWidth={false} pendingLabel="Matriculando…">Matricular</SubmitButton>
         </div>
       </div>
@@ -79,7 +75,7 @@ export function PlansList({ plans, counts, students }: { plans: Plan[]; counts: 
   const [enrollingId, setEnrollingId] = useState<string | null>(null)
 
   if (plans.length === 0)
-    return <p className="text-sm text-ink-muted">Nenhum plano cadastrado. Crie um ao lado.</p>
+    return <p className="sn-card text-[15px] text-(--sn-text-muted)">Nenhum plano ainda.</p>
 
   return (
     <div className="grid items-start gap-4 sm:grid-cols-2">
@@ -95,40 +91,37 @@ export function PlansList({ plans, counts, students }: { plans: Plan[]; counts: 
             ) : (
               <>
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold text-ink">{p.name}</p>
+                  <p className="m-0 text-[17px] font-semibold tracking-tight text-(--sn-ink)">{p.name}</p>
                   <Badge tone={perClass ? 'warning' : 'neutral'}>{billingTypeLabel(p.billing_type)}</Badge>
                   {!p.active && <Badge tone="danger">Inativo</Badge>}
                 </div>
-                {p.description && <p className="mt-1 text-sm text-ink-muted">{p.description}</p>}
+                {p.description && <p className="mt-1 mb-0 text-sm text-(--sn-text-muted)">{p.description}</p>}
 
                 <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-2xl font-bold text-brand-700">
+                  <span className="text-[30px] font-light leading-tight tracking-tight tabular-nums text-(--sn-ink)">
                     {formatBRL(p.amount)}
-                    <span className="text-sm font-normal text-ink-muted">{unit}</span>
+                    <span className="ml-0.5 text-sm text-(--sn-text-muted)">{unit}</span>
                   </span>
                   {p.early_pay_amount != null && (
-                    <span className="text-sm font-semibold text-accent-700">
+                    <span className="text-sm font-medium text-[#2f6b4f]">
                       {formatBRL(p.early_pay_amount)}
-                      <span className="text-xs font-normal text-ink-muted"> até o venc.</span>
+                      <span className="text-xs font-normal text-(--sn-text-muted)"> até o vencimento</span>
                     </span>
                   )}
-                  {age && <span className="text-xs text-ink-muted">{age}</span>}
+                  {age && <span className="text-xs text-(--sn-text-muted)">{age}</span>}
                 </div>
 
-                <span className={`mt-3 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${count > 0 ? 'bg-brand-50 text-brand-700' : 'bg-surface-muted text-ink-muted'}`}>
+                <span className={`sn-badge mt-3 w-fit ${count > 0 ? 'sn-badge-brand' : 'sn-badge-neutral'}`}>
                   {count === 0 ? 'Sem alunos' : `${count} aluno${count > 1 ? 's' : ''}`}
                 </span>
 
                 {/* Ações no rodapé do card */}
-                <div className="mt-4 flex items-center justify-between gap-2 border-t border-hairline pt-3">
-                  <Button
-                    className="px-3 py-1.5 text-xs"
-                    onClick={() => setEnrollingId(enrollingId === p.id ? null : p.id)}
-                  >
-                    + Matricular
+                <div className="mt-4 flex items-center justify-between gap-2 pt-3 shadow-[inset_0_1px_0_var(--sn-hairline)]">
+                  <Button size="sm" onClick={() => setEnrollingId(enrollingId === p.id ? null : p.id)}>
+                    <IconPlus /> Matricular
                   </Button>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setEditingId(p.id)}>Editar</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setEditingId(p.id)}>Editar</Button>
                     <DeleteButton
                       action={deletePlan}
                       hidden={{ planId: p.id }}

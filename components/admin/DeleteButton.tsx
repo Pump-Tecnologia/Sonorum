@@ -41,7 +41,7 @@ export function DeleteButton({
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
 
   const baseClass = buttonClassName ?? cn(
-    'inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 active:bg-red-100',
+    'sn-btn sn-btn-sm sn-btn-danger',
     className,
   )
 
@@ -58,7 +58,7 @@ export function DeleteButton({
           <button
             type="button"
             onClick={disarm}
-            className="inline-flex items-center justify-center rounded-lg px-2 py-1.5 text-xs font-semibold text-ink-muted transition-colors hover:text-ink"
+            className="sn-btn sn-btn-sm sn-btn-ghost"
           >
             Voltar
           </button>

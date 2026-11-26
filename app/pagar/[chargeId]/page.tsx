@@ -95,7 +95,7 @@ export default async function PagarPage({
 
   return (
     <PagarShell schoolName={schoolName}>
-      <p className={styles.payWhat}>{charge.description || enr?.plan?.name || 'Mensalidade'}{studentName ? ` · ${studentName}` : ''}</p>
+      <p className={styles.payWhat}>{charge.description || enr?.plan?.name || 'Mensalidade'}{studentName ? ` de ${studentName}` : ''}</p>
       <p className={styles.payAmount}>{formatBRL(amount)}</p>
       <span className={styles.payDue}>Vence em {dueLabel}</span>
 

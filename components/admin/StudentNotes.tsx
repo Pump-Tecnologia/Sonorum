@@ -9,8 +9,10 @@ interface Note {
   date: string
 }
 
+// A coluna é DATE ("2026-11-19"): sem hora, o JS lê como meia-noite UTC e a data
+// recua um dia no fuso de Brasília. Meio-dia evita a virada.
 const noteDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
+  new Date(iso.length === 10 ? `${iso}T12:00:00` : iso).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
 
 export function StudentNotes({ studentId, notes }: { studentId: string; notes: Note[] }) {
   return (

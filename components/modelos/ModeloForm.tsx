@@ -33,12 +33,12 @@ export function ModeloForm({ template }: { template?: TemplateData }) {
   const fieldErrors = state.fieldErrors ?? {}
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="max-w-4xl space-y-6">
       {isEdit && <input type="hidden" name="templateId" value={template!.id} />}
 
       <Card className="space-y-4">
         <Field label="Nome do modelo" htmlFor="name" error={fieldErrors.name}>
-          <Input id="name" name="name" defaultValue={template?.name ?? ''} placeholder="ex.: Violão iniciante — aula padrão" />
+          <Input id="name" name="name" defaultValue={template?.name ?? ''} placeholder="ex.: Violão iniciante, aula padrão" />
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -50,7 +50,6 @@ export function ModeloForm({ template }: { template?: TemplateData }) {
             instrumentLabel="Instrumento (opcional)"
           />
         </div>
-        <p className="text-xs text-ink-muted">A categoria/instrumento ajuda a sugerir este modelo nas aulas do aluno certo.</p>
       </Card>
 
       <Card className="space-y-4">
@@ -79,7 +78,7 @@ export function ModeloForm({ template }: { template?: TemplateData }) {
         <Button type="submit" disabled={pending}>
           {pending ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Criar modelo'}
         </Button>
-        {state.error && <span className="text-sm font-medium text-red-600">{state.error}</span>}
+        {state.error && <span className="sn-error" role="alert">{state.error}</span>}
       </div>
     </form>
   )

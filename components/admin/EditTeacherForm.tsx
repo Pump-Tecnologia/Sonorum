@@ -22,16 +22,16 @@ export function EditTeacherForm({ teacher }: { teacher: TeacherData }) {
   const fe = state.fieldErrors ?? {}
 
   return (
-    <Card>
+    <Card className="max-w-xl">
       <form
         action={action}
         onReset={(event) => event.preventDefault()}
-        className="max-w-lg space-y-5"
+        className="space-y-5"
       >
         <input type="hidden" name="teacherId" value={teacher.id} />
 
         {state.error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <p className="sn-alert" role="alert">
             {state.error}
           </p>
         )}
@@ -47,8 +47,6 @@ export function EditTeacherForm({ teacher }: { teacher: TeacherData }) {
         <Field label="Instrumentos" htmlFor="instruments" error={fe.instruments} hint="Separe por vírgula">
           <Input id="instruments" name="instruments" defaultValue={(teacher.instruments ?? []).join(', ')} />
         </Field>
-
-        <p className="text-xs text-ink-muted">Para redefinir a senha, envie ao professor um link pela ação “Redefinir senha” na lista de professores.</p>
 
         <SubmitButton pendingLabel="Salvando…">Salvar alterações</SubmitButton>
       </form>

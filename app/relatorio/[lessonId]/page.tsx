@@ -63,7 +63,8 @@ export default async function ReportPage({ params }: { params: Promise<{ lessonI
 
       <h1 className="text-2xl font-bold text-ink">Relatório de aula</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        {student?.name ? `${student.name} · ` : ''}{lesson.title} · {dateLabel}
+        {lesson.title}{student?.name ? ` de ${student.name}` : ''}
+        <span className="block first-letter:uppercase">{dateLabel}</span>
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -109,7 +110,7 @@ export default async function ReportPage({ params }: { params: Promise<{ lessonI
         </div>
       )}
 
-      <p className="mt-8 text-center text-xs text-ink-muted">{schoolName} · gerado pelo Sonorum</p>
+      <p className="mt-8 text-center text-xs text-ink-muted">Gerado pelo Sonorum para {schoolName}</p>
     </Shell>
   )
 }

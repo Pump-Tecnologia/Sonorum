@@ -102,3 +102,21 @@ export function startOfTodayBR(now: Date = new Date()): Date {
   const tomorrow = startOfTomorrowBR(now)
   return new Date(tomorrow.getTime() - 24 * 60 * 60 * 1000)
 }
+
+/** "Bom dia" / "Boa tarde" / "Boa noite" pela hora de Brasília (o servidor roda em UTC). */
+export function greetingInBR(date: Date = new Date()): string {
+  const hour = Number(timeInBR(date).slice(0, 2))
+  if (hour < 12) return 'Bom dia'
+  if (hour < 18) return 'Boa tarde'
+  return 'Boa noite'
+}
+
+/** "sábado, 21 de novembro" em Brasília. */
+export function longDateInBR(date: Date = new Date()): string {
+  return date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+/** "09:00" em Brasília, a partir de um ISO do banco. */
+export function hourInBR(iso: string): string {
+  return new Date(iso).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })
+}

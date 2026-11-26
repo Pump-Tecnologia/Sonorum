@@ -2,7 +2,11 @@
 
 import { useActionState, useState, useTransition } from 'react'
 
-import { Field, Input, Textarea } from '@/components/ui/Field'
+import { Button } from '@/components/ds/Button'
+import { Field, Input, Select, Textarea } from '@/components/ds/Field'
+import { IconClose, IconNote, IconPlus, IconSearch } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
+import styles from '@/components/schedule/planner.module.css'
 import {
   attachResource,
   createResourceFromLesson,
@@ -33,10 +37,6 @@ interface SearchResult {
   difficulty: string
 }
 
-const PRIMARY_BTN = 'rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60'
-const GHOST_BTN = 'rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted disabled:opacity-50'
-const INPUT_CLS = 'w-full rounded-xl border border-hairline bg-surface px-3.5 py-2 text-sm focus:outline-2 focus:outline-brand-500'
-
 const initialSave: LessonActionState = { ok: false }
 
 export function LessonPlanEditor({
@@ -64,17 +64,24 @@ export function LessonPlanEditor({
   const otherResources = attached.filter((r) => r.section === 'general' || !blueprintIds.has(r.section))
 
   return (
-    <form action={action} className="space-y-6">
+    <form action={action} className={styles.stack}>
       <input type="hidden" name="lessonId" value={lessonId} />
       <input type="hidden" name="blueprintKey" value={blueprint.key} />
 
-      <div className="rounded-2xl border border-hairline bg-surface p-5">
+      <section className={styles.panel} aria-label="Objetivos da aula">
         <Field label="Objetivos da aula" htmlFor="goals">
-          <Textarea id="goals" name="goals" defaultValue={goals} rows={2} placeholder="O que o aluno deve alcançar nesta aula?" />
+          <Textarea
+            id="goals"
+            name="goals"
+            defaultValue={goals}
+            rows={2}
+            placeholder="O que o aluno deve alcançar nesta aula?"
+            className={styles.goalsInput}
+          />
         </Field>
-      </div>
+      </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className={styles.sections}>
         {blueprint.sections.map((s) => (
           <SectionEditor
             key={s.id}
@@ -96,27 +103,25 @@ export function LessonPlanEditor({
         />
       </div>
 
-      <div className="rounded-2xl border border-hairline bg-surface p-5 space-y-4">
-          {blueprint.fields.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-3">
-              {blueprint.fields.map((f) => (
-                <Field key={f.key} label={`${f.label} (opcional)`} htmlFor={`fld-${f.key}`}>
-                  <Input id={`fld-${f.key}`} name={`fld.${f.key}`} defaultValue={content.fields[f.key] ?? ''} placeholder={f.placeholder} />
-                </Field>
-              ))}
-            </div>
-          )}
-          <Field label="Outras notas do planejamento" htmlFor="plan_notes">
-            <Textarea id="plan_notes" name="plan_notes" defaultValue={content.planNotes} rows={2} placeholder="Lembretes, materiais a levar, etc." />
-          </Field>
-      </div>
+      <section className={`${styles.panel} ${styles.extras}`} aria-label="Outros dados do plano">
+        {blueprint.fields.length > 0 && (
+          <div className={styles.fieldsGrid}>
+            {blueprint.fields.map((f) => (
+              <Field key={f.key} label={f.label} htmlFor={`fld-${f.key}`}>
+                <Input id={`fld-${f.key}`} name={`fld.${f.key}`} defaultValue={content.fields[f.key] ?? ''} placeholder={f.placeholder} />
+              </Field>
+            ))}
+          </div>
+        )}
+        <Field label="Outras notas" htmlFor="plan_notes">
+          <Textarea id="plan_notes" name="plan_notes" defaultValue={content.planNotes} rows={2} placeholder="Lembretes, o que levar para a aula" />
+        </Field>
+      </section>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={pending} className={PRIMARY_BTN}>
-          {pending ? 'Salvando…' : 'Salvar planejamento'}
-        </button>
-        {state.ok && <span className="text-sm font-medium text-accent-700">Salvo ✓</span>}
-        {state.error && <span className="text-sm font-medium text-red-600">{state.error}</span>}
+      <div className={styles.saveBar}>
+        {state.ok && !pending && <p className={`${styles.saveStatus} ${styles.ok}`} role="status">Plano salvo</p>}
+        {state.error && !pending && <p className={`${styles.saveStatus} ${styles.bad}`} role="alert">{state.error}</p>}
+        <Button type="submit" disabled={pending}>{pending ? 'Salvando…' : 'Salvar plano'}</Button>
       </div>
     </form>
   )
@@ -143,23 +148,33 @@ function SectionEditor({
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState(false)
   const [creating, setCreating] = useState(false)
   // Filtro de categoria do RECURSO — começa na categoria da seção (Aquecimento
   // sugere recursos de Aquecimento, etc.); '' = todas.
   const [category, setCategory] = useState<string>(section.defaultResourceCategory ?? '')
 
   const attachedIds = new Set(resources.map((r) => r.resourceId))
+  const titleId = `section-${section.id}-title`
 
   async function fetchResources(q: string, cat: string) {
     setSearching(true)
+    setSearchError(false)
     const params = new URLSearchParams()
     if (q) params.set('q', q)
     if (cat) params.set('category', cat)
     if (instrumentCategory) params.set('instrumentCategory', instrumentCategory)
-    const res = await fetch(`/api/resources?${params.toString()}`)
-    const data = (await res.json()) as SearchResult[]
-    setResults(Array.isArray(data) ? data : [])
-    setSearching(false)
+    try {
+      const res = await fetch(`/api/resources?${params.toString()}`)
+      if (!res.ok) throw new Error(String(res.status))
+      const data = (await res.json()) as SearchResult[]
+      setResults(Array.isArray(data) ? data : [])
+    } catch {
+      setResults([])
+      setSearchError(true)
+    } finally {
+      setSearching(false)
+    }
   }
 
   function attach(resourceId: string) {
@@ -184,101 +199,113 @@ function SectionEditor({
   const visibleResults = results.filter((r) => !attachedIds.has(r.id))
 
   return (
-    <div className="rounded-2xl border border-hairline bg-surface p-4">
-      <div className="mb-3">
-        <h3 className="text-sm font-semibold text-ink">{section.label}</h3>
-        {section.hint && <p className="text-xs text-ink-muted">{section.hint}</p>}
+    <section className={`${styles.panel} ${styles.section}`} aria-labelledby={titleId}>
+      <div className={styles.sectionHead}>
+        <div>
+          <h3 id={titleId} className={styles.sectionTitle}>{section.label}</h3>
+          {section.hint && <p className={styles.sectionHint}>{section.hint}</p>}
+        </div>
+        {resources.length > 0 && (
+          <span className={styles.count} aria-label={`${resources.length} ${resources.length === 1 ? 'recurso' : 'recursos'}`}>
+            {resources.length}
+          </span>
+        )}
       </div>
 
-      {resources.length > 0 ? (
-        <ul className="mb-3 space-y-1.5">
+      {resources.length > 0 && (
+        <ul className={styles.resources}>
           {resources.map((r) => (
-            <li key={r.pivotId} className="flex items-center justify-between gap-2 rounded-lg border border-hairline bg-surface-muted/40 px-3 py-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">{r.title}</p>
-                <p className="truncate text-xs text-ink-muted">
+            <li key={r.pivotId} className={styles.resource}>
+              <span className={styles.resourceMark}><IconNote /></span>
+              <div className={styles.resourceText}>
+                <p className={styles.resourceTitle}>{r.title}</p>
+                <p className={styles.resourceMeta}>
                   {r.category}
-                  {r.instrument ? ` · ${r.instrument}` : ''}
+                  {r.instrument ? ` de ${r.instrument}` : ''}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => detach(r.pivotId)}
                 disabled={pending}
-                aria-label={`Remover ${r.title} de ${section.label}`}
-                className="shrink-0 text-xs font-semibold text-ink-muted hover:text-red-600 disabled:opacity-50"
+                aria-label={`Tirar ${r.title} de ${section.label}`}
+                title="Tirar da aula"
+                className={styles.remove}
               >
-                Remover
+                <IconClose />
               </button>
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="mb-3 text-xs text-ink-muted">Nenhum recurso ainda.</p>
       )}
 
       {!picker && !creating && (
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
+        <div className={styles.sectionActions}>
+          <Button
+            size="sm"
+            variant="soft"
             onClick={() => {
               setPicker(true)
               void fetchResources(query, category)
             }}
-            className={GHOST_BTN}
           >
-            + Anexar recurso
-          </button>
-          <button type="button" onClick={() => setCreating(true)} className={GHOST_BTN}>+ Criar da aula</button>
+            <IconPlus /> Anexar recurso
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setCreating(true)}>Criar recurso</Button>
         </div>
       )}
 
       {picker && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <select
+        <div className={styles.picker}>
+          <div className={styles.pickerRow}>
+            <Select
               value={category}
               onChange={(e) => { setCategory(e.target.value); void fetchResources(query, e.target.value) }}
-              aria-label={`Filtrar categoria em ${section.label}`}
-              className="shrink-0 rounded-xl border border-hairline bg-surface px-2 py-2 text-xs"
+              aria-label={`Categoria dos recursos em ${section.label}`}
+              className={styles.pillControl}
             >
               <option value="">Todas</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <input
-              type="search"
-              autoFocus
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value)
-                void fetchResources(e.target.value, category)
-              }}
-              placeholder={instrument ? `Buscar (sugerindo ${instrument})…` : 'Buscar por título…'}
-              aria-label={`Buscar recurso para ${section.label}`}
-              className={INPUT_CLS}
-            />
-            <button type="button" onClick={() => setPicker(false)} className="shrink-0 text-xs font-medium text-ink-muted hover:text-ink">fechar</button>
+            </Select>
+            <label className={styles.search}>
+              <IconSearch />
+              <input
+                type="search"
+                autoFocus
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value)
+                  void fetchResources(e.target.value, category)
+                }}
+                placeholder={instrument ? `Buscar recurso de ${instrument}` : 'Buscar recurso'}
+                aria-label={`Buscar recurso para ${section.label}`}
+              />
+            </label>
+            <button type="button" onClick={() => setPicker(false)} className={styles.remove} aria-label="Fechar a busca" title="Fechar">
+              <IconClose />
+            </button>
           </div>
-          {searching && <p className="text-xs text-ink-muted">Buscando…</p>}
+          {searching && <p className={styles.pickerNote} role="status">Buscando…</p>}
+          {!searching && searchError && <p className={`${styles.pickerNote} ${styles.bad}`} role="alert">Não deu para buscar agora. Tente de novo.</p>}
           {!searching && visibleResults.length > 0 && (
-            <ul className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-hairline">
+            <ul className={styles.results}>
               {visibleResults.map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-surface-muted/50">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">{r.title}</p>
-                    <p className="truncate text-xs text-ink-muted">
-                      {r.category} · {r.difficulty}{r.instrument ? ` · ${r.instrument}` : ''}
+                <li key={r.id} className={styles.result}>
+                  <div className={styles.resourceText}>
+                    <p className={styles.resourceTitle}>{r.title}</p>
+                    <p className={styles.resourceMeta}>
+                      {r.category}, nível {r.difficulty}{r.instrument ? `, ${r.instrument}` : ''}
                     </p>
                   </div>
-                  <button type="button" onClick={() => attach(r.id)} disabled={pending} aria-label={`Anexar ${r.title} em ${section.label}`} className="shrink-0 text-xs font-semibold text-brand-600 hover:text-brand-700 disabled:opacity-50">
-                    + Anexar
-                  </button>
+                  <Button size="sm" variant="soft" onClick={() => attach(r.id)} disabled={pending} aria-label={`Anexar ${r.title} em ${section.label}`}>
+                    Anexar
+                  </Button>
                 </li>
               ))}
             </ul>
           )}
-          {!searching && results.length === 0 && (
-            <p className="text-xs text-ink-muted">Nada nesta categoria. Troque o filtro, busque, ou use “Criar da aula”.</p>
+          {!searching && !searchError && visibleResults.length === 0 && (
+            <p className={styles.pickerNote}>Nenhum recurso encontrado</p>
           )}
         </div>
       )}
@@ -295,13 +322,11 @@ function SectionEditor({
       )}
 
       {note !== undefined && (
-        <div className="mt-3">
-          <Field label="Nota (opcional)" htmlFor={`note-${section.id}`}>
-            <Textarea id={`note-${section.id}`} name={`sec.${section.id}`} defaultValue={note} rows={2} placeholder="Observação livre desta seção" />
-          </Field>
-        </div>
+        <Field label="Nota" htmlFor={`note-${section.id}`}>
+          <Textarea id={`note-${section.id}`} name={`sec.${section.id}`} defaultValue={note} rows={2} placeholder="Anotação livre" />
+        </Field>
       )}
-    </div>
+    </section>
   )
 }
 
@@ -328,6 +353,7 @@ function CreateResourceMini({
   const [link, setLink] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const isLink = contentType === 'Link Vídeo' || contentType === 'PDF'
 
   function submit() {
     setError(null)
@@ -349,29 +375,31 @@ function CreateResourceMini({
   }
 
   return (
-    <div className="mt-1 space-y-2 rounded-xl border border-dashed border-brand-300 bg-brand-50/40 p-3">
-      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título do recurso" aria-label="Título do recurso" className={INPUT_CLS} autoFocus />
-      <div className="grid grid-cols-2 gap-2">
-        <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Categoria do recurso" className={INPUT_CLS}>
+    <div className={styles.create}>
+      <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título do recurso" aria-label="Título do recurso" autoFocus />
+      <div className={styles.fieldsGrid}>
+        <Select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Categoria do recurso">
           {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select value={contentType} onChange={(e) => setContentType(e.target.value)} aria-label="Tipo de conteúdo" className={INPUT_CLS}>
+        </Select>
+        <Select value={contentType} onChange={(e) => setContentType(e.target.value)} aria-label="Tipo de conteúdo">
           {CONTENT_TYPES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        </Select>
       </div>
-      {contentType === 'Link Vídeo' || contentType === 'PDF' ? (
-        <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Link (https://…)" aria-label="Link do recurso" className={INPUT_CLS} />
+      {isLink ? (
+        <Input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" aria-label="Link do recurso" inputMode="url" />
       ) : (
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={2} placeholder="Conteúdo / cifra / instruções (resumido)" aria-label="Conteúdo do recurso" className={INPUT_CLS} />
+        <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={2} placeholder="Cifra, exercício ou instruções" aria-label="Conteúdo do recurso" />
       )}
-      {error && <p className="text-xs font-medium text-red-600">{error}</p>}
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={submit} disabled={pending || !title.trim()} className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50">
+      {error && <p className={`${styles.pickerNote} ${styles.bad}`} role="alert">{error}</p>}
+      <div className={styles.createActions}>
+        <Button size="sm" onClick={submit} disabled={pending || !title.trim()}>
           {pending ? 'Criando…' : 'Criar e anexar'}
-        </button>
-        <button type="button" onClick={onDone} className="text-xs font-medium text-ink-muted hover:text-ink">cancelar</button>
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onDone}>Cancelar</Button>
+        <InfoButton label="Sobre o recurso criado aqui">
+          O recurso entra na biblioteca da escola e fica anexado a esta aula. Dá para completar depois em Recursos.
+        </InfoButton>
       </div>
-      <p className="text-[11px] text-ink-muted">Cria uma versão resumida agora — dá pra enriquecer depois em Recursos.</p>
     </div>
   )
 }

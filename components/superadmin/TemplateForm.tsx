@@ -37,10 +37,10 @@ export function TemplateForm({ template }: { template?: TemplateData }) {
   }, [state.ok, router])
 
   return (
-    <Card>
-      <form action={formAction} className="max-w-2xl space-y-5">
+    <Card className="max-w-3xl">
+      <form action={formAction} className="space-y-5">
         {isEdit && <input type="hidden" name="templateId" value={template!.id} />}
-        {state.error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</p>}
+        {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
 
         <Field label="Título" htmlFor="title" error={fe.title}>
           <Input id="title" name="title" defaultValue={template?.title ?? ''} required />

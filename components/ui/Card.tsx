@@ -1,10 +1,6 @@
 import { cn } from '@/lib/cn'
 
+// Superfície de vidro do padrão novo (.sn-card em app/globals.css).
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn('rounded-2xl border border-hairline bg-surface p-6', className)}
-      {...props}
-    />
-  )
+  return <div className={cn('sn-card', className)} {...props} />
 }

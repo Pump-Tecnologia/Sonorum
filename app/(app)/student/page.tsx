@@ -1,15 +1,22 @@
-import { PageHeader } from '@/components/app/PageHeader'
-import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import { LinkButton } from '@/components/ui/Button'
+import Link from 'next/link'
+
+import { LinkButton } from '@/components/ds/Button'
+import { IconArrowRight, IconCheck } from '@/components/ds/icons'
+import { StatusPill } from '@/components/ds/StatusPill'
+import { DashHeader, Panel } from '@/components/dashboard/parts'
+import styles from '@/components/dashboard/dashboard.module.css'
 import { lessonStatus } from '@/lib/constants/lessons'
 import { toggleGoal } from '@/lib/actions/student-detail'
 import { requireCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { getStudentLessonTeachers } from '@/lib/data/student-lesson-teachers'
 import { studentLessonFilters } from '@/lib/queries/student-lesson-filters'
+import { hourInBR, longDateInBR } from '@/lib/timezone'
+import { cn } from '@/lib/cn'
 
 export const metadata = { title: 'Dashboard' }
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
 
 export default async function StudentDashboard() {
   const user = await requireCurrentUser()
@@ -48,94 +55,94 @@ export default async function StudentDashboard() {
   const lastLesson = lastRes.data
   const goals = goalsRes.data ?? []
 
+  const firstName = (user?.name ?? '').split(' ')[0]
+  const doneGoals = goals.filter((g) => g.completed).length
+  const nextTeacher = nextLesson ? teachers.get(nextLesson.id) : null
+  const nextStatus = nextLesson ? lessonStatus(nextLesson.status) : null
+  const lastStatus = lastLesson ? lessonStatus(lastLesson.status) : null
+
   return (
-    <>
-      <PageHeader title="Dashboard" subtitle={`Olá, ${user?.name ?? ''}`} />
+    <div className={styles.page}>
+      <DashHeader
+        kicker={longDateInBR(new Date())}
+        title={firstName ? `Olá, ${firstName}` : 'Olá'}
+        actions={<LinkButton href="/student/schedule" variant="soft">Minha agenda</LinkButton>}
+      />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Próxima aula */}
-        <Card>
-          <h2 className="mb-3 text-base font-semibold text-ink">Próxima aula</h2>
-          {nextLesson ? (
-            <div>
-              <Badge tone={lessonStatus(nextLesson.status).tone}>{lessonStatus(nextLesson.status).label}</Badge>
-              <p className="text-sm font-medium text-ink">{nextLesson.title}</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                {new Date(nextLesson.start_datetime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo',
-                  weekday: 'long', day: '2-digit', month: 'long',
-                  hour: '2-digit', minute: '2-digit',
-                })}
-              </p>
-              {teachers.get(nextLesson.id) && (
-                <p className="mt-1 text-sm text-ink-muted">
-                  Professor: {teachers.get(nextLesson.id)}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-ink-muted">Nenhuma aula agendada.</p>
-          )}
-        </Card>
-
-        {/* Última aula */}
-        <Card>
-          <h2 className="mb-3 text-base font-semibold text-ink">Última aula</h2>
-          {lastLesson ? (
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-ink">{lastLesson.title}</p>
-                <Badge tone={lessonStatus(lastLesson.status).tone}>{lessonStatus(lastLesson.status).label}</Badge>
-              </div>
-              <p className="mt-1 text-sm text-ink-muted">
-                {new Date(lastLesson.start_datetime).toLocaleDateString('pt-BR', {
-                  weekday: 'long', day: '2-digit', month: 'long',
-                })}
-              </p>
-              {lastLesson.notes && (
-                <p className="mt-2 text-sm text-ink">{lastLesson.notes}</p>
-              )}
-              <LinkButton href={`/student/lessons/${lastLesson.id}`} variant="ghost" size="sm" className="mt-2">
-                Ver detalhes →
-              </LinkButton>
-            </div>
-          ) : (
-            <p className="text-sm text-ink-muted">Nenhuma aula ainda.</p>
-          )}
-        </Card>
-
-        {/* Metas */}
-        <Card className="lg:col-span-2">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-ink">Minhas metas</h2>
-            <span className="text-sm text-ink-muted">
-              {goals.filter((g) => g.completed).length}/{goals.length} concluídas
-            </span>
+      {nextLesson ? (
+        <section className={cn(styles.panel, styles.next)} aria-labelledby="next-lesson">
+          <div>
+            <p className={styles.nextWhen}>Próxima aula</p>
+            <h2 id="next-lesson" className={styles.nextName}>
+              {capitalize(longDateInBR(new Date(nextLesson.start_datetime)))} às {hourInBR(nextLesson.start_datetime)}
+            </h2>
+            <p className={styles.nextMeta}>
+              {nextLesson.title}{nextTeacher ? `, com ${nextTeacher}` : ''}
+            </p>
           </div>
-          {goals.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhuma meta registrada pelo professor ainda.</p>
+          {nextStatus && <StatusPill tone={nextStatus.tone}>{nextStatus.label}</StatusPill>}
+        </section>
+      ) : (
+        <section className={cn(styles.panel, styles.next)} aria-label="Próxima aula">
+          <p className={styles.empty}>Nenhuma aula agendada.</p>
+        </section>
+      )}
+
+      <div className={styles.grid}>
+        <Panel
+          id="last-title"
+          title="Última aula"
+          link={lastLesson ? { href: `/student/lessons/${lastLesson.id}`, label: 'Ver aula' } : undefined}
+        >
+          {lastLesson ? (
+            <>
+              <div className={styles.barHead}>
+                <span>{lastLesson.title}</span>
+                {lastStatus && <StatusPill tone={lastStatus.tone}>{lastStatus.label}</StatusPill>}
+              </div>
+              <p className={styles.kicker}>{longDateInBR(new Date(lastLesson.start_datetime))}</p>
+              {lastLesson.notes && <p className={styles.lastNote}>{lastLesson.notes}</p>}
+            </>
           ) : (
-            <ul className="space-y-2">
+            <p className={styles.empty}>Nenhuma aula ainda.</p>
+          )}
+        </Panel>
+
+        <Panel
+          id="goals-title"
+          title="Minhas metas"
+          className={styles.span2}
+          badge={goals.length > 0 ? <StatusPill tone={doneGoals === goals.length ? 'success' : 'brand'}>{doneGoals} de {goals.length}</StatusPill> : undefined}
+        >
+          {goals.length === 0 ? (
+            <p className={styles.empty}>Seu professor ainda não registrou metas.</p>
+          ) : (
+            <ul className={styles.goals}>
               {goals.map((g) => (
-                <li key={g.id} className="flex items-center gap-3 text-sm">
+                <li key={g.id} className={styles.goal}>
                   <form action={toggleGoal}>
                     <input type="hidden" name="goalId" value={g.id} />
                     <input type="hidden" name="studentId" value={user.id} />
                     <input type="hidden" name="completed" value={String(g.completed)} />
                     <button
                       type="submit"
-                      aria-label={g.completed ? 'Marcar como pendente' : 'Concluir meta'}
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs transition-colors ${g.completed ? 'border-accent-500 bg-accent-500 text-white' : 'border-hairline hover:border-brand-400'}`}
+                      aria-pressed={g.completed}
+                      aria-label={g.completed ? `Desmarcar: ${g.text}` : `Concluir: ${g.text}`}
+                      className={styles.check}
                     >
-                      {g.completed ? '✓' : ''}
+                      <IconCheck />
                     </button>
                   </form>
-                  <span className={g.completed ? 'text-ink-muted line-through' : 'text-ink'}>{g.text}</span>
+                  <span className={cn(styles.goalText, g.completed && styles.goalDone)}>{g.text}</span>
                 </li>
               ))}
             </ul>
           )}
-        </Card>
+          <p className={styles.statHint}>
+            <Link href="/student/progress" className={styles.panelLink}>Ver meu progresso <IconArrowRight /></Link>
+          </p>
+        </Panel>
       </div>
-    </>
+    </div>
   )
 }

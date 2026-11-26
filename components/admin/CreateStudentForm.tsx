@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 
 import { SubmitButton } from '@/components/auth/SubmitButton'
 import { CreatePersonResult } from '@/components/admin/CreatePersonResult'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { InstrumentFields } from '@/components/ui/InstrumentFields'
@@ -27,14 +28,14 @@ export function CreateStudentForm({ teachers }: { teachers: { id: string; name: 
   }
 
   return (
-    <Card>
+    <Card className="max-w-3xl">
       <form
         action={action}
         onReset={(event) => event.preventDefault()}
-        className="max-w-2xl space-y-5"
+        className="space-y-5"
       >
         {state.error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <p className="sn-alert" role="alert">
             {state.error}
           </p>
         )}
@@ -61,10 +62,6 @@ export function CreateStudentForm({ teachers }: { teachers: { id: string; name: 
           </Field>
         </div>
 
-        <p className="rounded-xl bg-surface-muted px-4 py-3 text-xs text-ink-muted">
-          A mensalidade é definida depois, ao matricular o aluno em um plano no perfil dele.
-        </p>
-
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Status" htmlFor="status" error={fe.status}>
             <Select id="status" name="status" defaultValue="active">
@@ -82,19 +79,21 @@ export function CreateStudentForm({ teachers }: { teachers: { id: string; name: 
           </Field>
         </div>
 
-        <label className="flex items-start gap-2.5 rounded-xl border border-hairline bg-surface-muted/30 p-3 text-sm">
-          <input type="checkbox" name="notifyEmail" className="mt-0.5 h-4 w-4 accent-brand-600" />
-          <span>
-            <span className="font-medium text-ink">Receber notificações por e-mail</span>
-            <span className="block text-xs text-ink-muted">Aulas, cobranças e relatórios chegam no e-mail do aluno. (No Premium, as mensagens vão pelo WhatsApp oficial.)</span>
-          </span>
-        </label>
+        <div className="sn-check-wrap">
+          <label className="sn-checkrow">
+            <input type="checkbox" name="notifyEmail" />
+            Receber notificações por e-mail
+          </label>
+          <InfoButton label="Sobre as notificações" align="end">
+            Aulas, cobranças e relatórios chegam no e-mail do aluno. No Premium, as mensagens vão pelo WhatsApp oficial.
+          </InfoButton>
+        </div>
 
         <Field
           label="Objetivos"
           htmlFor="objectives"
           error={fe.objectives}
-          hint="Um por linha — viram metas do aluno"
+          hint="Uma por linha. Cada linha vira uma meta do aluno."
         >
           <Textarea id="objectives" name="objectives" rows={4} />
         </Field>

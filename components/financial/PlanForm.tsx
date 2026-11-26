@@ -10,7 +10,7 @@ import { BILLING_TYPES } from '@/lib/finance'
 import { createPlan, updatePlan, type PlanActionState } from '@/lib/actions/plans'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-ink-muted">{children}</p>
+  return <p className="m-0 text-[13px] font-medium text-(--sn-text-subtle)">{children}</p>
 }
 
 export interface Plan {
@@ -64,12 +64,12 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
                 aria-checked={selected}
                 onClick={() => setBillingType(b.value)}
                 className={cn(
-                  'rounded-xl border p-3 text-left transition-colors',
-                  selected ? 'border-brand-500 bg-brand-50/60 ring-1 ring-brand-200' : 'border-hairline hover:border-brand-300',
+                  'cursor-pointer rounded-(--sn-radius-lg) border-0 p-3.5 text-left transition-colors',
+                  selected ? 'bg-(--sn-ink) text-white' : 'bg-white/65 text-(--sn-ink) shadow-[inset_0_0_0_1px_var(--sn-hairline-strong)] hover:bg-(--sn-mint-soft)',
                 )}
               >
-                <span className="block text-sm font-semibold text-ink">{b.label}</span>
-                <span className="mt-0.5 block text-xs text-ink-muted">{b.hint}</span>
+                <span className="block text-[15px] font-medium">{b.label}</span>
+                <span className={cn('mt-0.5 block text-xs', selected ? 'text-[#c9ddd1]' : 'text-(--sn-text-muted)')}>{b.hint}</span>
               </button>
             )
           })}
@@ -80,9 +80,7 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
         </Field>
 
         {isPerClass ? (
-          <p className="rounded-lg border border-hairline bg-surface-muted/40 p-2.5 text-xs text-ink-muted">
-            A cobrança do mês = valor por aula × aulas realizadas (presença lançada).
-          </p>
+          <p className="sn-subpanel m-0 py-3 text-sm text-(--sn-ink-soft)">Cobrança do mês: valor por aula × aulas com presença lançada.</p>
         ) : (
           <Field
             label="Valor com desconto de pontualidade (R$)"
@@ -90,7 +88,7 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
             error={fe.earlyPayAmount}
             hint="Deixe vazio se não houver desconto. Vale quando o aluno paga até o vencimento."
           >
-            <Input id={`early-${k}`} name="earlyPayAmount" type="number" min="0" step="0.01" defaultValue={plan?.early_pay_amount ?? ''} placeholder="—" />
+            <Input id={`early-${k}`} name="earlyPayAmount" type="number" min="0" step="0.01" defaultValue={plan?.early_pay_amount ?? ''} placeholder="Sem desconto" />
           </Field>
         )}
       </div>
@@ -108,8 +106,8 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
         </div>
       </div>
 
-      <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-hairline bg-surface-muted/30 p-3 text-sm text-ink">
-        <input type="checkbox" name="active" defaultChecked={plan?.active ?? true} className="h-4 w-4 rounded border-hairline accent-brand-600" />
+      <label className="sn-checkrow">
+        <input type="checkbox" name="active" defaultChecked={plan?.active ?? true} />
         Plano ativo (disponível para novas matrículas)
       </label>
     </div>
@@ -126,11 +124,11 @@ export function CreatePlanForm({ redirectTo }: { redirectTo?: string }) {
     if (state.ok && redirectTo) router.push(redirectTo)
   }, [state.ok, redirectTo, router])
 
-  if (state.ok && !redirectTo) return <p className="text-sm font-medium text-accent-800">Plano criado!</p>
+  if (state.ok && !redirectTo) return <p className="sn-notice-ok" role="status">Plano criado</p>
 
   return (
     <form action={action} className="space-y-4">
-      {state.error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</p>}
+      {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
       <PlanFields fe={fe} />
       <SubmitButton pendingLabel="Criando…">Criar plano</SubmitButton>
     </form>
@@ -148,11 +146,11 @@ export function EditPlanForm({ plan, onClose }: { plan: Plan; onClose: () => voi
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="planId" value={plan.id} />
-      {state.error && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</p>}
+      {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
       <PlanFields plan={plan} fe={fe} />
       <div className="flex gap-2">
         <SubmitButton pendingLabel="Salvando…">Salvar</SubmitButton>
-        <button type="button" onClick={onClose} className="text-sm text-ink-muted hover:text-ink">Cancelar</button>
+        <button type="button" onClick={onClose} className="sn-btn sn-btn-ghost">Cancelar</button>
       </div>
     </form>
   )

@@ -38,16 +38,16 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="Meu perfil" subtitle="Atualize seus dados e senha" />
+      <PageHeader title="Meu perfil" />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Dados pessoais</h2>
+          <h2 className="sn-card-title mb-5">Dados pessoais</h2>
           <ProfileForm user={{ name: me.name, email: me.email ?? '', phone: data?.phone ?? null }} />
         </Card>
 
         <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Alterar senha</h2>
+          <h2 className="sn-card-title mb-5">Alterar senha</h2>
           <PasswordForm />
         </Card>
 
@@ -61,18 +61,15 @@ export default async function ProfilePage() {
           <GoogleCalendarConnect enabled={gcalEnabled} connected={Boolean(gcalConn)} />
         </div>
 
-        <Card className="lg:col-span-2 border-red-200">
-          <h2 className="mb-2 text-base font-semibold text-ink">Zona de perigo</h2>
+        <Card className="lg:col-span-2">
+          <h2 className="sn-card-title mb-2">Excluir conta</h2>
           {me.role === 'admin' ? (
-            <p className="text-sm text-ink-muted">
-              Como administrador da escola, a exclusão da conta e o cancelamento do cadastro devem ser solicitados
-              ao suporte (<a href="mailto:suporte@sonorum.com.br" className="font-semibold text-brand-600 hover:underline">suporte@sonorum.com.br</a>) para garantir a segurança e a exportação dos dados dos alunos.
-            </p>
+            <p className="m-0 text-[15px] text-(--sn-text-muted)">
+              Peça a exclusão da conta da escola pelo <a href="mailto:suporte@sonorum.com.br" className="font-medium text-(--sn-ink) underline underline-offset-2">suporte@sonorum.com.br</a>, para exportarmos os dados dos alunos com segurança.
+          </p>
           ) : (
             <>
-              <p className="mb-4 text-sm text-ink-muted">
-                Ao excluir sua conta, todos os seus dados serão removidos permanentemente.
-              </p>
+              <p className="mt-0 mb-4 text-[15px] text-(--sn-text-muted)">Seus dados são apagados de vez.</p>
               <DeleteAccountForm />
             </>
           )}

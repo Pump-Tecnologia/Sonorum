@@ -1,11 +1,12 @@
 import Link from 'next/link'
 
-import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
-import { Badge } from '@/components/ui/Badge'
-import { Button, LinkButton } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { DashHeader } from '@/components/dashboard/parts'
+import styles from '@/components/dashboard/dashboard.module.css'
+import { LinkButton } from '@/components/ds/Button'
+import { IconPlus } from '@/components/ds/icons'
 import { deleteLessonPlanTemplate } from '@/lib/actions/lesson-templates'
+import { instrumentTone } from '@/lib/constants/instrument-tone'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Modelos de aula' }
@@ -20,25 +21,19 @@ export default async function ModelosPage() {
   const list = templates ?? []
 
   return (
-    <>
-      <PageHeader
+    <div className={styles.page}>
+      <DashHeader
         title="Modelos de aula"
-        subtitle="Estruturas de planejamento reutilizáveis por instrumento"
-        action={
-          <Link href="/modelos/new">
-            <Button>Novo modelo</Button>
-          </Link>
-        }
+        info="Planos prontos para reaproveitar, por instrumento. Na tela da aula também dá para salvar o plano como modelo."
+        actions={<LinkButton href="/modelos/new"><IconPlus /> Novo modelo</LinkButton>}
       />
 
       {list.length === 0 ? (
-        <Card>
-          <p className="text-sm text-ink-muted">
-            Nenhum modelo ainda. Crie um aqui ou use “Salvar como modelo” dentro de uma aula para reaproveitar um planejamento.
-          </p>
-        </Card>
+        <section className={styles.panel} aria-label="Modelos">
+          <p className={styles.empty}>Nenhum modelo ainda.</p>
+        </section>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className={styles.cards} aria-label="Modelos">
           {list.map((t) => {
             const sections = [
               t.warmup_note && 'Aquecimento',
@@ -46,24 +41,21 @@ export default async function ModelosPage() {
               t.homework_note && 'Tarefa',
               t.target_bpm && 'BPM',
             ].filter(Boolean) as string[]
+            const instrument = t.instrument || t.instrument_category
             return (
-              <Card key={t.id} className="flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-medium leading-tight text-ink">{t.name}</p>
-                  {(t.instrument || t.instrument_category) && (
-                    <Badge tone="neutral">{t.instrument || t.instrument_category}</Badge>
-                  )}
+              <li key={t.id} className={`${styles.panel} ${styles.card}`}>
+                <div className={styles.cardHead}>
+                  <Link href={`/modelos/${t.id}/edit`} className={styles.cardTitle}>{t.name}</Link>
+                  {instrument && <span className={styles.chip} data-tone={instrumentTone(instrument)}>{instrument}</span>}
                 </div>
-                {t.goals && <p className="line-clamp-2 text-sm text-ink-muted">{t.goals}</p>}
+                {t.goals && <p className={styles.cardText}>{t.goals}</p>}
                 {sections.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 text-xs text-ink-muted">
-                    {sections.map((s) => (
-                      <span key={s} className="rounded-md bg-surface-muted px-2 py-0.5">{s}</span>
-                    ))}
-                  </div>
+                  <ul className={styles.tags} aria-label="Partes preenchidas">
+                    {sections.map((s) => <li key={s}>{s}</li>)}
+                  </ul>
                 )}
-                <div className="mt-auto flex items-center justify-between border-t border-hairline pt-3">
-                  <LinkButton href={`/modelos/${t.id}/edit`} variant="secondary" size="sm">Editar</LinkButton>
+                <div className={styles.cardFoot}>
+                  <LinkButton href={`/modelos/${t.id}/edit`} variant="soft" size="sm">Editar</LinkButton>
                   <DeleteButton
                     action={deleteLessonPlanTemplate}
                     hidden={{ templateId: t.id }}
@@ -71,11 +63,11 @@ export default async function ModelosPage() {
                     confirmText={`Excluir o modelo "${t.name}"?`}
                   />
                 </div>
-              </Card>
+              </li>
             )
           })}
-        </div>
+        </ul>
       )}
-    </>
+    </div>
   )
 }

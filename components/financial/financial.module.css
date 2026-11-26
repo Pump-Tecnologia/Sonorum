@@ -125,6 +125,10 @@
   .charge, .studentRow { grid-template-columns: minmax(0, 1fr) auto; }
   .charge .money, .studentRow .money { grid-column: 1; }
   .charge .actions { grid-column: 2; grid-row: 1 / span 2; align-self: start; }
+  /* No celular a mensalidade empilha: o título não divide a linha com o botão. */
+  .studentRow { grid-template-columns: minmax(0, 1fr); }
+  .studentRow .actions { justify-content: flex-start; }
+  .studentRow .actions:empty { display: none; }
 }
 
 /* ══ Página de pagamento (/pagar, pública, sem o shell) ══════════════════ */

@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from 'react'
 
 import { SubmitButton } from '@/components/auth/SubmitButton'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
 import {
@@ -45,25 +46,23 @@ export function TeachingToggle({ isTeacher, instruments }: TeachingToggleProps) 
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-ink">Também dou aula</p>
-          <p className="text-sm text-ink-muted">
-            Ative pra aparecer como professor na agenda e poder lançar aulas suas.
-          </p>
+        <div className="flex items-center gap-1">
+          <h2 className="sn-card-title">Também dou aula</h2>
+          <InfoButton label="Sobre dar aula">Ligado, você aparece como professor na agenda e pode lançar aulas suas.</InfoButton>
         </div>
         <Button variant={checked ? 'secondary' : 'primary'} onClick={toggle} disabled={isPending}>
           {checked ? 'Desativar' : 'Ativar'}
         </Button>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="sn-alert mt-3" role="alert">{error}</p>}
 
       {checked && (
-        <form action={instrumentsAction} className="mt-4 border-t border-hairline pt-4">
+        <form action={instrumentsAction} className="mt-4 space-y-3 pt-4 shadow-[inset_0_1px_0_var(--sn-hairline)]">
           {instrumentsState.ok && (
-            <p className="mb-2 text-sm font-medium text-accent-700">Instrumentos salvos!</p>
+            <p className="sn-notice-ok" role="status">Instrumentos salvos</p>
           )}
           {instrumentsState.error && (
-            <p className="mb-2 text-sm text-red-600">{instrumentsState.error}</p>
+            <p className="sn-alert" role="alert">{instrumentsState.error}</p>
           )}
           <Field label="Instrumentos que você dá aula" htmlFor="instruments" hint="Separe por vírgula">
             <Input
@@ -73,8 +72,8 @@ export function TeachingToggle({ isTeacher, instruments }: TeachingToggleProps) 
               placeholder="Ex.: Violão, Piano"
             />
           </Field>
-          <div className="mt-3">
-            <SubmitButton pendingLabel="Salvando…">Salvar instrumentos</SubmitButton>
+          <div>
+            <SubmitButton fullWidth={false} pendingLabel="Salvando…">Salvar instrumentos</SubmitButton>
           </div>
         </form>
       )}

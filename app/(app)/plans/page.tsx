@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation'
 
-import Link from 'next/link'
-
 import { PageHeader } from '@/components/app/PageHeader'
 import { LockedFeatureCard } from '@/components/billing/LockedFeatureCard'
 import { type Plan } from '@/components/financial/PlanForm'
 import { PlansList } from '@/components/financial/PlansList'
-import { Button } from '@/components/ui/Button'
+import { LinkButton } from '@/components/ds/Button'
+import { IconPlus } from '@/components/ds/icons'
 import { getPlanContext } from '@/lib/auth/plan'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -23,7 +22,7 @@ export default async function PlansPage() {
       <>
         <PageHeader
           title="Planos de mensalidade"
-          subtitle="Crie planos, matricule alunos e cobre no Financeiro"
+          info="Crie planos, matricule alunos e cobre no Financeiro"
         />
         <LockedFeatureCard
           title="Planos de Mensalidade"
@@ -66,12 +65,8 @@ export default async function PlansPage() {
     <>
       <PageHeader
         title="Planos de mensalidade"
-        subtitle="Crie planos, matricule alunos e cobre no Financeiro"
-        action={
-          <Link href="/plans/new">
-            <Button>Novo plano</Button>
-          </Link>
-        }
+        info="Crie planos, matricule alunos e cobre no Financeiro"
+        action={<LinkButton href="/plans/new"><IconPlus /> Novo plano</LinkButton>}
       />
 
       <PlansList

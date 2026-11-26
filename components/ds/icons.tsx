@@ -25,3 +25,7 @@ export const IconUpload = (p: IconProps) => <Base {...p}><path d="M12 15V4" /><p
 export const IconCheck = (p: IconProps) => <Base {...p}><path d="m5 12.5 4.5 4.5L19 7.5" /></Base>
 export const IconArrowLeft = (p: IconProps) => <Base {...p}><path d="M19 12H5" /><path d="m11 6-6 6 6 6" /></Base>
 export const IconTrash = (p: IconProps) => <Base {...p}><path d="M4.5 7h15" /><path d="M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" /><path d="M6.5 7l1 12.5a1 1 0 0 0 1 .9h7a1 1 0 0 0 1-.9l1-12.5" /></Base>
+export const IconInfo = (p: IconProps) => <Base {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5" /><circle cx="12" cy="8" r=".6" fill="currentColor" stroke="none" /></Base>
+export const IconPlay = (p: IconProps) => <Base {...p}><path d="M8 5.5v13l10.5-6.5z" /></Base>
+export const IconExternal = (p: IconProps) => <Base {...p}><path d="M14 4.5h5.5V10" /><path d="M19.5 4.5 11 13" /><path d="M18 14v4.5a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1H10" /></Base>
+export const IconChevronDown = (p: IconProps) => <Base {...p}><path d="m6 9 6 6 6-6" /></Base>

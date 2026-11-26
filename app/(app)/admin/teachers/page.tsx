@@ -1,19 +1,26 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
 import { ResetPasswordButton } from '@/components/admin/ResetPasswordButton'
-import { SearchBox } from '@/components/admin/SearchBox'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
+import { StudentSearch } from '@/components/admin/StudentSearch'
+import styles from '@/components/admin/students.module.css'
+import { Avatar } from '@/components/ds/Avatar'
+import { LinkButton } from '@/components/ds/Button'
+import { IconArrowRight, IconPlus, IconUpload } from '@/components/ds/icons'
+import { MoreMenu } from '@/components/ds/MoreMenu'
+import { StatusPill } from '@/components/ds/StatusPill'
+import dsStyles from '@/components/ds/ds.module.css'
 import { getPlanContext, isSoloExperience } from '@/lib/auth/plan'
 import { deleteTeacher } from '@/lib/actions/teachers'
+import { instrumentTone } from '@/lib/constants/instrument-tone'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Professores' }
+
+// Professor | Instrumentos | Status | ações (uma coluna a menos que a lista de alunos).
+const TEACHER_COLS = { '--cols': 'minmax(0, 2.2fr) minmax(0, 1.4fr) 100px 144px' } as React.CSSProperties
 
 type TeacherRow = {
   id: string
@@ -51,77 +58,71 @@ export default async function TeachersPage({
       })
     : all
 
+  const count = `${teachers.length} ${teachers.length === 1 ? 'professor' : 'professores'}`
+
   return (
-    <>
-      <PageHeader
-        title="Professores"
-        subtitle={`${teachers.length} professor(es)${term ? ` · busca: "${term}"` : ''}`}
-        action={
-          <div className="flex items-center gap-2">
-            <Link href="/admin/teachers/import">
-              <Button variant="secondary">Importar</Button>
-            </Link>
-            <Link href="/admin/teachers/new">
-              <Button>Novo professor</Button>
-            </Link>
-          </div>
-        }
-      />
+    <section className={styles.page} aria-labelledby="teachers-title">
+      <header className={styles.header}>
+        <div>
+          <h1 id="teachers-title" className={styles.kicker}>Professores</h1>
+          <p className={styles.count}>{term ? `${count} para “${term}”` : count}</p>
+        </div>
+        <div className={styles.actions}>
+          <LinkButton href="/admin/teachers/import" variant="soft"><IconUpload /> Importar</LinkButton>
+          <LinkButton href="/admin/teachers/new"><IconPlus /> Novo professor</LinkButton>
+        </div>
+      </header>
 
-      <div className="mb-4 max-w-sm">
-        <SearchBox
-          basePath="/admin/teachers"
-          defaultValue={term}
-          placeholder="Buscar professor por nome ou e-mail…"
-          label="Buscar professor"
-        />
-      </div>
+      <StudentSearch defaultValue={term} basePath="/admin/teachers" label="Buscar professor" />
 
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Nome</Th>
-            <Th>E-mail</Th>
-            <Th>Instrumentos</Th>
-            <Th>Status</Th>
-            <Th className="text-right"></Th>
-          </Tr>
-        </Thead>
-        <tbody>
-          {teachers.length === 0 && <EmptyRow colSpan={5}>Nenhum professor cadastrado.</EmptyRow>}
-          {teachers.map((t) => (
-            <Tr key={t.id}>
-              <Td className="font-medium">{t.user?.name ?? '—'}</Td>
-              <Td className="text-ink-muted">{t.user?.email ?? '—'}</Td>
-              <Td className="text-ink-muted">
-                {Array.isArray(t.instruments) && t.instruments.length
-                  ? t.instruments.join(', ')
-                  : '—'}
-              </Td>
-              <Td>
-                <Badge tone={t.status === 'active' ? 'success' : 'neutral'}>
-                  {t.status === 'active' ? 'Ativo' : t.status}
-                </Badge>
-              </Td>
-              <Td className="text-right">
-                <div className="flex items-center justify-end gap-3">
-                  <ResetPasswordButton userId={t.user_id} userName={t.user?.name ?? 'professor'} />
-                  <ImpersonateButton targetUserId={t.user_id} />
-                  <Link href={`/admin/teachers/${t.id}/edit`}>
-                    <Button variant="ghost" className="text-xs px-2 py-1">Editar</Button>
-                  </Link>
-                  <DeleteButton
-                    action={deleteTeacher}
-                    hidden={{ teacherId: t.id }}
-                    label="Excluir"
-                    confirmText={`Excluir ${t.user?.name ?? 'professor'}? O acesso será removido.`}
-                  />
+      {teachers.length === 0 ? (
+        <p className={styles.empty}>
+          {term ? 'Nenhum professor com esse nome ou e-mail.' : 'Nenhum professor cadastrado ainda.'}
+        </p>
+      ) : (
+        <ul className={styles.list} style={TEACHER_COLS} aria-label="Lista de professores">
+          <li className={styles.columns} aria-hidden="true">
+            <span>Professor</span><span>Instrumentos</span><span>Status</span><span />
+          </li>
+          {teachers.map((t) => {
+            const name = t.user?.name ?? 'Professor'
+            const instruments = Array.isArray(t.instruments) ? t.instruments : []
+            const active = t.status === 'active'
+            return (
+              <li key={t.id} className={styles.row}>
+                <div className={styles.who}>
+                  <Avatar name={name} tone={instrumentTone(instruments)} />
+                  <div className={styles.identity}>
+                    {/* O link do nome cobre a linha inteira: clicar em qualquer ponto abre a edição. */}
+                    <Link href={`/admin/teachers/${t.id}/edit`} className={styles.rowLink}>{name}</Link>
+                    <span className={styles.email}>{t.user?.email}</span>
+                  </div>
                 </div>
-              </Td>
-            </Tr>
-          ))}
-        </tbody>
-      </Table>
-    </>
+                <div className={styles.cell} data-label="Instrumentos">
+                  {instruments.length ? instruments.join(', ') : <span className={styles.none}>Sem instrumento</span>}
+                </div>
+                <div className={styles.cell} data-label="Status">
+                  <StatusPill tone={active ? 'success' : 'neutral'}>{active ? 'Ativo' : 'Inativo'}</StatusPill>
+                </div>
+                <div className={styles.rowActions}>
+                  <span className={styles.open} aria-hidden="true">Editar <IconArrowRight /></span>
+                  <MoreMenu label={`Mais ações para ${name}`}>
+                    <ResetPasswordButton userId={t.user_id} userName={name} className={dsStyles.menuItem} />
+                    <ImpersonateButton targetUserId={t.user_id} label="Entrar como este professor" className={dsStyles.menuItem} />
+                    <DeleteButton
+                      action={deleteTeacher}
+                      hidden={{ teacherId: t.id }}
+                      label="Excluir professor"
+                      confirmText={`Excluir ${name}? O acesso será removido.`}
+                      buttonClassName={`${dsStyles.menuItem} ${dsStyles.menuItemDanger}`}
+                    />
+                  </MoreMenu>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
   )
 }

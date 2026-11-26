@@ -48,7 +48,7 @@ export async function sendCredentialsEmail({ admin, to, name, schoolName, kind }
   const safeTo = escapeHtml(to)
   const safeSchool = escapeHtml(school)
   const safeSetupUrl = escapeHtml(setupUrl.toString())
-  const text = `${greeting}\n\n${intro}\n\nE-mail: ${to}\nDefinir senha: ${setupUrl}\n\nSe você não esperava esta mensagem, ignore-a.\n\n${school} · enviado pelo Sonorum`
+  const text = `${greeting}\n\n${intro}\n\nE-mail: ${to}\nDefinir senha: ${setupUrl}\n\nSe você não esperava esta mensagem, ignore-a.\n\n${school} usa o Sonorum para enviar estes avisos.`
   const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f4f8f5;font-family:system-ui,sans-serif;color:#1c362e">
   <div style="max-width:520px;margin:0 auto;padding:24px">
     <div style="background:#fff;border-radius:16px;padding:32px">
@@ -58,7 +58,7 @@ export async function sendCredentialsEmail({ admin, to, name, schoolName, kind }
       <a href="${safeSetupUrl}" style="display:inline-block;background:#25463c;color:#fff;text-decoration:none;font-weight:600;padding:12px 24px;border-radius:10px">Definir minha senha</a>
       <p style="margin-top:16px;font-size:12px;color:#5c7568">Se você não esperava esta mensagem, ignore-a.</p>
       <hr style="border:none;border-top:1px solid #e3ece6;margin:20px 0">
-      <div style="font-size:12px;color:#5c7568">${safeSchool} · enviado pelo Sonorum</div>
+      <div style="font-size:12px;color:#5c7568">${safeSchool} usa o Sonorum para enviar estes avisos.</div>
     </div>
   </div></body></html>`
 

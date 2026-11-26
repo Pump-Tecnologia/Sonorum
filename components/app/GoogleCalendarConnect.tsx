@@ -1,4 +1,7 @@
 import { disconnectGoogleCalendar } from '@/lib/actions/calendar'
+import { SubmitButton } from '@/components/ds/Button'
+import { InfoButton } from '@/components/ds/InfoButton'
+import { StatusPill } from '@/components/ds/StatusPill'
 import { Card } from '@/components/ui/Card'
 
 // Card de conexão com o Google Calendar (no perfil). Enquanto a integração não
@@ -6,43 +9,30 @@ import { Card } from '@/components/ui/Card'
 export function GoogleCalendarConnect({ enabled, connected }: { enabled: boolean; connected: boolean }) {
   return (
     <Card>
-      <h2 className="mb-2 text-base font-semibold text-ink">Google Calendar</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1">
+          <h2 className="sn-card-title">Google Agenda</h2>
+          {enabled && !connected && (
+            <InfoButton label="Sobre o Google Agenda">
+              Suas aulas aparecem no Google Agenda, inclusive no celular. Usamos a conexão só para criar e atualizar
+              suas aulas. <a href="https://sonorum.com.br/privacidade" className="underline underline-offset-2">Política de privacidade</a>
+            </InfoButton>
+          )}
+        </div>
 
-      {!enabled ? (
-        <p className="text-sm text-ink-muted">
-          Em breve: sincronize suas aulas com o Google Calendar. A integração está em configuração.
-        </p>
-      ) : connected ? (
-        <div className="space-y-3">
-          <p className="text-sm text-ink-muted">
-            Conectado. Suas aulas aparecem automaticamente no seu Google Calendar.
-          </p>
-          <form action={disconnectGoogleCalendar}>
-            <button
-              type="submit"
-              className="rounded-xl border border-hairline bg-surface px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-surface-muted"
-            >
-              Desconectar
-            </button>
-          </form>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <p className="text-sm text-ink-muted">
-            Conecte sua conta para ver suas aulas no Google Calendar (e no celular).
-          </p>
-          <a
-            href="/api/google/connect"
-            className="inline-flex items-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
-          >
-            Conectar Google Calendar
-          </a>
-          <p className="text-xs text-ink-muted">
-            Usamos só para criar/atualizar suas aulas na agenda.{' '}
-            <a href="https://sonorum.com.br/privacidade" className="hover:text-brand-600 hover:underline">Política de privacidade</a>.
-          </p>
-        </div>
-      )}
+        {!enabled ? (
+          <StatusPill tone="neutral">Em breve</StatusPill>
+        ) : connected ? (
+          <div className="flex items-center gap-2">
+            <StatusPill tone="success">Conectado</StatusPill>
+            <form action={disconnectGoogleCalendar}>
+              <SubmitButton variant="ghost" size="sm" pendingLabel="Desconectando…">Desconectar</SubmitButton>
+            </form>
+          </div>
+        ) : (
+          <a href="/api/google/connect" className="sn-btn sn-btn-primary">Conectar</a>
+        )}
+      </div>
     </Card>
   )
 }

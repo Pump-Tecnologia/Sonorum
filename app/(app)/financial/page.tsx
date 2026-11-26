@@ -52,7 +52,7 @@ export default async function FinancialPage({
       <>
         <PageHeader
           title="Financeiro"
-          subtitle="Controle de mensalidades, cobranças e inadimplência"
+          info="Controle de mensalidades, cobranças e inadimplência"
         />
         <LockedFeatureCard
           title="Módulo Financeiro e Cobranças"
@@ -226,7 +226,8 @@ export default async function FinancialPage({
                         <span className={styles.name}>
                           {sid ? <Link href={`/admin/students/${sid}`} className={styles.nameLink}>{name}</Link> : name}
                         </span>
-                        <span className={styles.meta}>{planOrDesc} · vence {dayMonth(c.due_date)}</span>
+                        <span className={styles.meta}>{planOrDesc}</span>
+                        <span className={styles.meta}>Vence em {dayMonth(c.due_date)}</span>
                       </div>
                     </div>
                     <div className={styles.money}>
@@ -299,7 +300,7 @@ export default async function FinancialPage({
                       <div className={styles.whoText}>
                         <Link href={`/admin/students/${d.id}`} className={`${styles.name} ${styles.nameLink}`}>{d.name}</Link>
                         <span className={styles.meta}>
-                          {d.count} {d.count === 1 ? 'cobrança' : 'cobranças'} · desde {dayMonth(d.oldest)}
+                          {d.count} {d.count === 1 ? 'cobrança em aberto' : 'cobranças em aberto'} desde {dayMonth(d.oldest)}
                         </span>
                       </div>
                     </div>

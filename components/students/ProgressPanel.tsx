@@ -72,7 +72,7 @@ export function ProgressPanel({ progress, action }: ProgressPanelProps) {
         <div className={styles.stat}>
           <p className={styles.statLabel}>Frequência</p>
           <p className={styles.statValue}>{attendance.rate}%</p>
-          <p className={styles.statSub}>{attendance.attended} presenças · {attendance.missed} faltas</p>
+          <p className={styles.statSub}>{attendance.attended} presenças e {attendance.missed} faltas</p>
         </div>
         <div className={styles.stat}>
           <p className={styles.statLabel}>Metas</p>
@@ -84,7 +84,7 @@ export function ProgressPanel({ progress, action }: ProgressPanelProps) {
           {bpm.song || bpm.reached ? (
             <>
               <p className={styles.statValue}>{bpm.reached ?? '—'}<small>BPM</small></p>
-              <p className={styles.statSub}>{bpm.song ? `${bpm.song} · ` : ''}começou em {bpm.initial ?? '—'}</p>
+              <p className={styles.statSub}>{bpm.song ? `${bpm.song}: ` : ''}começou em {bpm.initial ?? '—'}</p>
               <div className={styles.spark}><Sparkline values={bpm.series} /></div>
             </>
           ) : (

@@ -6,7 +6,7 @@ import { StatusPill } from '@/components/ds/StatusPill'
 import styles from '@/components/financial/financial.module.css'
 import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { getCurrentUser } from '@/lib/auth/session'
-import { chargeStatusMeta, effectiveChargeStatus } from '@/lib/finance'
+import { chargeStatusMeta, effectiveChargeStatus, paidVia } from '@/lib/finance'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Minhas mensalidades' }
@@ -88,7 +88,7 @@ export default async function StudentChargesPage() {
                     <span className={styles.name}>{title}</span>
                     <span className={styles.meta}>
                       {c.status === 'paid' && c.paid_at
-                        ? `Pago em ${new Date(c.paid_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}${c.payment_method ? ` · ${c.payment_method}` : ''}`
+                        ? `Pago ${paidVia(c.payment_method)}em ${new Date(c.paid_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
                         : `Vence em ${dayMonthYear(c.due_date)}`}
                     </span>
                   </div>

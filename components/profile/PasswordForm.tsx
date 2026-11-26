@@ -15,12 +15,12 @@ export function PasswordForm() {
   return (
     <form action={action} className="space-y-5">
       {state.ok && (
-        <p className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-medium text-accent-800">
+        <p className="sn-notice-ok" role="status">
           Senha atualizada!
         </p>
       )}
       {state.error && (
-        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{state.error}</p>
+        <p className="sn-alert" role="alert">{state.error}</p>
       )}
 
       <Field label="Senha atual" htmlFor="currentPassword" error={fe.currentPassword}>

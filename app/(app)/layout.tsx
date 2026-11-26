@@ -88,7 +88,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <FinanceVisibilityProvider>
       <div className={styles.shell} style={shellStyle as React.CSSProperties}>
-        {isImpersonating && <ImpersonationBanner asUserName={user.name} />}
+        {isImpersonating && <ImpersonationBanner asUserName={user.name} asRole={user.role} />}
         {user.role === 'admin' && (
           <GracePeriodBanner
             inGracePeriod={plan.inGracePeriod}

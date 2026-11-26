@@ -27,14 +27,14 @@ export function CreateTeacherForm() {
   }
 
   return (
-    <Card>
+    <Card className="max-w-xl">
       <form
         action={action}
         onReset={(event) => event.preventDefault()}
-        className="max-w-lg space-y-5"
+        className="space-y-5"
       >
         {state.error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <p className="sn-alert" role="alert">
             {state.error}
           </p>
         )}
@@ -48,7 +48,7 @@ export function CreateTeacherForm() {
         </Field>
 
         <MultiInstrumentField name="instruments" label="Instrumentos" />
-        {fe.instruments && <p className="text-xs font-medium text-red-600">{fe.instruments}</p>}
+        {fe.instruments && <p className="sn-error" role="alert">{fe.instruments}</p>}
 
         <SubmitButton pendingLabel="Criando…">Criar professor</SubmitButton>
       </form>

@@ -1,6 +1,5 @@
 import { PageHeader } from '@/components/app/PageHeader'
-import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { LockedFeatureCard } from '@/components/billing/LockedFeatureCard'
 import type { TranscriptionAccess } from '@/lib/auth/plan'
 
 // Estado "bloqueado" da feature: a escola vê do que se trata e um CTA de upgrade.
@@ -18,25 +17,16 @@ export function TranscriptionUpsell({ reason }: { reason: Exclude<TranscriptionA
     <>
       <PageHeader
         title="Transcrição de cifra por IA"
-        subtitle="Exclusivo do plano Premium"
       />
-      <Card className="max-w-2xl border-brand-200 bg-brand-50/40">
-        <h2 className="text-lg font-semibold text-ink">
-          {reason === 'expired' ? 'Seu plano venceu' : 'Disponível no plano Premium'}
-        </h2>
-        <p className="mt-2 text-sm text-ink-muted">
-          Envie um áudio e a IA gera um rascunho de cifra (acordes) automaticamente. Seu professor
-          revisa, ajusta e publica na biblioteca — economizando tempo a cada nova música.
-        </p>
-        <ul className="mt-4 space-y-2 text-sm text-ink-muted">
-          <li>✓ Áudio → cifra em segundos</li>
-          <li>✓ Revisão do professor antes de publicar</li>
-          <li>✓ Vira recurso reutilizável nas aulas</li>
-        </ul>
-        <a href={waLink} target="_blank" rel="noopener noreferrer" className="mt-6 inline-block">
-          <Button>{reason === 'expired' ? 'Renovar plano no WhatsApp' : 'Fazer upgrade no WhatsApp'}</Button>
-        </a>
-      </Card>
+      <LockedFeatureCard
+        title={reason === 'expired' ? 'Seu plano venceu' : 'Disponível no plano Premium'}
+        description="Envie um áudio e a IA gera um rascunho de cifra com os acordes. O professor revisa, ajusta e publica na biblioteca, economizando tempo a cada música nova."
+        benefits={['Áudio vira cifra em segundos', 'Revisão do professor antes de publicar', 'Vira recurso para usar nas aulas']}
+        planRequirement="Exclusivo do plano Premium"
+        upgradeUrl={waLink}
+        ctaLabel={reason === 'expired' ? 'Renovar pelo WhatsApp' : 'Falar no WhatsApp'}
+        isExpired={reason === 'expired'}
+      />
     </>
   )
 }

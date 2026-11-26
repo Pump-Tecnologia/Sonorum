@@ -1,7 +1,11 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { PageHeader } from '@/components/app/PageHeader'
+import { IconArrowLeft } from '@/components/ds/icons'
+import { CoverImage } from '@/components/resources/ResourceCard'
+import { coverFor } from '@/components/resources/resource-meta'
 import { ResourceForm } from '@/components/resources/ResourceForm'
+import styles from '@/components/resources/resources.module.css'
 import { createClient } from '@/lib/supabase/server'
 import { signedResourceUrl } from '@/lib/storage/resources'
 
@@ -19,11 +23,21 @@ export default async function EditResourcePage({ params }: { params: Promise<{ i
   if (!resource) notFound()
 
   const currentFileUrl = await signedResourceUrl(resource.file_path)
+  const kind = resource.file_path?.toLowerCase().endsWith('.pdf') ? 'pdf' as const : 'image' as const
+  const currentFile = currentFileUrl ? { url: currentFileUrl, kind } : null
+  const cover = coverFor(resource, { path: resource.file_path, url: currentFileUrl })
 
   return (
-    <>
-      <PageHeader title="Editar recurso" subtitle={resource.title} />
-      <ResourceForm resource={resource} currentFileUrl={currentFileUrl} />
-    </>
+    <section className={styles.page} aria-labelledby="edit-resource-title">
+      <Link href="/resources" className={styles.backLink}><IconArrowLeft /> Recursos</Link>
+      <header className={styles.editHeader}>
+        <CoverImage cover={cover} className={styles.editThumb} />
+        <div>
+          <h1 id="edit-resource-title" className={styles.kicker}>Editando</h1>
+          <p className={styles.title}>{resource.title}</p>
+        </div>
+      </header>
+      <ResourceForm resource={resource} currentFile={currentFile} />
+    </section>
   )
 }

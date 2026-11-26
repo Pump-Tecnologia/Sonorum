@@ -31,7 +31,7 @@ export default async function EditTeacherPage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <PageHeader title="Editar professor" subtitle={user?.name ?? ''} />
+      <PageHeader title="Editar professor" subtitle={user?.name ?? ''} back={{ href: '/admin/teachers', label: 'Professores' }} />
       <EditTeacherForm
         teacher={{
           id: teacher.id,

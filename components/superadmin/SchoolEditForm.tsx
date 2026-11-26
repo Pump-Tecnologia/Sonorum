@@ -1,12 +1,12 @@
 'use client'
 
-import Link from 'next/link'
 import { useActionState } from 'react'
 
 import { AppCard } from '@/components/app/AppCard'
 import { AppField, AppInput, AppSelect } from '@/components/app/AppField'
 import { AppSubmit } from '@/components/app/AppSubmit'
 import styles from '@/components/app/app.module.css'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { updateSchool, type SchoolActionState } from '@/lib/actions/schools'
 import { OVERRIDABLE_FEATURES, type OverridableFeature } from '@/lib/constants/plans'
 import { TRANSCRIPTION_ENABLED } from '@/lib/constants/transcription'
@@ -42,11 +42,11 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
   const fe = state.fieldErrors ?? {}
 
   return (
-    <AppCard>
-      <form action={action} className={styles.form} style={{ maxWidth: '32rem' }}>
+    <AppCard className={styles.cardNarrow}>
+      <form action={action} className={styles.form}>
         <input type="hidden" name="schoolId" value={school.id} />
 
-        {state.ok && <p className={styles.success}>Escola atualizada! ✓</p>}
+        {state.ok && <p className={styles.success}>Escola atualizada</p>}
         {state.error && <p className={styles.alert}>{state.error}</p>}
 
         <div className={`${styles.formRow} ${styles.formRow2}`}>
@@ -89,12 +89,12 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
 
         {/* Overrides de recursos por escola — sobretudo para o plano "Sob medida" */}
         <div>
-          <p style={{ margin: '0.5rem 0 0.25rem', fontWeight: 600, fontSize: '0.875rem' }}>
-            Recursos (sobrescreve o plano)
-          </p>
-          <p className={styles.hint} style={{ marginBottom: '0.75rem' }}>
-            Padrão = segue o plano. Use para liberar ou bloquear um recurso só nesta escola (ex.: Sob medida).
-          </p>
+          <div className="mt-2 mb-3 flex items-center gap-1">
+            <h2 className={styles.cardTitle} style={{ margin: 0 }}>Recursos da escola</h2>
+            <InfoButton label="Sobre os recursos da escola">
+              “Padrão do plano” segue o que o plano libera. Ativado ou Desativado vale só para esta escola, por exemplo no plano Sob medida.
+            </InfoButton>
+          </div>
           <div className={`${styles.formRow} ${styles.formRow2}`}>
             {(TRANSCRIPTION_ENABLED
               ? OVERRIDABLE_FEATURES
@@ -118,9 +118,6 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
         <AppSubmit pendingLabel="Salvando…">Salvar alterações</AppSubmit>
       </form>
 
-      <Link href="/superadmin" className={styles.rowLink} style={{ marginTop: '1rem', display: 'inline-block' }}>
-        ← Voltar para escolas
-      </Link>
     </AppCard>
   )
 }

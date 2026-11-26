@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation'
 
-import { PageHeader } from '@/components/app/PageHeader'
 import { ReportDateRange } from '@/components/admin/ReportDateRange'
+import { LockedFeatureCard } from '@/components/billing/LockedFeatureCard'
+import { DashHeader, DateBlock, Panel, StatTile } from '@/components/dashboard/parts'
+import styles from '@/components/dashboard/dashboard.module.css'
+import { StatusPill } from '@/components/ds/StatusPill'
 import { WhatsAppNotifyButton } from '@/components/notifications/WhatsAppNotifyButton'
-import { Badge } from '@/components/ui/Badge'
-import { Card } from '@/components/ui/Card'
-import { StatCard } from '@/components/ui/StatCard'
-import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
 import { sendLessonReport } from '@/lib/actions/notifications'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
@@ -14,6 +13,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Relatórios' }
 
+const decimal = (n: number) => n.toFixed(1).replace('.', ',')
 const pad = (n: number) => String(n).padStart(2, '0')
 const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
@@ -41,16 +41,15 @@ export default async function ReportsPage({
 
   if (!features.reports) {
     return (
-      <>
-        <PageHeader title="Relatórios de aula" subtitle="Envie o relatório da aula ao aluno" />
-        <Card className="border-dashed">
-          <p className="text-sm font-medium text-ink">Disponível nos planos pagos</p>
-          <p className="mt-1 text-sm text-ink-muted">
-            Envie automaticamente o relatório de cada aula (notas, música, BPM e observações) ao aluno por
-            e-mail/WhatsApp a partir do plano Profissional.
-          </p>
-        </Card>
-      </>
+      <div className={styles.page}>
+        <DashHeader title="Relatórios de aula" />
+        <LockedFeatureCard
+          title="Relatórios de aula"
+          description="Envie ao aluno o relatório de cada aula, com notas, música, BPM e observações, por e-mail e WhatsApp."
+          benefits={['Relatório da aula com notas por pilar', 'Envio por e-mail e WhatsApp', 'Histórico de quem já recebeu']}
+          planRequirement="Disponível a partir do plano Profissional"
+        />
+      </div>
     )
   }
 
@@ -87,77 +86,62 @@ export default async function ReportsPage({
     }
   }
 
-  const avg = (r: ReportEmbed) => ((r.technique_score + r.theory_score + r.repertoire_score + r.practice_score) / 4).toFixed(1)
+  const avg = (r: ReportEmbed) => (r.technique_score + r.theory_score + r.repertoire_score + r.practice_score) / 4
   const sentCount = rows.filter((r) => sentSet.has(r.id)).length
   const uniqueStudents = new Set(rows.map((r) => r.student_id)).size
   const totalScoreSum = rows.reduce(
     (acc, r) => acc + (r.rep!.technique_score + r.rep!.theory_score + r.rep!.repertoire_score + r.rep!.practice_score) / 4,
     0,
   )
-  const overallAvg = rows.length > 0 ? (totalScoreSum / rows.length).toFixed(1) : '—'
+  const overallAvg = rows.length > 0 ? decimal(totalScoreSum / rows.length) : '—'
 
   return (
-    <>
-      <PageHeader
+    <div className={styles.page}>
+      <DashHeader
         title="Relatórios de aula"
-        subtitle="Acompanhe o desempenho pedagógico e envie feedbacks aos alunos"
+        info="Acompanhe o desempenho das aulas e envie o relatório de cada uma ao aluno."
+        actions={<ReportDateRange from={from} to={to} />}
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Aulas avaliadas" value={rows.length} hint="Com relatório no período" />
-        <StatCard
+      <div className={styles.stats}>
+        <StatTile label="Aulas avaliadas" value={rows.length} hint="Com relatório no período" />
+        <StatTile
           label="Relatórios enviados"
           value={sentCount}
-          hint={rows.length > 0 ? `${Math.round((sentCount / rows.length) * 100)}% de entrega` : 'Nenhum envio'}
+          hint={rows.length > 0 ? `${Math.round((sentCount / rows.length) * 100)}% das aulas avaliadas` : 'Nenhum envio'}
         />
-        <StatCard
-          label="Média geral"
-          value={overallAvg !== '—' ? `★ ${overallAvg}` : '—'}
-          hint="Média dos 4 pilares avaliados"
-        />
-        <StatCard label="Alunos acompanhados" value={uniqueStudents} hint="Com avaliação no período" />
+        <StatTile label="Nota média" value={overallAvg !== '—' ? <>{overallAvg}<small>/5</small></> : '—'} hint="Técnica, teoria, repertório e dedicação" />
+        <StatTile label="Alunos avaliados" value={uniqueStudents} />
       </div>
 
-      <div className="mb-4">
-        <ReportDateRange from={from} to={to} />
-      </div>
-
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Aluno</Th>
-            <Th>Aula</Th>
-            <Th>Data</Th>
-            <Th>Avaliação</Th>
-            <Th className="text-right">Enviar</Th>
-          </Tr>
-        </Thead>
-        <tbody>
-          {rows.length === 0 && (
-            <EmptyRow colSpan={5}>Nenhuma aula com relatório preenchido no período.</EmptyRow>
-          )}
-          {rows.map((l) => (
-            <Tr key={l.id}>
-              <Td className="font-medium">{l.student?.name ?? '—'}</Td>
-              <Td className="text-ink-muted">{l.title}</Td>
-              <Td className="text-ink-muted">{new Date(l.start_datetime).toLocaleDateString('pt-BR')}</Td>
-              <Td>
-                <Badge tone={Number(avg(l.rep!)) >= 4 ? 'success' : 'neutral'}>★ {avg(l.rep!)}</Badge>
-              </Td>
-              <Td className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  {sentSet.has(l.id) && <span className="text-xs font-medium text-accent-700">enviado</span>}
-                  <WhatsAppNotifyButton
-                    action={sendLessonReport}
-                    hidden={{ lessonId: l.id }}
-                    label={sentSet.has(l.id) ? 'Reenviar' : 'Enviar'}
-                  />
-                </div>
-              </Td>
-            </Tr>
-          ))}
-        </tbody>
-      </Table>
-    </>
+      <Panel id="reports-title" title="Aulas com relatório">
+        {rows.length === 0 ? (
+          <p className={styles.empty}>Nenhuma aula com relatório preenchido no período.</p>
+        ) : (
+          <ul className={styles.rows}>
+            {rows.map((l) => {
+              const score = avg(l.rep!)
+              const sent = sentSet.has(l.id)
+              return (
+                <li key={l.id}>
+                  <div className={styles.row}>
+                    <DateBlock iso={l.start_datetime} />
+                    <span className={styles.rowMain}>
+                      <span className={styles.rowName}>{l.student?.name ?? 'Aluno'}</span>
+                      <span className={styles.rowMeta}>{l.title}</span>
+                    </span>
+                    <span className={styles.rowEnd}>
+                      <StatusPill tone={score >= 4 ? 'success' : 'neutral'}>Nota {decimal(score)}</StatusPill>
+                      {sent && <StatusPill tone="brand">Enviado</StatusPill>}
+                      <WhatsAppNotifyButton action={sendLessonReport} hidden={{ lessonId: l.id }} label={sent ? 'Reenviar' : 'Enviar'} />
+                    </span>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Panel>
+    </div>
   )
 }

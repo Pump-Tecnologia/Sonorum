@@ -46,7 +46,7 @@ export function RegisterForm() {
         label={isSolo ? 'Nome do seu trabalho' : 'Nome da escola'}
         htmlFor="schoolName"
         error={fe.schoolName}
-        hint={isSolo ? 'Como você se apresenta pros seus alunos — pode ser seu próprio nome' : undefined}
+        hint={isSolo ? 'Como você se apresenta para seus alunos. Pode ser seu próprio nome.' : undefined}
       >
         <AuthInput
           id="schoolName"

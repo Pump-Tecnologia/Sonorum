@@ -17,8 +17,8 @@ export function CreateSchoolForm() {
 
   if (state.ok) {
     return (
-      <AppCard>
-        <p className={styles.success}>Escola criada! ✓</p>
+      <AppCard className={styles.cardNarrow}>
+        <p className={styles.success} role="status">Escola criada</p>
         <p style={{ margin: '0.875rem 0 0.5rem 0', fontSize: '0.9375rem' }}>
           Admin: <strong>{state.createdEmail}</strong>
           <br />
@@ -26,16 +26,14 @@ export function CreateSchoolForm() {
         <p className={styles.hint} style={{ marginBottom: '1rem' }}>
           Enviamos um link de uso único para o administrador definir a senha e entrar.
         </p>
-        <Link href="/superadmin" className={styles.rowLink}>
-          ← Voltar para escolas
-        </Link>
+        <Link href="/superadmin" className={styles.rowLink}>Voltar para a visão geral</Link>
       </AppCard>
     )
   }
 
   return (
-    <AppCard>
-      <form action={action} className={styles.form} style={{ maxWidth: '32rem' }}>
+    <AppCard className={styles.cardNarrow}>
+      <form action={action} className={styles.form}>
         {state.error && <p className={styles.alert}>{state.error}</p>}
 
         <AppField label="Nome da escola" htmlFor="name" error={fe.name}>

@@ -13,7 +13,8 @@ export default async function NewTeacherPage() {
 
   return (
     <>
-      <PageHeader title="Novo professor" subtitle="Cria o acesso e o perfil do professor" />
+      <PageHeader title="Novo professor" info="Cria o acesso e o perfil do professor."
+        back={{ href: '/admin/teachers', label: 'Professores' }} />
       <CreateTeacherForm />
     </>
   )

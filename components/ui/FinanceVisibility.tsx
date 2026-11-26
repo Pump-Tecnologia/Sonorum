@@ -100,7 +100,7 @@ export function FinanceToggle({ className }: { className?: string }) {
       aria-label={hidden ? 'Mostrar valores' : 'Ocultar valores'}
       title={hidden ? 'Mostrar valores' : 'Ocultar valores'}
       className={cn(
-        'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-surface text-ink-muted transition-colors hover:border-brand-300 hover:text-ink',
+        'inline-grid h-10 w-10 place-items-center rounded-full bg-(--sn-mint-soft) text-(--sn-ink-soft) transition-colors hover:bg-(--sn-mint-hover) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--sn-green)',
         className,
       )}
     >

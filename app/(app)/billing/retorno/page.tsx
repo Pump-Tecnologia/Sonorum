@@ -1,15 +1,17 @@
-import Link from 'next/link'
-
 import { PageHeader } from '@/components/app/PageHeader'
+import { LinkButton } from '@/components/ds/Button'
+import { IconArrowRight } from '@/components/ds/icons'
+import { StatusPill } from '@/components/ds/StatusPill'
 import { Card } from '@/components/ui/Card'
+import type { StatusTone } from '@/lib/constants/lessons'
 import { reconcilePayment, reconcileSubscription } from '@/lib/payments/reconcile'
 
 export const metadata = { title: 'Pagamento' }
 
-const MESSAGES: Record<string, { title: string; body: string; tone: string }> = {
-  sucesso: { title: 'Pagamento aprovado 🎉', body: 'Sua assinatura foi renovada. A validade já foi estendida.', tone: 'text-accent-800' },
-  pendente: { title: 'Pagamento em processamento', body: 'Assim que for confirmado, a validade é estendida automaticamente.', tone: 'text-amber-700' },
-  falha: { title: 'Pagamento não concluído', body: 'Nada foi cobrado. Você pode tentar novamente.', tone: 'text-red-700' },
+const MESSAGES: Record<string, { title: string; body: string; pill: string; tone: StatusTone }> = {
+  sucesso: { title: 'Pagamento aprovado', body: 'Sua assinatura foi renovada e a validade já foi estendida.', pill: 'Aprovado', tone: 'success' },
+  pendente: { title: 'Pagamento em processamento', body: 'Assim que for confirmado, a validade é estendida sozinha.', pill: 'Processando', tone: 'warning' },
+  falha: { title: 'Pagamento não concluído', body: 'Nada foi cobrado. Você pode tentar de novo.', pill: 'Não concluído', tone: 'danger' },
 }
 
 export default async function BillingReturnPage({
@@ -29,11 +31,12 @@ export default async function BillingReturnPage({
     <>
       <PageHeader title="Assinatura" />
       <Card className="max-w-lg">
-        <h2 className={`text-lg font-semibold ${m.tone}`}>{m.title}</h2>
-        <p className="mt-2 text-sm text-ink-muted">{m.body}</p>
-        <Link href="/admin" className="mt-4 inline-block text-sm font-semibold text-brand-700 hover:underline">
-          Voltar ao painel →
-        </Link>
+        <StatusPill tone={m.tone}>{m.pill}</StatusPill>
+        <h2 className="mt-4 mb-0 text-2xl font-semibold tracking-tight text-(--sn-ink)">{m.title}</h2>
+        <p className="mt-2 mb-0 text-[15px] text-(--sn-text-muted)">{m.body}</p>
+        <LinkButton href={status === 'falha' ? '/upgrade' : '/admin'} variant="soft" className="mt-6">
+          {status === 'falha' ? 'Tentar de novo' : 'Voltar ao painel'} <IconArrowRight />
+        </LinkButton>
       </Card>
     </>
   )

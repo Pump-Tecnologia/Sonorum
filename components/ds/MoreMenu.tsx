@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
 
 import { IconMore } from '@/components/ds/icons'
 import styles from '@/components/ds/ds.module.css'
+import { useDismiss } from '@/components/ds/useDismiss'
 import { cn } from '@/lib/cn'
 
 interface MoreMenuProps {
@@ -18,22 +19,8 @@ export function MoreMenu({ label, children, className }: MoreMenuProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const menuId = useId()
-
-  useEffect(() => {
-    if (!open) return
-    const onPointer = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false)
-    }
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointer)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointer)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
+  const close = useCallback(() => setOpen(false), [])
+  useDismiss(ref, open, close)
 
   return (
     <div ref={ref} className={cn(styles.more, className)}>

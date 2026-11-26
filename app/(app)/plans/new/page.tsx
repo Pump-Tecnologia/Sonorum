@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 import { PageHeader } from '@/components/app/PageHeader'
@@ -16,10 +15,7 @@ export default async function NewPlanPage() {
 
   return (
     <>
-      <PageHeader title="Novo plano" subtitle="Defina nome, cobrança e restrições" />
-      <Link href="/plans" className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted hover:text-brand-600">
-        ← Voltar para planos
-      </Link>
+      <PageHeader title="Novo plano" info="Defina nome, cobrança e restrições." back={{ href: '/plans', label: 'Planos' }} />
       <div className="max-w-5xl">
         <Card>
           <CreatePlanForm redirectTo="/plans" />

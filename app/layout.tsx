@@ -12,7 +12,7 @@ const figtree = Figtree({
 export const metadata: Metadata = {
   title: {
     default: 'Sonorum — Gestão para escolas de música',
-    template: '%s · Sonorum',
+    template: '%s | Sonorum',
   },
   description:
     'Plataforma de gestão para escolas de música: agenda, alunos, professores, materiais e financeiro num só lugar.',

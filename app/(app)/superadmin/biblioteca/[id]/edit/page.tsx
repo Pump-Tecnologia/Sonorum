@@ -19,7 +19,7 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
 
   return (
     <>
-      <PageHeader title="Editar recurso do catálogo" subtitle={`${template.title} · editar bumpa a versão`} />
+      <PageHeader title="Editar recurso do catálogo" subtitle={template.title} info="Ao salvar, o recurso ganha uma nova versão no catálogo." back={{ href: '/superadmin/biblioteca', label: 'Biblioteca global' }} />
       <TemplateForm template={template} />
     </>
   )

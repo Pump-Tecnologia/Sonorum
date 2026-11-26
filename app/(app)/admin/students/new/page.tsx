@@ -17,7 +17,8 @@ export default async function NewStudentPage() {
 
   return (
     <>
-      <PageHeader title="Novo aluno" subtitle="Cria o acesso e o perfil do aluno" />
+      <PageHeader title="Novo aluno" info="Cria o acesso e o perfil do aluno. A mensalidade é definida depois, ao matricular o aluno em um plano na ficha dele."
+        back={{ href: '/admin/students', label: 'Alunos' }} />
       <CreateStudentForm teachers={teachers} />
     </>
   )

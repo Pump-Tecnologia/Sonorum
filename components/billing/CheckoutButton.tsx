@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react'
 
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ds/Button'
 import type { CheckoutActionState } from '@/lib/actions/billing'
 
 const initial: CheckoutActionState = { ok: false }
@@ -33,10 +33,10 @@ export function CheckoutButton({
   return (
     <form action={run}>
       <input type="hidden" name="planType" value={planType} />
-      <Button type="submit" disabled={pending} variant={variant === 'outline' ? 'ghost' : undefined}>
+      <Button type="submit" disabled={pending} variant={variant === 'outline' ? 'soft' : 'primary'}>
         {pending ? 'Redirecionando…' : label}
       </Button>
-      {state.error && <p className="mt-2 text-sm font-medium text-red-600">{state.error}</p>}
+      {state.error && <p className="sn-error mt-2" role="alert">{state.error}</p>}
     </form>
   )
 }

@@ -34,12 +34,12 @@ export default async function ReviewTranscriptionPage({ params }: { params: Prom
       <>
         <PageHeader title="Revisar transcrição" subtitle={job.title} />
         <Card className="space-y-2">
-          <p className="text-sm text-ink">
+          <p className="text-sm text-(--sn-ink)">
             Esta transcrição está com status <strong>{STATUS_LABEL[status]}</strong>.
           </p>
-          {status === 'failed' && job.error && <p className="text-sm text-ink-muted">{job.error}</p>}
+          {status === 'failed' && job.error && <p className="text-sm text-(--sn-text-muted)">{job.error}</p>}
           {status === 'processing' && (
-            <p className="text-sm text-ink-muted">
+            <p className="text-sm text-(--sn-text-muted)">
               A IA ainda está processando o áudio. Atualize a página em instantes.
             </p>
           )}
@@ -55,7 +55,7 @@ export default async function ReviewTranscriptionPage({ params }: { params: Prom
     <>
       <PageHeader
         title="Revisar transcrição"
-        subtitle="Corrija a cifra gerada pela IA antes de publicar na biblioteca."
+        info="Corrija a cifra gerada pela IA antes de publicar na biblioteca."
       />
       <TranscriptionReview job={job} audioUrl={audioUrl} />
     </>

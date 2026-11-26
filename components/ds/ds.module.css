@@ -107,6 +107,8 @@
 .status {
   display: inline-flex;
   align-items: center;
+  flex: none;
+  white-space: nowrap;
   gap: 6px;
   padding: 5px 11px;
   border-radius: var(--sn-radius-pill);
@@ -225,3 +227,20 @@ select.control {
 .heroSoftButton:hover:not(:disabled) { background: var(--sn-mint-hover); border-color: transparent; }
 .heroSoftButton:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
 .heroSoftButton svg { width: 16px; height: 16px; }
+
+/* ── Botão "i": o texto de apoio fica aqui dentro, nunca solto na tela ───── */
+.info { position: relative; display: inline-flex; vertical-align: middle; }
+.infoTrigger { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--sn-text-subtle); cursor: pointer; transition: background-color var(--sn-duration) var(--sn-ease), color var(--sn-duration) var(--sn-ease); }
+.infoTrigger svg { width: 18px; height: 18px; }
+.infoTrigger:hover, .infoTrigger[aria-expanded="true"] { background: var(--sn-mint-soft); color: var(--sn-ink); }
+.infoTrigger:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
+.infoBubble { position: absolute; left: 0; top: calc(100% + 6px); z-index: 40; width: max-content; max-width: min(300px, calc(100vw - 48px)); padding: 12px 14px; border-radius: var(--sn-radius-md); background: #fff; border: 1px solid var(--sn-hairline); box-shadow: var(--sn-shadow-pop); font-family: var(--sn-font); font-size: 13px; font-weight: 400; line-height: 1.5; letter-spacing: 0; text-align: left; white-space: normal; color: var(--sn-ink-soft); }
+.infoBubbleEnd { left: auto; right: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .infoBubble { animation: info-enter 160ms var(--sn-ease); }
+}
+@keyframes info-enter { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* ── Confirmação em dois passos (ações que não dá para desfazer) ─────────── */
+.confirmForm { display: inline-flex; max-width: 100%; }
+.confirmRow { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; font-weight: 500; color: var(--sn-danger); }

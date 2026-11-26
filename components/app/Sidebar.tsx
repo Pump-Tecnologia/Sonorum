@@ -17,6 +17,12 @@ const LOGO = '/brand/logo-vazado.png'
 const STORAGE_KEY = 'sonorum:sidebar-collapsed'
 const STORAGE_EVENT = 'sonorum:sidebar-storage'
 
+// Rotas sem item próprio no menu: [prefixo, item que acende]. A tela da aula pertence à agenda.
+const NAV_ALIASES: ReadonlyArray<readonly [string, string]> = [
+  ['/student/lessons/', '/student/schedule'],
+  ['/lessons/', '/schedule'],
+]
+
 function subscribeCollapsed(callback: () => void) {
   window.addEventListener('storage', callback)
   window.addEventListener(STORAGE_EVENT, callback)
@@ -94,8 +100,10 @@ export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum'
   // Item ativo = o match MAIS específico, não qualquer prefixo. Sem isso, um
   // href "pai" (ex: Dashboard /admin) acende em toda subrota (/admin/teachers,
   // /admin/students…), marcando dois itens ao mesmo tempo.
+  // Telas que pertencem a outro item: a aula aberta acende a agenda.
+  const navPath = NAV_ALIASES.find(([prefix]) => pathname.startsWith(prefix))?.[1] ?? pathname
   const matches = (href: string) =>
-    pathname === href || (href !== '/' && pathname.startsWith(`${href}/`))
+    navPath === href || (href !== '/' && navPath.startsWith(`${href}/`))
 
   const activeHref = items
     .map((item) => item.href)
@@ -174,7 +182,7 @@ export function Sidebar({ role, name, schoolName, logoUrl, brandWord = 'Sonorum'
           href="/profile"
           onClick={mobile ? closeMobile : undefined}
           className={styles.sidebarUser}
-          title={compact ? `${name} · ${ROLE_LABEL[role]}` : undefined}
+          title={compact ? `${name} (${ROLE_LABEL[role]})` : undefined}
           aria-label={compact ? `Perfil de ${name}` : undefined}
         >
           <span className={styles.sidebarAvatar} aria-hidden="true">{initialsOf(name)}</span>

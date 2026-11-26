@@ -29,6 +29,19 @@ export function chargeStatusMeta(status: string): { label: string; tone: StatusT
 
 export const PAYMENT_METHODS = ['Pix', 'Dinheiro', 'Cartão', 'Transferência', 'Boleto'] as const
 
+// Como o pagamento entra numa frase ("Pago pelo Pix em 08/10/2026"). Vazio sem forma de pagamento.
+const PAID_VIA: Record<string, string> = {
+  Pix: 'pelo Pix',
+  Dinheiro: 'em dinheiro',
+  Cartão: 'no cartão',
+  Transferência: 'por transferência',
+  Boleto: 'no boleto',
+}
+export function paidVia(method: string | null | undefined): string {
+  if (!method) return ''
+  return `${PAID_VIA[method] ?? `via ${method}`} `
+}
+
 // ── Tipo de cobrança do plano ────────────────────────────────────────────────
 export type BillingType = 'monthly' | 'per_class'
 

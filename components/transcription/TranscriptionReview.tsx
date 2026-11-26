@@ -34,20 +34,20 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
     <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
       <Card className="space-y-4">
         <div>
-          <p className="text-sm font-semibold text-ink">Áudio original</p>
-          <p className="text-xs text-ink-muted">Ouça enquanto confere a cifra.</p>
+          <h2 className="sn-card-title">Áudio original</h2>
+          
         </div>
         {audioUrl ? (
           <audio controls src={audioUrl} className="w-full" preload="none" />
         ) : (
-          <p className="text-sm text-ink-muted">Áudio indisponível.</p>
+          <p className="m-0 text-sm text-(--sn-text-muted)">Áudio indisponível.</p>
         )}
 
-        <form action={rejectTranscription} className="border-t border-hairline pt-4">
+        <form action={rejectTranscription} className="pt-4 shadow-[inset_0_1px_0_var(--sn-hairline)]">
           <input type="hidden" name="jobId" value={job.id} />
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
+            className="sn-btn sn-btn-sm sn-btn-danger"
           >
             Rejeitar transcrição
           </button>
@@ -59,7 +59,7 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
           <input type="hidden" name="jobId" value={job.id} />
 
           {state.error && (
-            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{state.error}</p>
+            <p className="sn-alert" role="alert">{state.error}</p>
           )}
 
           <Field label="Título" htmlFor="title" error={fe.title}>
@@ -81,7 +81,7 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
           </div>
 
           <Field
-            label="Cifra (gerada por IA — revise e corrija)"
+            label="Cifra gerada pela IA"
             htmlFor="body"
             error={fe.body}
             hint="A transcrição automática não é perfeita. Ajuste acordes e tempos antes de aprovar."
@@ -96,7 +96,7 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
             <button
               type="submit"
               formAction={saveTranscriptionDraft}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink"
+              className="sn-btn sn-btn-sm sn-btn-ghost"
             >
               Salvar rascunho sem aprovar
             </button>

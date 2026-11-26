@@ -109,3 +109,138 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
+
+/* ── Componentes antigos (components/ui) no visual novo ─────────────────────
+   Ficam na camada "components" do Tailwind: as classes utilitárias que cada
+   tela passa por className continuam valendo por cima. Mesmo desenho de
+   components/ds (pílulas, vidro, tokens --sn-*).                            */
+@layer components {
+  .sn-card {
+    padding: 24px;
+    border-radius: var(--sn-radius-xl);
+    background: var(--sn-glass);
+    border: var(--sn-glass-border);
+    box-shadow: var(--sn-glass-shadow);
+    -webkit-backdrop-filter: var(--sn-glass-blur);
+    backdrop-filter: var(--sn-glass-blur);
+  }
+
+  .sn-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 20px;
+    border: 1px solid transparent;
+    border-radius: var(--sn-radius-pill);
+    font-family: var(--sn-font);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color var(--sn-duration), color var(--sn-duration), box-shadow var(--sn-duration), transform var(--sn-duration) var(--sn-ease);
+  }
+  .sn-btn svg { width: 18px; height: 18px; flex: none; }
+  .sn-btn:focus-visible { outline: 2px solid var(--sn-green); outline-offset: 3px; }
+  .sn-btn:disabled { opacity: .55; cursor: default; transform: none; }
+  .sn-btn-sm { min-height: 36px; padding: 0 14px; font-size: 13px; }
+  .sn-btn-sm svg { width: 16px; height: 16px; }
+  .sn-btn-primary { color: #fff; background: var(--sn-ink); box-shadow: 0 10px 24px -12px #1c362e8c; }
+  .sn-btn-primary:hover:not(:disabled) { background: var(--sn-ink-strong); transform: translateY(-1px); }
+  .sn-btn-secondary { color: var(--sn-ink-soft); background: var(--sn-mint-soft); }
+  .sn-btn-secondary:hover:not(:disabled) { background: var(--sn-mint-hover); }
+  .sn-btn-ghost { color: var(--sn-ink); background: transparent; }
+  .sn-btn-ghost:hover:not(:disabled) { background: #ffffff99; }
+  .sn-btn-danger { color: var(--sn-danger); background: var(--sn-danger-soft); }
+  .sn-btn-danger:hover:not(:disabled) { background: #f3d9d5; }
+
+  .sn-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: var(--sn-radius-pill);
+    font-family: var(--sn-font);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .sn-badge-neutral { color: var(--sn-text-muted); background: #eef3ef; }
+  .sn-badge-brand { color: var(--sn-ink-soft); background: var(--sn-mint-soft); }
+  .sn-badge-success { color: #2f6b4f; background: #e9f4ed; }
+  .sn-badge-warning { color: var(--sn-warning); background: var(--sn-warning-soft); }
+  .sn-badge-danger { color: var(--sn-danger); background: var(--sn-danger-soft); }
+
+  .sn-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .sn-label { font-family: var(--sn-font); font-size: 13px; font-weight: 500; color: var(--sn-ink); }
+  .sn-hint { margin: 0; font-size: 12px; color: var(--sn-text-muted); }
+  .sn-error { margin: 0; font-size: 12px; color: var(--sn-danger); }
+  .sn-control {
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 14px;
+    border: 1px solid var(--sn-hairline-strong);
+    border-radius: var(--sn-radius-md);
+    font-family: var(--sn-font);
+    font-size: 15px;
+    color: var(--sn-ink);
+    background: #ffffffcc;
+    outline: none;
+    transition: border-color var(--sn-duration), box-shadow var(--sn-duration), background-color var(--sn-duration);
+  }
+  .sn-control::placeholder { color: var(--sn-placeholder); }
+  .sn-control:hover { border-color: #31594740; }
+  .sn-control:focus { border-color: var(--sn-green); box-shadow: var(--sn-focus-ring); background: #fff; }
+  .sn-control[aria-invalid="true"] { border-color: var(--sn-danger); }
+  textarea.sn-control { min-height: 84px; resize: vertical; line-height: 1.5; }
+  select.sn-control {
+    appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2350826a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+
+  .sn-stat-label { margin: 0; font-size: 13px; font-weight: 500; color: var(--sn-text-subtle); }
+  .sn-stat-value { margin: 8px 0 0; font-size: 34px; font-weight: 300; letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums; color: var(--sn-ink); }
+  .sn-stat-hint { margin: 6px 0 0; font-size: 13px; color: var(--sn-text-muted); }
+
+  .sn-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--sn-radius-xl);
+    background: var(--sn-glass);
+    border: var(--sn-glass-border);
+    box-shadow: var(--sn-glass-shadow);
+    -webkit-backdrop-filter: var(--sn-glass-blur);
+    backdrop-filter: var(--sn-glass-blur);
+  }
+  .sn-table { width: 100%; border-collapse: collapse; font-family: var(--sn-font); font-size: 14px; }
+  .sn-table th { padding: 16px 16px 10px; text-align: left; font-size: 12px; font-weight: 500; color: var(--sn-text-subtle); white-space: nowrap; }
+  .sn-table td { padding: 14px 16px; color: var(--sn-ink); box-shadow: inset 0 1px 0 var(--sn-hairline); }
+  .sn-table th:first-child, .sn-table td:first-child { padding-left: 24px; }
+  .sn-table th:last-child, .sn-table td:last-child { padding-right: 24px; }
+  .sn-table tbody tr { transition: background-color var(--sn-duration) var(--sn-ease); }
+  .sn-table tbody tr:hover { background: #ffffff8c; }
+  .sn-table-empty { padding: 48px 16px; text-align: center; font-size: 14px; color: var(--sn-text-muted); }
+
+  .sn-card-title { margin: 0; font-family: var(--sn-font); font-size: 17px; font-weight: 600; letter-spacing: -.2px; color: var(--sn-ink); }
+  .sn-notice-ok { margin: 0; padding: 12px 14px; border-radius: var(--sn-radius-md); font-size: 14px; color: var(--sn-ink-soft); background: var(--sn-mint-soft); }
+  .sn-subpanel { padding: 18px; border-radius: var(--sn-radius-lg); background: #ffffff8c; box-shadow: inset 0 0 0 1px var(--sn-hairline); }
+  .sn-alert { margin: 0; padding: 12px 14px; border-radius: var(--sn-radius-md); font-size: 14px; color: var(--sn-danger); background: var(--sn-danger-soft); }
+
+  /* caixa de seleção em linha de vidro (ex.: "Receber notificações por e-mail") */
+  .sn-checkrow { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 16px; border-radius: var(--sn-radius-lg); background: #ffffffa6; box-shadow: inset 0 0 0 1px var(--sn-hairline); font-family: var(--sn-font); font-size: 15px; font-weight: 500; color: var(--sn-ink); cursor: pointer; }
+  .sn-checkrow:hover { background: #fff; }
+  .sn-checkrow input[type="checkbox"] { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--sn-ink); cursor: pointer; }
+  .sn-checkrow:has(input:focus-visible) { box-shadow: inset 0 0 0 1px var(--sn-green), var(--sn-focus-ring); }
+  .sn-check-wrap { display: flex; align-items: center; gap: 4px; }
+  .sn-check-wrap > .sn-checkrow { flex: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sn-btn, .sn-control, .sn-table tbody tr { transition: none; }
+  }
+}

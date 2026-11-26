@@ -1,13 +1,15 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
-import { Card } from '@/components/ui/Card'
-import { Field, Input, Select, Textarea } from '@/components/ui/Field'
+import { LinkButton, SubmitButton } from '@/components/ds/Button'
+import { Field, FieldRow, FormAlert, Input, Select, Textarea } from '@/components/ds/Field'
+import { contentMeta } from '@/components/resources/resource-meta'
+import { ResourcePreview, type PreviewKind } from '@/components/resources/ResourcePreview'
+import styles from '@/components/resources/resources.module.css'
 import { InstrumentFields } from '@/components/ui/InstrumentFields'
 import { createResource, updateResource, type ResourceActionState } from '@/lib/actions/resources'
-import { CATEGORIES, DIFFICULTIES, CONTENT_TYPES } from '@/lib/constants/resources'
+import { CATEGORIES, CONTENT_TYPES, DIFFICULTIES } from '@/lib/constants/resources'
 
 interface ResourceData {
   id?: string
@@ -24,95 +26,130 @@ interface ResourceData {
 
 const initial: ResourceActionState = { ok: false }
 
+type FilePreview = { url: string; kind: PreviewKind }
+
+function kindOf(type: string): PreviewKind | null {
+  if (type === 'application/pdf') return 'pdf'
+  if (type.startsWith('image/')) return 'image'
+  return null
+}
+
 export function ResourceForm({
   resource,
-  currentFileUrl,
+  currentFile,
 }: {
   resource?: ResourceData
-  currentFileUrl?: string | null
+  /** Arquivo já salvo (URL assinada e tipo), para a prévia ao editar. */
+  currentFile?: FilePreview | null
 }) {
   const isEdit = Boolean(resource?.id)
   const [state, action] = useActionState(isEdit ? updateResource : createResource, initial)
   const fe = state.fieldErrors ?? {}
+  const currentType = resource?.content_type ?? 'Texto'
+  const [link, setLink] = useState(resource?.content_link ?? '')
+  const [body, setBody] = useState(resource?.body ?? '')
+  const [picked, setPicked] = useState<FilePreview | null>(null)
+  const [removeCurrent, setRemoveCurrent] = useState(false)
+
+  // A prévia do arquivo escolhido usa uma URL local; libera ao trocar ou sair.
+  useEffect(() => () => { if (picked) URL.revokeObjectURL(picked.url) }, [picked])
+
+  const previewFile = picked ?? (removeCurrent ? null : currentFile ?? null)
 
   return (
-    <Card>
-      <form
-        action={action}
-        onReset={(event) => event.preventDefault()}
-        className="max-w-2xl space-y-5"
-      >
+    <div className={styles.editor}>
+    <div className={styles.formCard}>
+      <form action={action} onReset={(event) => event.preventDefault()} className={styles.form}>
         {isEdit && <input type="hidden" name="resourceId" value={resource!.id} />}
+        {state.error && <FormAlert>{state.error}</FormAlert>}
 
-        {state.error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{state.error}</p>
-        )}
-
-        <Field label="Título" htmlFor="title" error={fe.title}>
-          <Input id="title" name="title" defaultValue={resource?.title ?? ''} required />
-        </Field>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Categoria" htmlFor="category" error={fe.category}>
-            <Select id="category" name="category" defaultValue={resource?.category ?? 'Aquecimento'}>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </Select>
+        <div className={styles.formSection}>
+          <h2 className={styles.formSectionTitle}>O recurso</h2>
+          <Field label="Título" htmlFor="title" error={fe.title}>
+            <Input id="title" name="title" defaultValue={resource?.title ?? ''} placeholder="Ex.: Escala de Dó maior em duas oitavas" required invalid={!!fe.title} />
           </Field>
-
-          <Field label="Dificuldade" htmlFor="difficulty" error={fe.difficulty}>
-            <Select id="difficulty" name="difficulty" defaultValue={resource?.difficulty ?? 'Iniciante'}>
-              {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
-            </Select>
+          <Field label="Descrição curta" htmlFor="description" error={fe.description} hint="Aparece no cartão, para o aluno saber do que se trata.">
+            <Textarea id="description" name="description" rows={2} defaultValue={resource?.description ?? ''} />
           </Field>
-
-          <InstrumentFields
-            defaultCategory={resource?.instrument_category}
-            defaultInstrument={resource?.instrument}
-            categoryError={fe.instrumentCategory}
-            instrumentError={fe.instrument}
-          />
         </div>
 
-        <Field label="Tipo de conteúdo" htmlFor="contentType" error={fe.contentType}>
-          <Select id="contentType" name="contentType" defaultValue={resource?.content_type ?? 'Texto'}>
-            {CONTENT_TYPES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </Select>
-        </Field>
+        <div className={styles.formSection}>
+          <h2 className={styles.formSectionTitle}>Onde ele entra na aula</h2>
+          <FieldRow>
+            <Field label="Etapa da aula" htmlFor="category" error={fe.category}>
+              <Select id="category" name="category" defaultValue={resource?.category ?? 'Aquecimento'}>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </Select>
+            </Field>
+            <Field label="Nível" htmlFor="difficulty" error={fe.difficulty}>
+              <Select id="difficulty" name="difficulty" defaultValue={resource?.difficulty ?? 'Iniciante'}>
+                {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+              </Select>
+            </Field>
+          </FieldRow>
+          <FieldRow>
+            <InstrumentFields
+              ds
+              defaultCategory={resource?.instrument_category}
+              defaultInstrument={resource?.instrument}
+              categoryError={fe.instrumentCategory}
+              instrumentError={fe.instrument}
+            />
+          </FieldRow>
+        </div>
 
-        <Field label="Link do conteúdo (vídeo, PDF externo, etc.)" htmlFor="contentLink" error={fe.contentLink}>
-          <Input id="contentLink" name="contentLink" type="url" defaultValue={resource?.content_link ?? ''} placeholder="https://…" />
-        </Field>
+        <div className={styles.formSection}>
+          <h2 className={styles.formSectionTitle}>Conteúdo</h2>
+          <fieldset className={styles.typePicker} aria-label="Tipo de conteúdo">
+            {CONTENT_TYPES.map((t) => {
+              const { Icon } = contentMeta(t)
+              return (
+                <label key={t} className={styles.typeOption}>
+                  <input type="radio" name="contentType" value={t} defaultChecked={t === currentType} />
+                  <span><Icon />{t}</span>
+                </label>
+              )
+            })}
+          </fieldset>
+          {fe.contentType && <FormAlert>{fe.contentType}</FormAlert>}
 
-        <Field label="Arquivo (PDF ou imagem de partitura · até 10MB)" htmlFor="file" error={fe.file}>
-          <input
-            id="file"
-            name="file"
-            type="file"
-            accept="application/pdf,image/png,image/jpeg,image/webp"
-            className="block w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
-          />
-          {currentFileUrl && (
-            <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
-              <a href={currentFileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-semibold text-brand-600 transition-colors hover:bg-brand-50">
-                Ver arquivo atual →
-              </a>
-              <label className="flex items-center gap-1.5 text-xs text-ink-muted">
-                <input type="checkbox" name="removeFile" /> Remover
-              </label>
-            </div>
-          )}
-        </Field>
+          <Field label="Link (vídeo, PDF ou página)" htmlFor="contentLink" error={fe.contentLink}>
+            <Input id="contentLink" name="contentLink" type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" invalid={!!fe.contentLink} />
+          </Field>
 
-        <Field label="Descrição curta" htmlFor="description" error={fe.description}>
-          <Textarea id="description" name="description" rows={2} defaultValue={resource?.description ?? ''} />
-        </Field>
+          <Field label="Arquivo" htmlFor="file" error={fe.file} hint="PDF ou imagem de partitura, de até 10 MB.">
+            <input
+              id="file"
+              name="file"
+              type="file"
+              accept="application/pdf,image/png,image/jpeg,image/webp"
+              className={styles.file}
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                const kind = f ? kindOf(f.type) : null
+                setPicked(f && kind ? { url: URL.createObjectURL(f), kind } : null)
+              }}
+            />
+            {currentFile && (
+              <div className={styles.current}>
+                <a href={currentFile.url} target="_blank" rel="noopener noreferrer">Ver o arquivo atual</a>
+                <label><input type="checkbox" name="removeFile" checked={removeCurrent} onChange={(e) => setRemoveCurrent(e.target.checked)} /> Remover</label>
+              </div>
+            )}
+          </Field>
 
-        <Field label="Conteúdo (texto / cifra / tablatura)" htmlFor="body" error={fe.body}>
-          <Textarea id="body" name="body" rows={6} defaultValue={resource?.body ?? ''} className="font-mono" />
-        </Field>
+          <Field label="Texto, cifra ou tablatura" htmlFor="body" error={fe.body}>
+            <Textarea id="body" name="body" rows={7} value={body} onChange={(e) => setBody(e.target.value)} className={styles.mono} />
+          </Field>
+        </div>
 
-        <SubmitButton pendingLabel="Salvando…">{isEdit ? 'Salvar alterações' : 'Criar recurso'}</SubmitButton>
+        <div className={styles.formFoot}>
+          <SubmitButton pendingLabel="Salvando…">{isEdit ? 'Salvar alterações' : 'Criar recurso'}</SubmitButton>
+          <LinkButton href="/resources" variant="ghost">Cancelar</LinkButton>
+        </div>
       </form>
-    </Card>
+    </div>
+    <ResourcePreview file={previewFile} link={link} body={body} />
+    </div>
   )
 }

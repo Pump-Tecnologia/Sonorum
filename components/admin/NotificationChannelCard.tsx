@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
-import { Badge } from '@/components/ui/Badge'
+import { InfoButton } from '@/components/ds/InfoButton'
+import { StatusPill } from '@/components/ds/StatusPill'
 import { Card } from '@/components/ui/Card'
 
 interface Props {
@@ -15,40 +16,33 @@ interface Props {
 export function NotificationChannelCard({ whatsappOfficial, whatsappActive }: Props) {
   return (
     <Card>
-      <h2 className="mb-1 text-base font-semibold text-ink">Notificações</h2>
-      <p className="mb-4 text-sm text-ink-muted">
-        Como aulas, cobranças e relatórios são enviados aos seus alunos.
-      </p>
+      <div className="mb-4 flex items-center gap-1">
+        <h2 className="sn-card-title">Notificações</h2>
+        <InfoButton label="Sobre as notificações" align="end">
+          Como aulas, cobranças e relatórios chegam aos alunos.{' '}
+          {whatsappOfficial
+            ? 'O e-mail continua disponível como canal opcional, ligado na conta de cada aluno.'
+            : 'O e-mail é ligado aluno por aluno, na edição do aluno, em “Receber notificações por e-mail”.'}
+        </InfoButton>
+      </div>
 
       {whatsappOfficial ? (
-        <div className="space-y-3">
-          <div className="rounded-xl border border-hairline bg-surface-muted/30 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium text-ink">WhatsApp oficial</p>
-              <Badge tone={whatsappActive ? 'success' : 'warning'}>
-                {whatsappActive ? 'Ativo' : 'Em ativação'}
-              </Badge>
-            </div>
-            <p className="mt-1.5 text-xs text-ink-muted">
-              Envio automático pelo número oficial do Sonorum — sem precisar clicar.
-            </p>
+        <div className="sn-subpanel flex items-center justify-between gap-2">
+          <div>
+            <p className="m-0 text-[15px] font-medium text-(--sn-ink)">WhatsApp oficial</p>
+            <p className="mt-0.5 mb-0 text-sm text-(--sn-text-muted)">Envio automático pelo número do Sonorum</p>
           </div>
-          <p className="text-xs text-ink-muted">
-            O e-mail continua disponível como canal opcional, ativável na conta de cada aluno.
-          </p>
+          <StatusPill tone={whatsappActive ? 'success' : 'warning'}>{whatsappActive ? 'Ativo' : 'Em ativação'}</StatusPill>
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="rounded-xl border border-hairline bg-surface-muted/30 p-3">
-            <p className="text-sm font-medium text-ink">E-mail (opcional por aluno)</p>
-            <p className="text-xs text-ink-muted">
-              As notificações chegam por e-mail aos alunos que ativarem o recebimento na conta
-              (em Alunos → editar → “Receber notificações por e-mail”).
-            </p>
+          <div className="sn-subpanel">
+            <p className="m-0 text-[15px] font-medium text-(--sn-ink)">E-mail</p>
+            <p className="mt-0.5 mb-0 text-sm text-(--sn-text-muted)">Para os alunos que ligarem o recebimento</p>
           </div>
-          <p className="text-xs text-ink-muted">
-            Envio automático por <strong>WhatsApp oficial</strong> está disponível no{' '}
-            <Link href="/upgrade" className="font-medium text-brand-600 hover:underline">plano Premium</Link>.
+          <p className="m-0 flex flex-wrap items-center justify-between gap-2 text-sm text-(--sn-text-muted)">
+            WhatsApp oficial automático no Premium
+            <Link href="/upgrade" className="sn-btn sn-btn-sm sn-btn-secondary">Ver planos</Link>
           </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { PageHeader } from '@/components/app/PageHeader'
-import { Badge } from '@/components/ui/Badge'
-import { Card } from '@/components/ui/Card'
+import { IconCheck } from '@/components/ds/icons'
+import { StatusPill } from '@/components/ds/StatusPill'
+import styles from '@/components/billing/locked.module.css'
 import { CheckoutButton } from '@/components/billing/CheckoutButton'
 import { startSaasSubscriptionCheckout } from '@/lib/actions/billing'
 import { getPlanContext } from '@/lib/auth/plan'
@@ -65,16 +66,17 @@ export default async function UpgradePage() {
     <>
       <PageHeader
         title="Escolha seu plano"
+        info="A cobrança é mensal e automática, no cartão ou no Pix. Você finaliza no ambiente seguro do Asaas, o plano renova sozinho e dá para cancelar quando quiser."
         subtitle={
           planType === 'free' || planType === 'solo_free'
             ? `Você está no plano ${PLAN_FEATURES[planType as keyof typeof PLAN_FEATURES]?.label ?? 'Essencial'} (grátis)`
             : `Plano atual: ${PLAN_FEATURES[planType as keyof typeof PLAN_FEATURES]?.label ?? planType}${
                 expirationDate
-                  ? ` · ${
+                  ? `, ${
                       active
                         ? `válido até ${new Date(expirationDate + 'T12:00:00').toLocaleDateString('pt-BR')}`
                         : inGracePeriod
-                          ? `venceu em ${new Date(expirationDate + 'T12:00:00').toLocaleDateString('pt-BR')} (carência de ${graceDaysRemaining}d)`
+                          ? `venceu em ${new Date(expirationDate + 'T12:00:00').toLocaleDateString('pt-BR')}, com ${graceDaysRemaining} ${graceDaysRemaining === 1 ? 'dia' : 'dias'} de carência`
                           : `venceu em ${new Date(expirationDate + 'T12:00:00').toLocaleDateString('pt-BR')}`
                     }`
                   : ''
@@ -82,39 +84,33 @@ export default async function UpgradePage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <ul className={styles.plans} aria-label="Planos">
         {visiblePlans.map((plan) => {
           const f = PLAN_FEATURES[plan]
           const price = planPrice(plan, monthlyPrice)
           const isCurrent = planType === plan && active
           return (
-            <Card key={plan} className={isCurrent ? 'border-brand-300 bg-brand-50/40' : ''}>
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-ink">{f.label}</h2>
-                {isCurrent && <Badge tone="success">Plano atual</Badge>}
+            <li key={plan} className={styles.plan} data-current={isCurrent || undefined}>
+              <div className={styles.planHead}>
+                <h2 className={styles.planName}>{f.label}</h2>
+                {isCurrent && <StatusPill tone="success">Plano atual</StatusPill>}
               </div>
-              <p className="mt-1 text-2xl font-bold text-brand-700">
-                {formatBRL(price)}<span className="text-sm font-normal text-ink-muted">/mês</span>
-              </p>
-              <ul className="mt-4 space-y-2 text-sm text-ink-muted">
-                {FEATURE_LINES[plan]?.map((line) => <li key={line}>✓ {line}</li>)}
+              <p className={styles.price}>{formatBRL(price)}<small>/mês</small></p>
+              <ul className={styles.planLines}>
+                {FEATURE_LINES[plan]?.map((line) => (
+                  <li key={line}><span className={styles.check}><IconCheck /></span>{line}</li>
+                ))}
               </ul>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <CheckoutButton
-                  action={startSaasSubscriptionCheckout}
-                  planType={plan}
-                  label={isCurrent ? 'Renovar assinatura' : 'Assinar agora'}
-                />
-              </div>
-            </Card>
+              <CheckoutButton
+                action={startSaasSubscriptionCheckout}
+                planType={plan}
+                label={isCurrent ? 'Renovar assinatura' : 'Assinar'}
+                variant={isCurrent ? 'outline' : 'primary'}
+              />
+            </li>
           )
         })}
-      </div>
-
-      <p className="mt-6 text-sm text-ink-muted">
-        Assinando no cartão ou Pix, a cobrança é mensal e automática — você finaliza no ambiente seguro do
-        Asaas e o plano renova sozinho. Pode cancelar quando quiser.
-      </p>
+      </ul>
     </>
   )
 }

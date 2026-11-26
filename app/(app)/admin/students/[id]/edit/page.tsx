@@ -20,7 +20,12 @@ export default async function EditStudentPage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <PageHeader title="Editar aluno" subtitle={student.name} />
+      <PageHeader
+        title="Editar aluno"
+        subtitle={student.name}
+        info="A mensalidade vem da matrícula em um plano, na ficha do aluno. Para trocar a senha, use “Redefinir senha” no menu da lista de alunos."
+        back={{ href: `/admin/students/${student.id}`, label: 'Ficha do aluno' }}
+      />
       <EditStudentForm student={student} />
     </>
   )

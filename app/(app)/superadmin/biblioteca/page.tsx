@@ -2,6 +2,7 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { AppLinkButton } from '@/components/app/AppButton'
 import { AppEmpty, AppTable, cellMuted, cellPrimary, cellSub, tableRight } from '@/components/app/AppTable'
 import { DeleteButton } from '@/components/admin/DeleteButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { LinkButton } from '@/components/ui/Button'
 import { deleteTemplate, provisionAllSchools } from '@/lib/actions/resource-templates'
 import { createClient } from '@/lib/supabase/server'
@@ -27,13 +28,12 @@ export default async function LibraryPage() {
     <>
       <PageHeader
         title="Biblioteca global"
-        subtitle={`${templates.length} recurso(s) no catálogo · vão como cópia editável para as escolas`}
+        subtitle={templates.length === 1 ? '1 recurso no catálogo' : `${templates.length} recursos no catálogo`}
+        info="Cada escola recebe uma cópia editável. Enviar para as escolas copia para cada escola os recursos do catálogo que ela ainda não tem."
         action={
           <div className="flex items-center gap-2">
             <form action={provisionAllSchools}>
-              <button type="submit" className="rounded-xl border border-hairline bg-surface px-4 py-2 text-sm font-semibold text-ink hover:border-brand-300">
-                Provisionar escolas
-              </button>
+              <SubmitButton variant="soft" pendingLabel="Enviando…">Enviar para as escolas</SubmitButton>
             </form>
             <AppLinkButton href="/superadmin/biblioteca/new">Novo recurso</AppLinkButton>
           </div>
@@ -56,10 +56,10 @@ export default async function LibraryPage() {
             <tr key={t.id}>
               <td>
                 <span className={cellPrimary}>{t.title}</span>
-                <span className={cellSub}>{t.category ?? '—'}{t.instrument_category ? ` · ${t.instrument_category}` : ''}</span>
+                <span className={cellSub}>{t.category ?? 'Sem categoria'}{t.instrument_category ? ` de ${t.instrument_category}` : ''}</span>
               </td>
-              <td className={cellMuted}>{t.instrument ?? '—'}</td>
-              <td className={cellMuted}>{t.difficulty ?? '—'}</td>
+              <td className={cellMuted}>{t.instrument ?? 'Qualquer'}</td>
+              <td className={cellMuted}>{t.difficulty ?? 'Livre'}</td>
               <td className={cellMuted}>v{t.version}</td>
               <td className={tableRight}>
                 <div className="flex items-center justify-end gap-2">

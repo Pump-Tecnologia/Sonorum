@@ -30,7 +30,7 @@ export default async function EditSchoolPage({ params }: { params: Promise<{ id:
 
   return (
     <>
-      <PageHeader title="Editar escola" subtitle={school.custom_name || school.name} />
+      <PageHeader title="Editar escola" subtitle={school.custom_name || school.name} back={{ href: '/superadmin', label: 'Visão geral' }} />
       <SchoolEditForm
         school={{
           id: school.id,
