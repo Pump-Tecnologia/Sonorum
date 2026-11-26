@@ -1,0 +1,161 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   Sonorum — Financeiro, página de pagamento e mensalidades (padrão novo)
+   Vidro sobre o fundo menta; números grandes e finos, como na página de
+   lançamento. Tokens em app/globals.css (--sn-*).
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.page { padding: 16px 8px 8px; color: var(--sn-ink); font-family: var(--sn-font); }
+
+/* ── Cabeçalho (igual ao da agenda) ──────────────────────────────────────── */
+.header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 24px; }
+.kicker { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: -.1px; color: var(--sn-text-muted); }
+.title { margin: 4px 0 0; font-size: clamp(30px, 2rem + 1.4vw, 48px); font-weight: 600; letter-spacing: -.04em; line-height: 1.05; color: var(--sn-ink); }
+.title::first-letter { text-transform: uppercase; }
+.headerActions { display: flex; align-items: center; gap: 8px; }
+.stepButton { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--sn-mint-soft); color: var(--sn-ink-soft); text-decoration: none; transition: background-color var(--sn-duration) var(--sn-ease); }
+.stepButton:hover { background: var(--sn-mint-hover); }
+.stepButton:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
+.stepButton svg { width: 18px; height: 18px; }
+.todayLink { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: var(--sn-radius-pill); background: var(--sn-mint-soft); color: var(--sn-ink-soft); font-size: 14px; font-weight: 500; text-decoration: none; }
+.todayLink:hover { background: var(--sn-mint-hover); }
+.todayLink[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+/* botão olho (componente antigo aceita className; regra sem layer vence o Tailwind) */
+.eyeButton { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: #ffffffb3; color: var(--sn-text-muted); box-shadow: inset 0 0 0 1px var(--sn-hairline); cursor: pointer; }
+.eyeButton:hover { background: #fff; color: var(--sn-ink); }
+
+/* ── Superfície de vidro ─────────────────────────────────────────────────── */
+.panel {
+  padding: 22px;
+  border-radius: var(--sn-radius-xl);
+  background: var(--sn-glass); border: var(--sn-glass-border); box-shadow: var(--sn-glass-shadow);
+  -webkit-backdrop-filter: var(--sn-glass-blur); backdrop-filter: var(--sn-glass-blur);
+}
+.panelHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.panelTitle { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.2px; color: var(--sn-ink); }
+.panelHint { margin: 0; font-size: 13px; color: var(--sn-text-muted); }
+
+/* ── Números do mês ──────────────────────────────────────────────────────── */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.stat { padding: 20px 22px; border-radius: var(--sn-radius-xl); background: var(--sn-glass); border: var(--sn-glass-border); box-shadow: var(--sn-glass-shadow); }
+.statLabel { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 500; color: var(--sn-text-muted); }
+.statLabel::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--sn-green)); }
+.statValue { margin: 10px 0 0; font-size: clamp(28px, 1.4rem + 1vw, 38px); font-weight: 300; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--sn-ink); }
+.statPaid { --dot: #2f6b4f; }
+.statPending { --dot: #c89a3c; }
+.statOverdue { --dot: var(--sn-danger); }
+
+/* ── Duas colunas: lista + lateral ───────────────────────────────────────── */
+.grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 20px; align-items: start; }
+.side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+/* ── Lista de cobranças ──────────────────────────────────────────────────── */
+.list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.charge { position: relative; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) 150px; align-items: center; gap: 12px 16px; padding: 14px 12px; border-radius: var(--sn-radius-lg); }
+.charge + .charge { box-shadow: inset 0 1px 0 var(--sn-hairline); }
+.charge:hover { background: #ffffffb3; }
+.charge:has([aria-expanded="true"]) { z-index: 5; }
+.who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.whoText { display: flex; flex-direction: column; min-width: 0; }
+.name { font-size: 15px; font-weight: 600; letter-spacing: -.1px; color: var(--sn-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nameLink { color: inherit; text-decoration: none; }
+.nameLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+.meta { font-size: 13px; color: var(--sn-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.money { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.amount { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--sn-ink); }
+.early { font-size: 12px; color: #2f6b4f; }
+.actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.empty { margin: 0; padding: 28px 8px; text-align: center; font-size: 14px; color: var(--sn-text-muted); }
+
+/* status com troca rápida: o select fica por cima da pílula, invisível */
+.statusPick { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.statusSelect { appearance: none; -webkit-appearance: none; display: inline-flex; align-items: center; min-height: 28px; padding: 0 26px 0 12px; border: 0; border-radius: var(--sn-radius-pill); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235c7568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; }
+.statusSelect:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
+.status-pending { background-color: var(--sn-warning-soft); color: var(--sn-warning); }
+.status-paid { background-color: #e9f4ed; color: #2f6b4f; }
+.status-overdue { background-color: var(--sn-danger-soft); color: var(--sn-danger); }
+.status-cancelled { background-color: #eef3ef; color: var(--sn-text-muted); }
+.methodSelect { min-height: 28px; padding: 0 10px; border: 1px solid var(--sn-hairline-strong); border-radius: var(--sn-radius-pill); background: #fff; font: inherit; font-size: 13px; color: var(--sn-ink); }
+.confirm { min-height: 28px; padding: 0 12px; border: 0; border-radius: var(--sn-radius-pill); background: var(--sn-ink); color: #fff; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.confirm:hover { background: var(--sn-ink-strong); }
+
+/* botão "Lembrar" (WhatsAppNotifyButton aceita className) */
+.remind { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 14px; border: 0; border-radius: var(--sn-radius-pill); background: var(--sn-mint-soft); color: var(--sn-ink-soft); font-family: var(--sn-font); font-size: 13px; font-weight: 500; cursor: pointer; }
+.remind:hover:not(:disabled) { background: var(--sn-mint-hover); border-color: transparent; }
+.remind svg { width: 14px; height: 14px; }
+.menuLink { display: flex; align-items: center; width: 100%; min-height: 40px; padding: 0 12px; border-radius: var(--sn-radius-sm); color: var(--sn-ink); font-size: 14px; text-decoration: none; }
+.menuLink:hover { background: var(--sn-mint-soft); }
+
+/* ── Nova cobrança ───────────────────────────────────────────────────────── */
+.creator { display: flex; flex-direction: column; gap: 14px; }
+.planNote { margin: 0; padding: 12px 14px; border-radius: var(--sn-radius-md); background: var(--sn-mint-soft); font-size: 14px; color: var(--sn-ink-soft); }
+.planNote strong { display: block; font-weight: 600; color: var(--sn-ink); }
+.warn { margin: 0; padding: 12px 14px; border-radius: var(--sn-radius-md); background: var(--sn-warning-soft); font-size: 14px; color: var(--sn-warning); }
+.warn a { color: inherit; font-weight: 600; }
+.ok { margin: 0; padding: 12px 14px; border-radius: var(--sn-radius-md); background: #e9f4ed; font-size: 14px; color: #2f6b4f; }
+.toggle { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--sn-radius-md); background: #ffffffb3; box-shadow: inset 0 0 0 1px var(--sn-hairline); font-size: 14px; color: var(--sn-ink); cursor: pointer; }
+.toggle input { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--sn-ink); }
+.toggle small { display: block; margin-top: 2px; font-size: 12px; color: var(--sn-text-muted); }
+.bulk { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 500; color: var(--sn-ink-soft); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.bulk:hover { color: var(--sn-ink); }
+
+/* ── Em atraso ───────────────────────────────────────────────────────────── */
+.debtTotal { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--sn-danger); }
+.debtor { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; }
+.debtor + .debtor { box-shadow: inset 0 1px 0 var(--sn-hairline); }
+.debtAmount { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--sn-danger); white-space: nowrap; }
+
+/* ── Mensalidades (aluno) ────────────────────────────────────────────────── */
+.openBox { display: inline-flex; flex-direction: column; gap: 6px; margin-bottom: 20px; padding: 20px 24px; border-radius: var(--sn-radius-xl); background: var(--sn-ink); color: #f4f9f4; box-shadow: var(--sn-shadow-pop); }
+.openLabel { margin: 0; font-size: 14px; color: #c9ddd1; }
+.openValue { margin: 0; font-size: clamp(32px, 1.6rem + 1.2vw, 44px); font-weight: 300; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.studentRow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 170px; align-items: center; gap: 12px 16px; padding: 16px 12px; }
+.studentRow + .studentRow { box-shadow: inset 0 1px 0 var(--sn-hairline); }
+.paidOn { font-size: 13px; color: var(--sn-text-muted); }
+
+@media (max-width: 1100px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .page { padding: 8px 4px 4px; }
+  .stats { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .stat { padding: 16px 18px; }
+  .panel { padding: 16px; border-radius: var(--sn-radius-lg); }
+  .charge, .studentRow { grid-template-columns: minmax(0, 1fr) auto; }
+  .charge .money, .studentRow .money { grid-column: 1; }
+  .charge .actions { grid-column: 2; grid-row: 1 / span 2; align-self: start; }
+  /* No celular a mensalidade empilha: o título não divide a linha com o botão. */
+  .studentRow { grid-template-columns: minmax(0, 1fr); }
+  .studentRow .actions { justify-content: flex-start; }
+  .studentRow .actions:empty { display: none; }
+}
+
+/* ══ Página de pagamento (/pagar, pública, sem o shell) ══════════════════ */
+.payStage { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; min-height: 100dvh; padding: 32px 16px; background: var(--sn-stage); background-attachment: fixed; color: var(--sn-ink); font-family: var(--sn-font); }
+.payCard { width: 100%; max-width: 440px; min-width: 0; padding: 32px 28px 28px; border-radius: 32px; background: var(--sn-glass); border: var(--sn-glass-border); box-shadow: var(--sn-glass-shadow), var(--sn-shadow-pop); -webkit-backdrop-filter: var(--sn-glass-blur); backdrop-filter: var(--sn-glass-blur); text-align: center; }
+.paySchool { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.1px; color: var(--sn-ink); }
+.payWhat { margin: 4px 0 0; font-size: 14px; color: var(--sn-text-muted); }
+.payAmount { margin: 22px 0 0; font-size: 52px; font-weight: 300; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--sn-ink); }
+.payDue { display: inline-flex; margin-top: 12px; padding: 6px 14px; border-radius: var(--sn-radius-pill); background: var(--sn-mint-soft); font-size: 13px; font-weight: 500; color: var(--sn-ink-soft); }
+.qr { width: 232px; margin: 24px auto 0; padding: 16px; border-radius: 24px; background: #fff; box-shadow: 0 16px 36px -18px #1c362e55, inset 0 0 0 1px var(--sn-hairline); }
+.qr svg { display: block; width: 100%; height: auto; }
+.copyLabel { margin: 22px 0 8px; font-size: 13px; font-weight: 500; color: var(--sn-text-muted); }
+.copyRow { min-width: 0; display: flex; align-items: center; gap: 6px; padding: 5px 5px 5px 16px; border-radius: var(--sn-radius-pill); background: #fff; box-shadow: inset 0 0 0 1px var(--sn-hairline-strong); }
+.copyCode { flex: 1; min-width: 0; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--sn-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.copyButton { flex: none; min-height: 40px; padding: 0 18px; border: 0; border-radius: var(--sn-radius-pill); background: var(--sn-ink); color: #fff; font-family: var(--sn-font); font-size: 14px; font-weight: 500; cursor: pointer; }
+.copyButton:hover { background: var(--sn-ink-strong); }
+.copyButton:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
+.steps { display: flex; flex-direction: column; gap: 10px; margin: 22px 0 0; padding: 0; list-style: none; text-align: left; counter-reset: step; }
+.steps li { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--sn-ink); counter-increment: step; }
+.steps li::before { content: counter(step); display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--sn-mint-soft); color: var(--sn-ink-soft); font-size: 13px; font-weight: 600; }
+.payFoot { margin: 22px 0 0; padding-top: 16px; box-shadow: inset 0 1px 0 var(--sn-hairline); font-size: 12px; color: var(--sn-text-muted); }
+.payMessageTitle { margin: 14px 0 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+.payMessageBody { margin: 8px 0 0; font-size: 15px; line-height: 1.5; color: var(--sn-text-muted); }
+.payIcon { display: grid; place-items: center; width: 56px; height: 56px; margin: 0 auto; border-radius: 50%; background: var(--sn-mint-soft); color: var(--sn-ink-soft); }
+.payIcon svg { width: 26px; height: 26px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stepButton, .todayLink { transition: none; }
+}
+.spaced { margin-bottom: 14px; }

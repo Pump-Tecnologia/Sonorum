@@ -77,7 +77,8 @@ export async function notifyCharge(
   _prev: NotifyActionState,
   formData: FormData,
 ): Promise<NotifyActionState> {
-  if (!(await requireStaff())) return { ok: false, error: 'Acesso negado.' }
+  const me = await requireStaff()
+  if (!me) return { ok: false, error: 'Acesso negado.' }
   const chargeId = String(formData.get('chargeId') ?? '')
   const kind = String(formData.get('kind') ?? 'charge.due_soon') as NotificationEvent
   if (!chargeId || !CHARGE_EVENTS.has(kind)) return { ok: false, error: 'Cobrança inválida.' }
@@ -85,14 +86,17 @@ export async function notifyCharge(
   const admin = await createAdminClient()
   const { data: charge } = await admin
     .from('charges')
-    .select('id, amount, due_date, payment_method, description, student_id, enrollment:enrollments(student_id, plan:plans(name))')
+    .select('id, school_id, amount, due_date, payment_method, description, student_id, enrollment:enrollments(student_id, plan:plans(name))')
     .eq('id', chargeId)
     .maybeSingle()
 
   const enr = charge?.enrollment as { student_id: string; plan: { name: string } | null } | null
   // Resolve o aluno via matrícula (plano) ou direto (cobrança avulsa).
   const studentId = enr?.student_id ?? charge?.student_id ?? null
-  if (!charge || !studentId) return { ok: false, error: 'Cobrança não encontrada.' }
+  // admin client ignora RLS — a cobrança PRECISA ser da escola do staff.
+  if (!charge || charge.school_id !== me.schoolId || !studentId) {
+    return { ok: false, error: 'Cobrança não encontrada.' }
+  }
 
   const dueDate = new Date(charge.due_date + 'T12:00:00')
   const today = new Date()
@@ -215,7 +219,8 @@ export async function notifyLesson(
   _prev: NotifyActionState,
   formData: FormData,
 ): Promise<NotifyActionState> {
-  if (!(await requireStaff())) return { ok: false, error: 'Acesso negado.' }
+  const me = await requireStaff()
+  if (!me) return { ok: false, error: 'Acesso negado.' }
   const lessonId = String(formData.get('lessonId') ?? '')
   const kind = String(formData.get('kind') ?? 'lesson.tomorrow') as NotificationEvent
   if (!lessonId || !LESSON_EVENTS.has(kind)) return { ok: false, error: 'Aula inválida.' }
@@ -223,10 +228,11 @@ export async function notifyLesson(
   const admin = await createAdminClient()
   const { data: lesson } = await admin
     .from('lessons')
-    .select('id, title, start_datetime, student_id, room:rooms(name), teacher:users!lessons_teacher_id_fkey(name)')
+    .select('id, school_id, title, start_datetime, student_id, room:rooms(name), teacher:users!lessons_teacher_id_fkey(name)')
     .eq('id', lessonId)
     .maybeSingle()
-  if (!lesson) return { ok: false, error: 'Aula não encontrada.' }
+  // admin client ignora RLS — a aula PRECISA ser da escola do staff.
+  if (!lesson || lesson.school_id !== me.schoolId) return { ok: false, error: 'Aula não encontrada.' }
 
   const start = new Date(lesson.start_datetime)
   const when = start.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })

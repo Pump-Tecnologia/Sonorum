@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache'
 
 import { getCurrentUser } from '@/lib/auth/session'
+import { effectivePlanFeatures } from '@/lib/auth/plan'
 import { sendCredentialsEmail } from '@/lib/notifications/credentials'
+import { rateLimit, RATE_LIMIT_MESSAGE } from '@/lib/security/rate-limit'
 import { createAdminClient } from '@/lib/supabase/server'
 import { createUserWithProfile, generatePassword } from '@/lib/users/admin'
 
@@ -47,11 +49,23 @@ function validateBatch(formData: FormData): { rows: ParsedRow[] } | { error: str
 export async function importStudents(_prev: ImportState, formData: FormData): Promise<ImportState> {
   const me = await getCurrentUser()
   if (me?.role !== 'admin' || !me.schoolId) return { ok: false, error: 'Acesso negado.' }
+  // Importação cria até 200 usuários + e-mails por chamada — limita a cadência.
+  const rl = await rateLimit(`import:${me.id}`, 5, 10 * 60 * 1000)
+  if (!rl.ok) return { ok: false, error: RATE_LIMIT_MESSAGE }
   const parsed = validateBatch(formData)
   if ('error' in parsed) return { ok: false, error: parsed.error }
 
   const admin = await createAdminClient()
-  const schoolName = await getSchoolName(admin, me.schoolId)
+  const [{ data: school }, { count: currentCount }, schoolName] = await Promise.all([
+    admin.from('schools').select('plan_type, feature_overrides, expiration_date').eq('id', me.schoolId).maybeSingle(),
+    admin.from('users').select('id', { count: 'exact', head: true }).eq('school_id', me.schoolId).eq('role', 'student'),
+    getSchoolName(admin, me.schoolId),
+  ])
+  if (!school) return { ok: false, error: 'Escola não encontrada.' }
+  const features = effectivePlanFeatures(school.plan_type, school.expiration_date, school.feature_overrides)
+  const remaining = Number.isFinite(features.studentLimit)
+    ? Math.max(0, features.studentLimit - (currentCount ?? 0))
+    : Number.POSITIVE_INFINITY
   let created = 0
   const failures: NonNullable<ImportState['failures']> = []
 
@@ -59,6 +73,10 @@ export async function importStudents(_prev: ImportState, formData: FormData): Pr
     const r = parsed.rows[i]
     if (!r.name || r.name.length < 2) { failures.push({ line: i + 1, value: r.name || '(vazio)', reason: 'nome inválido' }); continue }
     if (!EMAIL_RE.test(r.email)) { failures.push({ line: i + 1, value: r.email || r.name, reason: 'e-mail inválido' }); continue }
+    if (created >= remaining) {
+      failures.push({ line: i + 1, value: r.email, reason: `limite de ${features.studentLimit} alunos do plano ${features.label} atingido` })
+      continue
+    }
 
     const password = generatePassword()
     const res = await createUserWithProfile({
@@ -70,8 +88,13 @@ export async function importStudents(_prev: ImportState, formData: FormData): Pr
       profile: { phone: r.extra[0] || null, parent_contact: r.extra[1] || null, status: 'active', notify_to: 'both' },
     })
     if (!res.ok) { failures.push({ line: i + 1, value: r.email, reason: res.error }); continue }
+    const setupEmail = await sendCredentialsEmail({ admin, to: r.email, name: r.name, schoolName, kind: 'new' })
+    if (!setupEmail.ok) {
+      await admin.auth.admin.deleteUser(res.userId)
+      failures.push({ line: i + 1, value: r.email, reason: 'falha ao enviar link de definição de senha; usuário removido' })
+      continue
+    }
     created++
-    await sendCredentialsEmail({ to: r.email, name: r.name, password, schoolName, kind: 'new' }).catch(() => {})
   }
 
   revalidatePath('/admin/students')
@@ -82,11 +105,23 @@ export async function importStudents(_prev: ImportState, formData: FormData): Pr
 export async function importTeachers(_prev: ImportState, formData: FormData): Promise<ImportState> {
   const me = await getCurrentUser()
   if (me?.role !== 'admin' || !me.schoolId) return { ok: false, error: 'Acesso negado.' }
+  // Importação cria até 200 usuários + e-mails por chamada — limita a cadência.
+  const rl = await rateLimit(`import:${me.id}`, 5, 10 * 60 * 1000)
+  if (!rl.ok) return { ok: false, error: RATE_LIMIT_MESSAGE }
   const parsed = validateBatch(formData)
   if ('error' in parsed) return { ok: false, error: parsed.error }
 
   const admin = await createAdminClient()
-  const schoolName = await getSchoolName(admin, me.schoolId)
+  const [{ data: school }, { count: currentCount }, schoolName] = await Promise.all([
+    admin.from('schools').select('plan_type, feature_overrides, expiration_date').eq('id', me.schoolId).maybeSingle(),
+    admin.from('teachers').select('id', { count: 'exact', head: true }).eq('school_id', me.schoolId),
+    getSchoolName(admin, me.schoolId),
+  ])
+  if (!school) return { ok: false, error: 'Escola não encontrada.' }
+  const features = effectivePlanFeatures(school.plan_type, school.expiration_date, school.feature_overrides)
+  const remaining = Number.isFinite(features.teacherLimit)
+    ? Math.max(0, features.teacherLimit - (currentCount ?? 0))
+    : Number.POSITIVE_INFINITY
   let created = 0
   const failures: NonNullable<ImportState['failures']> = []
 
@@ -94,6 +129,10 @@ export async function importTeachers(_prev: ImportState, formData: FormData): Pr
     const r = parsed.rows[i]
     if (!r.name || r.name.length < 2) { failures.push({ line: i + 1, value: r.name || '(vazio)', reason: 'nome inválido' }); continue }
     if (!EMAIL_RE.test(r.email)) { failures.push({ line: i + 1, value: r.email || r.name, reason: 'e-mail inválido' }); continue }
+    if (created >= remaining) {
+      failures.push({ line: i + 1, value: r.email, reason: `limite de ${features.teacherLimit} professor(es) do plano ${features.label} atingido` })
+      continue
+    }
 
     const password = generatePassword()
     const res = await createUserWithProfile({ email: r.email, password, name: r.name, role: 'teacher', schoolId: me.schoolId })
@@ -107,11 +146,19 @@ export async function importTeachers(_prev: ImportState, formData: FormData): Pr
     })
     if (teacherError) {
       await admin.auth.admin.deleteUser(res.userId)
-      failures.push({ line: i + 1, value: r.email, reason: 'falha ao criar perfil de professor' })
+      const reason = teacherError.message.includes('teacher_limit_reached')
+        ? `limite de ${features.teacherLimit} professor(es) do plano ${features.label} atingido`
+        : 'falha ao criar perfil de professor'
+      failures.push({ line: i + 1, value: r.email, reason })
+      continue
+    }
+    const setupEmail = await sendCredentialsEmail({ admin, to: r.email, name: r.name, schoolName, kind: 'new' })
+    if (!setupEmail.ok) {
+      await admin.auth.admin.deleteUser(res.userId)
+      failures.push({ line: i + 1, value: r.email, reason: 'falha ao enviar link de definição de senha; usuário removido' })
       continue
     }
     created++
-    await sendCredentialsEmail({ to: r.email, name: r.name, password, schoolName, kind: 'new' }).catch(() => {})
   }
 
   revalidatePath('/admin/teachers')

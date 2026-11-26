@@ -30,6 +30,6 @@ export function chordSummary(chords: ChordEvent[], max = 8): string {
   for (const ev of chords) {
     if (unique[unique.length - 1] !== ev.chord) unique.push(ev.chord)
   }
-  const head = unique.slice(0, max).join(' · ')
+  const head = unique.slice(0, max).join(', ')
   return unique.length > max ? `${head} …` : head
 }

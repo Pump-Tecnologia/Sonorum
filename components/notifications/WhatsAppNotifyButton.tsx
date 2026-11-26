@@ -41,7 +41,7 @@ export function WhatsAppNotifyButton({ action, hidden, label = 'Lembrar via What
         disabled={pending}
         title={title ?? label}
         className={cn(
-          'inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted disabled:cursor-wait disabled:opacity-60',
+          'sn-btn sn-btn-sm sn-btn-secondary',
           className,
         )}
       >
@@ -51,7 +51,7 @@ export function WhatsAppNotifyButton({ action, hidden, label = 'Lembrar via What
         </svg>
         {pending ? 'Enviando…' : label}
       </button>
-      {state.error && <span className="ml-2 text-xs font-medium text-red-600">{state.error}</span>}
+      {state.error && <span className="sn-error ml-2" role="alert">{state.error}</span>}
     </form>
   )
 }

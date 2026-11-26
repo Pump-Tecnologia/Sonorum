@@ -4,22 +4,22 @@
    ──────────────────────────────────────────────────────────────────────────── */
 
 .page {
-  --ds-ink: #1F3A5F;
-  --ds-ink-deep: #142844;
+  --ds-ink: #315947;
+  --ds-ink-deep: #254b3a;
   /* Fundo do painel esquerdo: levemente mais claro/vivido que o ink da marca
      para a logo vazada ter contraste. Não substitui o ink — só o background. */
-  --ds-panel-bg: #25456E;
-  --ds-green: #63C08F;
+  --ds-panel-bg: #183c32;
+  --ds-green: #7CC99B;
   --ds-green-soft: #A8DCC1;
   --ds-green-deep: #4FAB78;
-  --ds-canvas: #F2F4F7;
+  --ds-canvas: #FFFFFF;
   --ds-surface: #FFFFFF;
-  --ds-text: #2B2E34;
-  --ds-text-muted: #6B7480;
-  --ds-hairline: #E4E8EF;
+  --ds-text: #25463c;
+  --ds-text-muted: #71867a;
+  --ds-hairline: #e3ece6;
 
   --font-display: var(--font-sans), system-ui, sans-serif;
-  --font-body: var(--font-poppins), system-ui, sans-serif;
+  --font-body: var(--font-sans), system-ui, sans-serif;
 
   --r-md: 0.875rem;
   --r-lg: 1.125rem;
@@ -45,7 +45,7 @@
   display: none;
   position: relative;
   overflow: hidden;
-  background: var(--ds-panel-bg);
+  background: radial-gradient(ellipse at 90% 0%, #7cc99b1c, transparent 65%), var(--ds-panel-bg);
   color: #fff;
   padding: 3rem;
   flex-direction: column;
@@ -92,8 +92,8 @@
 }
 .brandWord {
   font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 600;
   letter-spacing: -0.01em;
   color: #fff;
 }
@@ -105,8 +105,8 @@
 .brandPitchTitle {
   font-family: var(--font-display);
   font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.1;
+  font-weight: 500;
+  line-height: 1.2;
   letter-spacing: -0.025em;
   color: #fff;
 }
@@ -116,8 +116,8 @@
 }
 .brandPitchSub {
   margin-top: 1rem;
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 0.9375rem;
+  line-height: 1.7;
   color: color-mix(in oklab, #fff 80%, transparent);
 }
 
@@ -129,7 +129,7 @@
 
 /* ── Painel do formulário (direita) ──────────────────────────────────────── */
 .formPanel {
-  background: var(--ds-canvas);
+  background: radial-gradient(ellipse at 90% 95%, #dcefe1, transparent 65%), radial-gradient(ellipse at 0% 40%, #f0f8f2, transparent 55%), var(--ds-canvas);
   padding: 1.5rem 1.5rem 2rem;
   display: flex;
   flex-direction: column;
@@ -144,7 +144,15 @@
 
 .formInner {
   width: 100%;
-  max-width: 24rem;
+  max-width: 26rem;
+  padding: 2rem;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #ffffffa8, #ffffff42);
+  border: 1px solid #ffffffcc;
+  box-shadow: inset 0 1px 0 #ffffffed, 0 14px 42px #345e4514, 0 3px 10px #345e4505;
+  -webkit-backdrop-filter: blur(24px) saturate(135%);
+  backdrop-filter: blur(24px) saturate(135%);
+  animation: auth-enter .65s ease both;
 }
 
 /* Brand pequena no topo, visível só em mobile/tablet (lg- esconde) */
@@ -168,15 +176,15 @@
 
 .title {
   font-family: var(--font-display);
-  font-size: 1.625rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 500;
   letter-spacing: -0.015em;
   color: var(--ds-ink);
   margin: 0;
 }
 .subtitle {
   margin: 0.375rem 0 1.25rem 0;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   color: var(--ds-text-muted);
   line-height: 1.5;
 }
@@ -196,7 +204,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
 }
 .field {
   display: flex;
@@ -205,30 +213,31 @@
 }
 .label {
   font-family: var(--font-body);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--ds-ink);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ds-text-muted);
 }
 .input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
-  border: 1px solid var(--ds-hairline);
-  background: var(--ds-surface);
-  border-radius: var(--r-md);
+  padding: 0.75rem 1rem;
+  border: 1px solid #ffffffd9;
+  background: #ffffff8c;
+  border-radius: 28px;
   font-family: var(--font-body);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
   color: var(--ds-text);
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 .input::placeholder {
-  /* Placeholder menor que o texto digitado, alinhado com a label */
-  font-size: 0.8125rem;
+  /* Escala compacta compartilhada por todas as telas de autenticação. */
+  font-size: 0.75rem;
   color: color-mix(in oklab, var(--ds-text-muted) 80%, transparent);
 }
 .input:focus {
   outline: none;
-  border-color: var(--ds-ink);
-  box-shadow: 0 0 0 4px color-mix(in oklab, var(--ds-ink) 12%, transparent);
+  border-color: #91bea4;
+  box-shadow: 0 0 0 3px #7cc99b22;
 }
 .input[aria-invalid='true'] {
   border-color: #DC2626;
@@ -277,13 +286,13 @@
   padding: 0.6875rem 1.25rem;
   background: var(--ds-ink);
   color: #fff;
-  border-radius: var(--r-md);
+  border-radius: 28px;
   font-family: var(--font-body);
   font-size: 0.9375rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
-  box-shadow: 0 10px 24px -10px rgb(31 58 95 / 0.55);
+  box-shadow: 0 6px 20px -12px #31594740;
   transition: background-color 200ms ease, transform 200ms ease;
 }
 .submit:hover:not(:disabled) {
@@ -318,3 +327,10 @@
   text-decoration: none;
 }
 .backLink:hover { color: var(--ds-green-deep); }
+
+@keyframes auth-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media(max-width: 639px) {
+  .formPanel { padding: 1.25rem; }
+  .formInner { padding: 1.5rem; border-radius: 24px; }
+}
+@media(prefers-reduced-motion: reduce) { .formInner { animation: none; } .input, .submit { transition: none; } }

@@ -104,6 +104,7 @@ export async function deleteTemplate(formData: FormData) {
 
 // ── Provisionamento: copia os templates ativos p/ a escola (só os que faltam) ──
 export async function provisionSchoolLibrary(schoolId: string): Promise<number> {
+  if (!(await requireSuperadmin())) return 0
   const admin = await createAdminClient()
 
   const [{ data: templates }, { data: existing }] = await Promise.all([

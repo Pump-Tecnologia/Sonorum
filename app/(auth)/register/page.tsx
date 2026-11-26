@@ -16,6 +16,8 @@ export default async function RegisterPage({
   const { plan } = await searchParams
   const sellable = SELLABLE_PLANS.includes(plan as (typeof SELLABLE_PLANS)[number])
   const f = sellable ? PLAN_FEATURES[plan as keyof typeof PLAN_FEATURES] : null
+  // Porta de entrada gratuita: 'solo_free' (professor autônomo) ou 'free' (escola/padrão).
+  const freeLabel = plan === 'solo_free' ? PLAN_FEATURES.solo_free.label : PLAN_FEATURES.free.label
 
   return (
     <>
@@ -23,7 +25,7 @@ export default async function RegisterPage({
       <p className={styles.subtitle}>
         {f
           ? `Crie sua conta e finalize o pagamento — ${formatBRL(planPrice(plan!))}/mês no cartão, cancele quando quiser.`
-          : 'Crie sua conta no plano Essencial e comece hoje, sem cartão.'}
+          : `Crie sua conta no plano ${freeLabel} e comece hoje, sem cartão.`}
       </p>
       <Suspense fallback={null}>
         <RegisterForm />

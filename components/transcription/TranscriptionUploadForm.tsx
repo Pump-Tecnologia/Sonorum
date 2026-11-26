@@ -19,7 +19,7 @@ export function TranscriptionUploadForm() {
     <Card>
       <form action={action} className="max-w-2xl space-y-5">
         {state.error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{state.error}</p>
+          <p className="sn-alert" role="alert">{state.error}</p>
         )}
 
         <Field label="Título da música" htmlFor="title" error={fe.title}>
@@ -29,10 +29,10 @@ export function TranscriptionUploadForm() {
         <InstrumentSelect label="Instrumento (opcional)" error={fe.instrument} optional />
 
         <Field
-          label="Áudio (MP3, WAV, M4A · até 25MB)"
+          label="Áudio"
           htmlFor="file"
           error={fe.file}
-          hint="Funciona melhor com instrumento solo e gravação limpa. A IA gera um rascunho — você revisa antes de aprovar."
+          hint="MP3, WAV ou M4A de até 25 MB. Funciona melhor com instrumento solo e gravação limpa. A IA gera um rascunho — você revisa antes de aprovar."
         >
           <input
             id="file"
@@ -40,7 +40,7 @@ export function TranscriptionUploadForm() {
             type="file"
             accept={AUDIO_ACCEPT}
             required
-            className="block w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+            className="block w-full text-sm text-(--sn-text-muted) file:mr-3 file:min-h-10 file:cursor-pointer file:rounded-full file:border-0 file:bg-(--sn-mint-soft) file:px-4 file:text-sm file:font-medium file:text-(--sn-ink-soft) hover:file:bg-(--sn-mint-hover)"
           />
         </Field>
 

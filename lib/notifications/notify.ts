@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/server'
-import { planFeatures } from '@/lib/constants/plans'
+import { effectivePlanFeatures } from '@/lib/auth/plan'
 import { sendEmail } from '@/lib/notifications/email'
 import { TEMPLATES } from '@/lib/notifications/templates'
 import type { NotificationEvent, NotificationPayload, NotifyTo } from '@/lib/notifications/types'
@@ -42,7 +42,7 @@ async function resolveRecipients(
   const admin = await createAdminClient()
   const { data: student } = await admin
     .from('users')
-    .select('id, name, email, phone, parent_contact, notify_to, notify_email, school_id, schools(name, custom_name, brand_primary, logo_path, plan_type, feature_overrides)')
+    .select('id, name, email, phone, parent_contact, notify_to, notify_email, school_id, schools(name, custom_name, brand_primary, logo_path, plan_type, feature_overrides, expiration_date)')
     .eq('id', studentId)
     .maybeSingle()
 
@@ -51,7 +51,7 @@ async function resolveRecipients(
   }
 
   const target = (override ?? (student.notify_to as NotifyTo | null) ?? 'both')
-  const school = (student.schools ?? null) as { name: string; custom_name: string | null; brand_primary: string | null; logo_path: string | null; plan_type: string | null; feature_overrides: unknown } | null
+  const school = (student.schools ?? null) as { name: string; custom_name: string | null; brand_primary: string | null; logo_path: string | null; plan_type: string | null; feature_overrides: unknown; expiration_date: string | null } | null
 
   const recipients: Recipient[] = []
   if (target === 'student' || target === 'both') {
@@ -80,7 +80,7 @@ async function resolveRecipients(
     brandPrimary: school?.brand_primary ?? null,
     logoUrl: school?.logo_path ?? null,
     // Envio automático pelo WhatsApp oficial só vale no Premium.
-    whatsappOfficial: planFeatures(school?.plan_type, school?.feature_overrides).whatsappOfficial,
+    whatsappOfficial: effectivePlanFeatures(school?.plan_type, school?.expiration_date, school?.feature_overrides).whatsappOfficial,
     // E-mail é opt-in por aluno (mesmos templates do WhatsApp chegam por e-mail).
     emailEnabled: Boolean(student.notify_email),
   }

@@ -1,43 +1,59 @@
 import Link from 'next/link'
 
-import { PageHeader } from '@/components/app/PageHeader'
-import { Badge } from '@/components/ui/Badge'
-import { Button, LinkButton } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { Bar, DashHeader, LessonRow, Panel, RowLink, StatTile } from '@/components/dashboard/parts'
+import styles from '@/components/dashboard/dashboard.module.css'
+import { LinkButton } from '@/components/ds/Button'
+import { IconArrowRight, IconPlus } from '@/components/ds/icons'
+import { StatusPill } from '@/components/ds/StatusPill'
 import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
-import { StatCard } from '@/components/ui/StatCard'
-import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
-import { lessonStatus } from '@/lib/constants/lessons'
-import { getCurrentUser } from '@/lib/auth/session'
-import { getPlanContext } from '@/lib/auth/plan'
+import { requireCurrentUser } from '@/lib/auth/session'
+import { getPlanContext, isSoloExperience } from '@/lib/auth/plan'
+import { instrumentTone, type InstrumentTone } from '@/lib/constants/instrument-tone'
 import { effectiveChargeStatus } from '@/lib/finance'
 import { dayRange, monthRange } from '@/lib/format'
+import { dateInBR, greetingInBR, hourInBR, longDateInBR } from '@/lib/timezone'
+import { listActiveTeachers } from '@/lib/queries/teachers'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Dashboard' }
 
-const INSTRUMENT_BAR = ['bg-brand-600', 'bg-accent-500', 'bg-brand-400', 'bg-accent-300', 'bg-brand-300', 'bg-ink-muted']
+// Cor da barra de cada categoria de instrumento (mesmos tons da agenda).
+const CATEGORY_TONE: Record<string, InstrumentTone> = {
+  Teclas: 'piano', Cordas: 'cordas', Voz: 'canto', 'Percussão': 'bateria', Sopros: 'violao',
+}
+const ATTENDANCE_ROWS = 8
 
-function pctTrend(current: number, previous: number): string | undefined {
-  if (previous <= 0) return current > 0 ? 'novo este mês' : undefined
+function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`
+}
+
+function instrumentLabel(instrument: unknown): string {
+  if (Array.isArray(instrument)) return instrument.join(', ')
+  return typeof instrument === 'string' ? instrument : ''
+}
+
+function pctTrend(current: number, previous: number): { text: string; trend?: 'up' | 'down' } | undefined {
+  if (previous <= 0) return undefined
   const pct = Math.round(((current - previous) / previous) * 100)
-  if (pct === 0) return 'estável vs mês anterior'
-  return `${pct > 0 ? '↑' : '↓'} ${Math.abs(pct)}% vs mês anterior`
+  if (pct === 0) return { text: 'Igual ao mês passado' }
+  return { text: `${pct > 0 ? '+' : '−'}${Math.abs(pct)}% sobre o mês passado`, trend: pct > 0 ? 'up' : 'down' }
 }
 
 export default async function AdminDashboard() {
-  const user = await getCurrentUser()
+  const user = await requireCurrentUser()
   const supabase = await createClient()
   const plan = await getPlanContext()
+  // Conta presa a 1 professor (Essencial, Solo, Solo Pro): sem "equipe" —
+  // esconde stat/ranking que só fazem sentido comparando vários professores.
+  const soloAccount = isSoloExperience(plan)
 
   const today = dayRange()
   const month = monthRange()
   const now = new Date()
-  const lastMonth = monthRange(new Date(now.getFullYear(), now.getMonth() - 1, 1))
+  const [brYear, brMonth] = dateInBR(now).split('-').map(Number)
+  const lastMonth = monthRange(new Date(Date.UTC(brYear, brMonth - 2, 15, 12)))
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
-  const todayISO = now.toISOString().slice(0, 10)
-
-  type TodayLessonRow = { id: string; start_datetime: string; status: string; users: { name: string } | null }
+  type TodayLessonRow = { id: string; start_datetime: string; status: string; users: { name: string; instrument: unknown } | null }
   type RetentionRow = { student_id: string; status: string; users: { name: string } | null }
   type ReportEmbed = { technique_score: number; theory_score: number; repertoire_score: number; practice_score: number }
   type TeacherLessonRow = {
@@ -47,11 +63,11 @@ export default async function AdminDashboard() {
   }
 
   const [
-    teachersCount, lessonsToday, chargesMonth, chargesLast, retentionLessons,
+    teacherList, lessonsToday, chargesMonth, chargesLast, retentionLessons,
     todayLessonsList, newStudentsMonth, newStudentsLast, studentsInstr,
-    teacherList, teacherMonthLessons, unassigned,
+    teacherMonthLessons, unassigned,
   ] = await Promise.all([
-    supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'teacher'),
+    user?.schoolId ? listActiveTeachers(supabase, user.schoolId) : Promise.resolve([]),
     supabase.from('lessons').select('id', { count: 'exact', head: true }).gte('start_datetime', today.start).lte('start_datetime', today.end),
     plan.features.financial
       ? supabase.from('charges').select('amount, status, due_date').gte('due_date', month.start).lte('due_date', month.end)
@@ -60,11 +76,10 @@ export default async function AdminDashboard() {
       ? supabase.from('charges').select('amount').gte('due_date', lastMonth.start).lte('due_date', lastMonth.end)
       : Promise.resolve({ data: [] as { amount: number }[] }),
     supabase.from('lessons').select('student_id, status, users!lessons_student_id_fkey(name)').eq('status', 'canceled').gte('start_datetime', thirtyDaysAgo),
-    supabase.from('lessons').select('id, start_datetime, status, users!lessons_student_id_fkey(name)').gte('start_datetime', today.start).lte('start_datetime', today.end).order('start_datetime').limit(5),
+    supabase.from('lessons').select('id, start_datetime, status, users!lessons_student_id_fkey(name, instrument)').gte('start_datetime', today.start).lte('start_datetime', today.end).order('start_datetime').limit(6),
     supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'student').gte('created_at', month.start).lte('created_at', month.end + 'T23:59:59'),
     supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'student').gte('created_at', lastMonth.start).lte('created_at', lastMonth.end + 'T23:59:59'),
     supabase.from('users').select('instrument_category').eq('role', 'student'),
-    supabase.from('users').select('id, name').eq('role', 'teacher').order('name'),
     supabase.from('lessons').select('teacher_id, status, student_id, start_datetime, student:users!lessons_student_id_fkey(name), teacher:users!lessons_teacher_id_fkey(name), lesson_reports(technique_score, theory_score, repertoire_score, practice_score)').gte('start_datetime', month.start + 'T00:00:00').lte('start_datetime', month.end + 'T23:59:59'),
     supabase.from('lessons').select('id', { count: 'exact', head: true }).is('teacher_id', null).gte('start_datetime', now.toISOString()).neq('status', 'canceled'),
   ])
@@ -113,7 +128,7 @@ export default async function AdminDashboard() {
     }
     tStats.set(l.teacher_id, e)
   }
-  const teachers = ((teacherList.data ?? []) as { id: string; name: string }[]).map((t) => {
+  const teachers = teacherList.map((t) => {
     const s = tStats.get(t.id)
     return {
       id: t.id, name: t.name,
@@ -164,236 +179,222 @@ export default async function AdminDashboard() {
   type Alert = { label: string; detail: React.ReactNode; href: string; tone: 'danger' | 'warning' }
   const alerts: Alert[] = []
   if (plan.features.financial && overdue.length > 0)
-    alerts.push({ label: `${overdue.length} cobrança(s) vencida(s)`, detail: <><MoneyValue value={overdueSum} /> em atraso</>, href: '/financial', tone: 'danger' })
+    alerts.push({ label: plural(overdue.length, 'cobrança vencida', 'cobranças vencidas'), detail: <><MoneyValue value={overdueSum} /> em atraso</>, href: '/financial', tone: 'danger' })
   if ((unassigned.count ?? 0) > 0)
-    alerts.push({ label: `${unassigned.count} aula(s) sem professor`, detail: 'Atribua um professor na agenda', href: '/schedule', tone: 'warning' })
+    alerts.push({ label: plural(unassigned.count ?? 0, 'aula sem professor', 'aulas sem professor'), detail: 'Atribua na agenda', href: '/schedule', tone: 'warning' })
   if (pendingTotal > 0)
-    alerts.push({ label: `${pendingTotal} presença(s) pendente(s)`, detail: 'Aulas já passaram sem presença lançada', href: '/schedule', tone: 'warning' })
+    alerts.push({ label: plural(pendingTotal, 'presença para lançar', 'presenças para lançar'), detail: 'Aulas que já passaram', href: '/schedule', tone: 'warning' })
   for (const r of retentionRisk.filter((r) => r.count >= 3))
-    alerts.push({ label: `${r.name} faltou ${r.count}×`, detail: 'Risco de evasão', href: `/admin/students/${r.id}`, tone: 'danger' })
+    alerts.push({ label: `${r.name} cancelou ${r.count} aulas`, detail: 'Risco de evasão', href: `/admin/students/${r.id}`, tone: 'danger' })
 
   const todayList = (todayLessonsList.data ?? []) as unknown as TodayLessonRow[]
-  const datePill = `Hoje: ${now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`
+  const firstName = (user?.name ?? '').split(' ')[0]
+  const studentsTrend = pctTrend(newThisMonth, newLastMonth)
+  const revenueTrend = pctTrend(expectedRevenue, lastRevenue)
 
   return (
-    <>
-      <PageHeader
-        title="Dashboard"
-        subtitle={`Bem-vindo, ${user?.name ?? ''}`}
-        action={
-          <div className="flex items-center gap-2">
+    <div className={styles.page}>
+      <DashHeader
+        kicker={longDateInBR(now)}
+        title={firstName ? `${greetingInBR(now)}, ${firstName}` : greetingInBR(now)}
+        actions={
+          <>
             {plan.features.financial && <FinanceToggle />}
-            <span className="hidden items-center rounded-xl border border-hairline bg-surface px-3 py-2 text-sm text-ink-muted sm:inline-flex">{datePill}</span>
-            <Link href="/admin/students/new"><Button>Novo aluno</Button></Link>
-          </div>
+            <LinkButton href="/admin/students/new"><IconPlus /> Novo aluno</LinkButton>
+          </>
         }
       />
 
       {isFree && (
-        <Card className="mb-6 flex flex-wrap items-center justify-between gap-4 border-brand-200 bg-brand-50/50">
-          <div>
-            <p className="text-sm font-semibold text-ink">Plano {plan.features.label} · {studentLimitLabel} alunos</p>
-            <p className="text-sm text-ink-muted">Faça upgrade para alunos ilimitados, financeiro e relatórios.</p>
-          </div>
-          <Link href="/upgrade"><Button>Fazer upgrade</Button></Link>
-        </Card>
+        <div className={styles.planBanner}>
+          <p><strong>Plano {plan.features.label} com {studentLimitLabel} alunos.</strong> Nos planos pagos você tem alunos ilimitados, financeiro e relatórios.</p>
+          <LinkButton href="/upgrade" className={styles.planCta}>Ver planos <IconArrowRight /></LinkButton>
+        </div>
       )}
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/admin/students"><StatCard label="Alunos" value={studentLimitLabel} hint={pctTrend(newThisMonth, newLastMonth) ?? `${newThisMonth} novo(s) este mês`} /></Link>
-        <Link href="/admin/teachers"><StatCard label="Professores" value={teachersCount.count ?? 0} /></Link>
-        <Link href="/schedule"><StatCard label="Aulas hoje" value={lessonsToday.count ?? 0} /></Link>
+      <div className={styles.stats}>
+        <StatTile
+          href="/admin/students"
+          label="Alunos"
+          value={studentLimitLabel}
+          hint={studentsTrend?.text ?? plural(newThisMonth, 'novo este mês', 'novos este mês')}
+          trend={studentsTrend?.trend}
+        />
+        {!soloAccount && <StatTile href="/admin/teachers" label="Professores" value={teacherList.length} />}
+        <StatTile href="/schedule" label="Aulas hoje" value={lessonsToday.count ?? 0} />
         {plan.features.financial ? (
-          <Link href="/financial"><StatCard label="Receita prevista (mês)" value={<MoneyValue value={expectedRevenue} />} hint={pctTrend(expectedRevenue, lastRevenue)} /></Link>
+          <StatTile
+            href="/financial"
+            label="Receita prevista no mês"
+            value={<MoneyValue value={expectedRevenue} />}
+            hint={revenueTrend?.text}
+            trend={revenueTrend?.trend}
+          />
         ) : (
-          <StatCard label="Receita prevista" value="—" hint="Disponível em planos pagos" />
+          <StatTile label="Receita prevista" value="—" hint="Nos planos pagos" />
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Atenção necessária */}
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-ink">Atenção necessária</h2>
-            {alerts.length > 0 && <Badge tone="danger">{alerts.length}</Badge>}
-          </div>
-          {alerts.length === 0 ? (
-            <p className="text-sm text-ink-muted">Tudo em dia por aqui. 🎵</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {alerts.slice(0, 5).map((a, i) => (
-                <li key={i}>
-                  <Link href={a.href} className="flex items-start gap-2.5 rounded-xl border border-hairline px-3 py-2.5 transition-colors hover:bg-surface-muted">
-                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${a.tone === 'danger' ? 'bg-red-500' : 'bg-amber-400'}`} aria-hidden="true" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-ink">{a.label}</p>
-                      <p className="text-xs text-ink-muted">{a.detail}</p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Aulas de hoje */}
-        <Card className="lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-ink">Aulas de hoje</h2>
-            <LinkButton href="/schedule" variant="ghost" size="sm">Ver agenda →</LinkButton>
-          </div>
+      <div className={styles.grid}>
+        <Panel id="today-title" title="Aulas de hoje" link={{ href: '/schedule', label: 'Agenda' }} className={styles.span2}>
           {todayList.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhuma aula hoje.</p>
+            <p className={styles.empty}>Nenhuma aula hoje.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className={styles.rows}>
               {todayList.map((l) => (
-                <li key={l.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
-                  <div>
-                    <span className="font-medium">{l.users?.name ?? '—'}</span>
-                    <span className="ml-2 text-xs text-ink-muted">{new Date(l.start_datetime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                  <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
-                </li>
+                <LessonRow
+                  key={l.id}
+                  href={`/lessons/${l.id}/planner`}
+                  time={hourInBR(l.start_datetime)}
+                  name={l.users?.name ?? 'Aluno'}
+                  meta={instrumentLabel(l.users?.instrument)}
+                  tone={instrumentTone(l.users?.instrument)}
+                  status={l.status}
+                />
               ))}
             </ul>
           )}
-        </Card>
+        </Panel>
 
-        {/* Alunos por instrumento */}
-        <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Alunos por instrumento</h2>
+        <Panel
+          id="alerts-title"
+          title="Atenção"
+          badge={alerts.length > 0 ? <StatusPill tone="danger">{alerts.length}</StatusPill> : undefined}
+        >
+          {alerts.length === 0 ? (
+            <p className={styles.empty}>Tudo em dia.</p>
+          ) : (
+            <ul className={styles.rows}>
+              {alerts.slice(0, 5).map((a) => (
+                <RowLink key={`${a.href}-${String(a.label)}`} href={a.href} label={a.label} detail={a.detail} tone={a.tone} />
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel id="instruments-title" title="Alunos por instrumento">
           {instruments.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhum aluno cadastrado.</p>
+            <p className={styles.empty}>Nenhum aluno cadastrado.</p>
           ) : (
-            <ul className="space-y-3">
-              {instruments.map((inst, i) => (
-                <li key={inst.label}>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="text-ink">{inst.label}</span>
-                    <span className="font-semibold text-ink">{inst.count}</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
-                    <div className={`h-full rounded-full ${INSTRUMENT_BAR[i % INSTRUMENT_BAR.length]}`} style={{ width: `${instrTotal ? (inst.count / instrTotal) * 100 : 0}%` }} />
-                  </div>
-                </li>
+            <ul className={styles.bars}>
+              {instruments.map((inst) => (
+                <Bar key={inst.label} label={inst.label} value={inst.count} total={instrTotal} tone={CATEGORY_TONE[inst.label] ?? 'outro'} />
               ))}
             </ul>
           )}
-        </Card>
+        </Panel>
 
-        {/* Professores em destaque */}
-        <Card className="lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-ink">Professores em destaque (mês)</h2>
-            <LinkButton href="/admin/teachers" variant="ghost" size="sm">Ver todos →</LinkButton>
-          </div>
-          {teachers.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhum professor cadastrado.</p>
-          ) : (
-            <ul className="space-y-2">
-              {teachers.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
-                  <span className="font-medium text-ink">{t.name}</span>
-                  <div className="flex items-center gap-4 text-ink-muted">
-                    <span><span className="font-semibold text-ink">{t.completed}</span> aulas</span>
-                    <span><span className="font-semibold text-ink">{t.students}</span> alunos</span>
-                    {t.avg && <Badge tone={Number(t.avg) >= 4 ? 'success' : 'neutral'}>★ {t.avg}</Badge>}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Risco de retenção */}
-        <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Risco de retenção</h2>
-          <p className="mb-3 text-xs text-ink-muted">Mais cancelamentos nos últimos 30 dias</p>
-          {retentionRisk.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhum cancelamento recente. 🎵</p>
-          ) : (
-            <ul className="space-y-2">
-              {retentionRisk.map((r) => (
-                <li key={r.id} className="flex items-center justify-between text-sm">
-                  <Link href={`/admin/students/${r.id}`} className="font-medium text-ink hover:text-brand-600">{r.name}</Link>
-                  <Badge tone={r.count >= 3 ? 'danger' : 'warning'}>{r.count} faltas</Badge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
-
-      {/* ── Operação do mês ───────────────────────────────────────────────── */}
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        {/* Frequência por aluno */}
-        <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Frequência <span className="text-sm font-normal text-ink-muted">(mês)</span></h2>
-          <Table>
-            <Thead>
-              <Tr><Th>Aluno</Th><Th>Presenças</Th><Th>Faltas</Th><Th>Taxa</Th></Tr>
-            </Thead>
-            <tbody>
-              {attendance.length === 0 && <EmptyRow colSpan={4}>Sem presenças registradas no mês.</EmptyRow>}
-              {attendance.map((a) => (
-                <Tr key={a.id}>
-                  <Td className="font-medium">
-                    <Link href={`/admin/students/${a.id}`} className="text-brand-700 hover:underline">{a.name}</Link>
-                  </Td>
-                  <Td>{a.attended}</Td>
-                  <Td>{a.missed}</Td>
-                  <Td><Badge tone={a.rate >= 80 ? 'success' : a.rate >= 60 ? 'warning' : 'danger'}>{a.rate}%</Badge></Td>
-                </Tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card>
-
-        {/* Produtividade dos professores */}
-        <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Produtividade <span className="text-sm font-normal text-ink-muted">(professores, mês)</span></h2>
-          <Table>
-            <Thead>
-              <Tr><Th>Professor</Th><Th>Realizadas</Th><Th>Faltas</Th><Th>A lançar</Th><Th>Conclusão</Th></Tr>
-            </Thead>
-            <tbody>
-              {productivity.length === 0 && <EmptyRow colSpan={5}>Sem aulas no mês.</EmptyRow>}
-              {productivity.map((p, i) => (
-                <Tr key={i}>
-                  <Td className="font-medium">{p.name}</Td>
-                  <Td className="font-semibold">{p.done}</Td>
-                  <Td>{p.missed}</Td>
-                  <Td>{p.toMark}</Td>
-                  <Td><Badge tone={p.doneRate >= 80 ? 'success' : p.doneRate >= 50 ? 'warning' : 'neutral'}>{p.doneRate}%</Badge></Td>
-                </Tr>
-              ))}
-            </tbody>
-          </Table>
-        </Card>
-
-        {/* Presenças pendentes */}
-        {pendingTotal > 0 && (
-          <Card className="lg:col-span-2">
-            <h2 className="mb-1 text-base font-semibold text-ink">Presenças pendentes</h2>
-            <p className="mb-4 text-sm text-ink-muted">
-              {pendingTotal} aula(s) já passaram e seguem como “Agendada” — a presença não foi lançada.
-            </p>
-            <Table>
-              <Thead>
-                <Tr><Th>Professor</Th><Th className="text-right">Aulas a lançar</Th></Tr>
-              </Thead>
-              <tbody>
-                {pendings.map((p, i) => (
-                  <Tr key={i}>
-                    <Td className="font-medium">{p.name}</Td>
-                    <Td className="text-right font-semibold text-amber-600">{p.count}</Td>
-                  </Tr>
+        {/* Professores do mês — só faz sentido comparando uma equipe */}
+        {!soloAccount && (
+          <Panel id="teachers-title" title="Professores do mês" link={{ href: '/admin/teachers', label: 'Professores' }} className={styles.span2}>
+            {teachers.length === 0 ? (
+              <p className={styles.empty}>Nenhum professor cadastrado.</p>
+            ) : (
+              <ul className={styles.rows}>
+                {teachers.map((t) => (
+                  <li key={t.id}>
+                    <div className={styles.row}>
+                      <span className={styles.rowMain}><span className={styles.rowName}>{t.name}</span></span>
+                      <span className={styles.rowEnd}>
+                        <span><strong>{t.completed}</strong> aulas</span>
+                        <span><strong>{t.students}</strong> alunos</span>
+                        {t.avg && <StatusPill tone={Number(t.avg) >= 4 ? 'success' : 'neutral'}>Nota {t.avg}</StatusPill>}
+                      </span>
+                    </div>
+                  </li>
                 ))}
-              </tbody>
-            </Table>
-          </Card>
+              </ul>
+            )}
+          </Panel>
+        )}
+
+        <Panel id="retention-title" title="Risco de evasão" info="Alunos com mais aulas canceladas nos últimos 30 dias.">
+          {retentionRisk.length === 0 ? (
+            <p className={styles.empty}>Nenhum cancelamento recente.</p>
+          ) : (
+            <ul className={styles.rows}>
+              {retentionRisk.map((r) => (
+                <RowLink
+                  key={r.id}
+                  href={`/admin/students/${r.id}`}
+                  label={r.name}
+                  end={<StatusPill tone={r.count >= 3 ? 'danger' : 'warning'}>{plural(r.count, 'cancelada', 'canceladas')}</StatusPill>}
+                />
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel
+          id="attendance-title"
+          title="Frequência do mês"
+          info={`Os ${ATTENDANCE_ROWS} alunos com menor frequência aparecem primeiro.`}
+          link={{ href: '/admin/students', label: 'Alunos' }}
+          className={styles.span2}
+        >
+          {attendance.length === 0 ? (
+            <p className={styles.empty}>Sem presenças registradas no mês.</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr><th>Aluno</th><th className={styles.num}>Presenças</th><th className={styles.num}>Faltas</th><th className={styles.num}>Taxa</th></tr>
+                </thead>
+                <tbody>
+                  {attendance.slice(0, ATTENDANCE_ROWS).map((a) => (
+                    <tr key={a.id}>
+                      <td><Link href={`/admin/students/${a.id}`}>{a.name}</Link></td>
+                      <td className={styles.num}>{a.attended}</td>
+                      <td className={styles.num}>{a.missed}</td>
+                      <td className={styles.num}><StatusPill tone={a.rate >= 80 ? 'success' : a.rate >= 60 ? 'warning' : 'danger'}>{a.rate}%</StatusPill></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+
+        <Panel id="productivity-title" title={soloAccount ? 'Sua produtividade no mês' : 'Produtividade no mês'} className={pendingTotal > 0 ? styles.span2 : styles.span3}>
+          {productivity.length === 0 ? (
+            <p className={styles.empty}>Sem aulas no mês.</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr><th>Professor</th><th className={styles.num}>Realizadas</th><th className={styles.num}>Faltas</th><th className={styles.num}>A lançar</th><th className={styles.num}>Conclusão</th></tr>
+                </thead>
+                <tbody>
+                  {productivity.map((p) => (
+                    <tr key={p.name}>
+                      <td>{p.name}</td>
+                      <td className={styles.num}>{p.done}</td>
+                      <td className={styles.num}>{p.missed}</td>
+                      <td className={styles.num}>{p.toMark}</td>
+                      <td className={styles.num}><StatusPill tone={p.doneRate >= 80 ? 'success' : p.doneRate >= 50 ? 'warning' : 'neutral'}>{p.doneRate}%</StatusPill></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+
+        {pendingTotal > 0 && (
+          <Panel id="pending-title" title="Presenças para lançar" info="Aulas que já passaram e continuam como Agendada, sem a presença registrada." link={{ href: '/schedule', label: 'Agenda' }}>
+            <ul className={styles.rows}>
+              {pendings.map((p) => (
+                <li key={p.name}>
+                  <div className={styles.row}>
+                    <span className={styles.rowMain}><span className={styles.rowName}>{p.name}</span></span>
+                    <span className={styles.rowEnd}><StatusPill tone="warning">{plural(p.count, 'aula', 'aulas')}</StatusPill></span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Panel>
         )}
       </div>
-    </>
+    </div>
   )
 }

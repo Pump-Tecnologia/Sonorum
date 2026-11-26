@@ -3,9 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 import { getPlanContext } from '@/lib/auth/plan'
+import { SCHOOL_BRAND_COLOR_ENABLED } from '@/lib/constants/branding'
 import { deleteSchoolLogo, uploadSchoolLogo } from '@/lib/storage/branding'
 
 const settingsSchema = z.object({
@@ -50,7 +51,7 @@ export async function updateSchoolSettings(
   }
 
   const d = parsed.data
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
 
   // Nome exibido é livre; logo e cores são exclusivos do Premium (branding).
   // Chave PIX é livre (todos os planos) — habilita a cobrança avulsa no PIX.
@@ -73,8 +74,11 @@ export async function updateSchoolSettings(
 
   const { features } = await getPlanContext()
   if (features.branding) {
-    update.brand_primary = d.brandPrimary || null
-    update.brand_secondary = null
+    // Com a cor da marca em backlog o campo some do formulário; não zera a cor salva.
+    if (SCHOOL_BRAND_COLOR_ENABLED) {
+      update.brand_primary = d.brandPrimary || null
+      update.brand_secondary = null
+    }
 
     const { data: cur } = await supabase.from('schools').select('logo_path').eq('id', me.schoolId).maybeSingle()
     const file = formData.get('logo')

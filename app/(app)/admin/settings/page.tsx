@@ -5,7 +5,7 @@ import { NotificationChannelCard } from '@/components/admin/NotificationChannelC
 import { RoomsManager } from '@/components/admin/RoomsManager'
 import { SchoolSettingsForm, PlanSummaryCard } from '@/components/admin/SchoolSettingsForm'
 import { getCurrentUser } from '@/lib/auth/session'
-import { planFeatures } from '@/lib/constants/plans'
+import { effectivePlanFeatures } from '@/lib/auth/plan'
 import { isWhatsAppCloudEnabled } from '@/lib/notifications/whatsapp-cloud'
 import { createClient } from '@/lib/supabase/server'
 
@@ -19,7 +19,7 @@ export default async function SettingsPage() {
   const [{ data: school }, { data: rooms }] = await Promise.all([
     supabase
       .from('schools')
-      .select('name, custom_name, brand_primary, brand_secondary, logo_path, plan_type, student_limit, pix_key, pix_key_type, pix_city, feature_overrides')
+      .select('name, custom_name, brand_primary, brand_secondary, logo_path, plan_type, student_limit, pix_key, pix_key_type, pix_city, feature_overrides, expiration_date')
       .eq('id', user.schoolId)
       .single(),
     supabase.from('rooms').select('id, name').eq('school_id', user.schoolId).order('name'),
@@ -29,7 +29,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Configurações" subtitle="Identidade, salas e plano da escola" />
+      <PageHeader title="Configurações" />
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Form principal */}
         <div className="lg:col-span-2">
@@ -45,7 +45,7 @@ export default async function SettingsPage() {
               pixKeyType: school.pix_key_type,
               pixCity: school.pix_city,
             }}
-            canBrand={planFeatures(school.plan_type, school.feature_overrides).branding}
+            canBrand={effectivePlanFeatures(school.plan_type, school.expiration_date, school.feature_overrides).branding}
           />
         </div>
 
@@ -53,7 +53,7 @@ export default async function SettingsPage() {
         <div className="space-y-6">
           <PlanSummaryCard planType={school.plan_type} />
           <NotificationChannelCard
-            whatsappOfficial={planFeatures(school.plan_type, school.feature_overrides).whatsappOfficial}
+            whatsappOfficial={effectivePlanFeatures(school.plan_type, school.expiration_date, school.feature_overrides).whatsappOfficial}
             whatsappActive={isWhatsAppCloudEnabled()}
           />
           <RoomsManager rooms={(rooms ?? []) as { id: string; name: string }[]} />

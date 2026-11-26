@@ -1,27 +1,32 @@
 import Link from 'next/link'
 
-import { PageHeader } from '@/components/app/PageHeader'
+import { Avatar } from '@/components/ds/Avatar'
+import { LinkButton } from '@/components/ds/Button'
+import { IconArrowRight, IconPlus, IconUpload } from '@/components/ds/icons'
+import { MoreMenu } from '@/components/ds/MoreMenu'
+import { StatusPill } from '@/components/ds/StatusPill'
+import dsStyles from '@/components/ds/ds.module.css'
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
 import { ResetPasswordButton } from '@/components/admin/ResetPasswordButton'
 import { StudentSearch } from '@/components/admin/StudentSearch'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { EmptyRow, Table, Td, Th, Thead, Tr } from '@/components/ui/Table'
+import styles from '@/components/admin/students.module.css'
+import { instrumentTone } from '@/lib/constants/instrument-tone'
+import type { StatusTone } from '@/lib/constants/lessons'
 import { formatBRL } from '@/lib/format'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Alunos' }
 
-const STATUS: Record<string, { label: string; tone: 'success' | 'warning' | 'neutral' }> = {
+const STATUS: Record<string, { label: string; tone: StatusTone }> = {
   active: { label: 'Ativo', tone: 'success' },
   paused: { label: 'Pausado', tone: 'warning' },
   inactive: { label: 'Inativo', tone: 'neutral' },
 }
 
 function instrumentLabel(instrument: unknown): string {
-  if (Array.isArray(instrument)) return instrument.join(', ') || '—'
+  if (Array.isArray(instrument)) return instrument.join(', ')
   if (typeof instrument === 'string') return instrument
-  return '—'
+  return ''
 }
 
 export default async function StudentsPage({
@@ -63,77 +68,71 @@ export default async function StudentsPage({
     }
   }
 
+  const count = `${students.length} ${students.length === 1 ? 'aluno' : 'alunos'}`
+
   return (
-    <>
-      <PageHeader
-        title="Alunos"
-        subtitle={`${students.length} aluno(s)${term ? ` · busca: "${term}"` : ''}`}
-        action={
-          <div className="flex items-center gap-2">
-            <Link href="/admin/students/import">
-              <Button variant="secondary">Importar</Button>
-            </Link>
-            <Link href="/admin/students/new">
-              <Button>Novo aluno</Button>
-            </Link>
-          </div>
-        }
-      />
+    <section className={styles.page} aria-labelledby="students-title">
+      <header className={styles.header}>
+        <div>
+          <h1 id="students-title" className={styles.kicker}>Alunos</h1>
+          <p className={styles.count}>{term ? `${count} para “${term}”` : count}</p>
+        </div>
+        <div className={styles.actions}>
+          <LinkButton href="/admin/students/import" variant="soft"><IconUpload /> Importar</LinkButton>
+          <LinkButton href="/admin/students/new"><IconPlus /> Novo aluno</LinkButton>
+        </div>
+      </header>
 
-      <div className="mb-4 max-w-sm">
-        <StudentSearch defaultValue={term} />
-      </div>
+      <StudentSearch defaultValue={term} />
 
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>Nome</Th>
-            <Th>Instrumento</Th>
-            <Th>Plano</Th>
-            <Th>Status</Th>
-            <Th className="text-right"></Th>
-          </Tr>
-        </Thead>
-        <tbody>
-          {students.length === 0 && (
-            <EmptyRow colSpan={5}>{term ? 'Nenhum aluno encontrado.' : 'Nenhum aluno cadastrado.'}</EmptyRow>
-          )}
+      {students.length === 0 ? (
+        <p className={styles.empty}>
+          {term ? 'Nenhum aluno com esse nome ou e-mail.' : 'Nenhum aluno cadastrado ainda.'}
+        </p>
+      ) : (
+        <ul className={styles.list} aria-label="Lista de alunos">
+          <li className={styles.columns} aria-hidden="true">
+            <span>Aluno</span><span>Instrumento</span><span>Plano</span><span>Status</span><span />
+          </li>
           {students.map((s) => {
             const st = STATUS[s.status] ?? { label: s.status, tone: 'neutral' as const }
             const plan = planByStudent.get(s.id)
+            const instrument = instrumentLabel(s.instrument)
+            const href = `/admin/students/${s.id}`
             return (
-              <Tr key={s.id}>
-                <Td>
-                  <Link href={`/admin/students/${s.id}`} className="font-medium text-brand-700 hover:underline">
-                    {s.name}
-                  </Link>
-                  <span className="block text-xs text-ink-muted">{s.email}</span>
-                </Td>
-                <Td className="text-ink-muted">{instrumentLabel(s.instrument)}</Td>
-                <Td className="text-ink-muted">
+              <li key={s.id} className={styles.row}>
+                <div className={styles.who}>
+                  <Avatar name={s.name} tone={instrumentTone(s.instrument)} />
+                  <div className={styles.identity}>
+                    {/* O link do nome cobre a linha inteira: clicar em qualquer ponto abre a ficha. */}
+                    <Link href={href} className={styles.rowLink}>{s.name}</Link>
+                    <span className={styles.email}>{s.email}</span>
+                  </div>
+                </div>
+                <div className={styles.cell} data-label="Instrumento">{instrument || <span className={styles.none}>Sem instrumento</span>}</div>
+                <div className={styles.cell} data-label="Plano">
                   {plan ? (
                     <>
-                      <span className="text-ink">{plan.name}</span>
-                      <span className="block text-xs">{formatBRL(plan.amount)}</span>
+                      <span>{plan.name}</span>
+                      <span className={styles.amount}>{formatBRL(plan.amount)}</span>
                     </>
                   ) : (
-                    '—'
+                    <span className={styles.none}>Sem plano</span>
                   )}
-                </Td>
-                <Td>
-                  <Badge tone={st.tone}>{st.label}</Badge>
-                </Td>
-                <Td className="text-right">
-                  <div className="flex items-center justify-end gap-3">
-                    <ResetPasswordButton userId={s.id} userName={s.name} />
-                    <ImpersonateButton targetUserId={s.id} />
-                  </div>
-                </Td>
-              </Tr>
+                </div>
+                <div className={styles.cell} data-label="Status"><StatusPill tone={st.tone}>{st.label}</StatusPill></div>
+                <div className={styles.rowActions}>
+                  <span className={styles.open} aria-hidden="true">Ver ficha <IconArrowRight /></span>
+                  <MoreMenu label={`Mais ações para ${s.name}`}>
+                    <ResetPasswordButton userId={s.id} userName={s.name} className={dsStyles.menuItem} />
+                    <ImpersonateButton targetUserId={s.id} label="Entrar como este aluno" className={dsStyles.menuItem} />
+                  </MoreMenu>
+                </div>
+              </li>
             )
           })}
-        </tbody>
-      </Table>
-    </>
+        </ul>
+      )}
+    </section>
   )
 }

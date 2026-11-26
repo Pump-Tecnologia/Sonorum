@@ -15,12 +15,11 @@ export function CreateTeacherForm() {
   const [state, action] = useActionState(createTeacher, initial)
   const fe = state.fieldErrors ?? {}
 
-  if (state.ok && state.tempPassword && state.createdEmail) {
+  if (state.ok && state.createdEmail) {
     return (
       <CreatePersonResult
         roleLabel="Professor"
         email={state.createdEmail}
-        tempPassword={state.tempPassword}
         backHref="/admin/teachers"
         backLabel="Voltar para professores"
       />
@@ -28,10 +27,14 @@ export function CreateTeacherForm() {
   }
 
   return (
-    <Card>
-      <form action={action} className="max-w-lg space-y-5">
+    <Card className="max-w-xl">
+      <form
+        action={action}
+        onReset={(event) => event.preventDefault()}
+        className="space-y-5"
+      >
         {state.error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <p className="sn-alert" role="alert">
             {state.error}
           </p>
         )}
@@ -45,7 +48,7 @@ export function CreateTeacherForm() {
         </Field>
 
         <MultiInstrumentField name="instruments" label="Instrumentos" />
-        {fe.instruments && <p className="text-xs font-medium text-red-600">{fe.instruments}</p>}
+        {fe.instruments && <p className="sn-error" role="alert">{fe.instruments}</p>}
 
         <SubmitButton pendingLabel="Criando…">Criar professor</SubmitButton>
       </form>

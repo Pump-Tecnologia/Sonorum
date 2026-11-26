@@ -1,67 +1,84 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { PageHeader } from '@/components/app/PageHeader'
-import { LessonScheduleForm } from '@/components/schedule/LessonScheduleForm'
+import { Avatar } from '@/components/ds/Avatar'
+import { LinkButton, SubmitButton } from '@/components/ds/Button'
+import { Field, Textarea } from '@/components/ds/Field'
+import { IconArrowLeft, IconRepeat } from '@/components/ds/icons'
+import { StatusPill } from '@/components/ds/StatusPill'
+import { LiveActionCard, ScheduleDisclosure, TodayPlan } from '@/components/schedule/LessonLivePhase'
 import { LessonPlanEditor, type AttachedResource } from '@/components/schedule/LessonPlanEditor'
+import { LessonReportForm } from '@/components/schedule/LessonReportForm'
+import { LessonScheduleForm } from '@/components/schedule/LessonScheduleForm'
 import { LessonTemplateBar, type TemplateOption } from '@/components/schedule/LessonTemplateBar'
 import { PlannerTabs, type PlannerTab } from '@/components/schedule/PlannerTabs'
-import { Badge } from '@/components/ui/Badge'
-import { Card } from '@/components/ui/Card'
-import { Field, Select, Textarea } from '@/components/ui/Field'
-import { LessonReportForm } from '@/components/schedule/LessonReportForm'
-import { cancelLessonSeries, markAttendance, startLesson, updateLesson } from '@/lib/actions/lessons'
-import { lessonStatus } from '@/lib/constants/lessons'
-import { GENERAL_SECTION, resolveBlueprint } from '@/lib/constants/lesson-blueprints'
-import { readPlanContent } from '@/lib/lesson-plan'
+import styles from '@/components/schedule/planner.module.css'
+import { updateLesson } from '@/lib/actions/lessons'
 import { getPlanContext } from '@/lib/auth/plan'
 import { getCurrentUser } from '@/lib/auth/session'
+import { instrumentTone } from '@/lib/constants/instrument-tone'
+import { resolveBlueprint } from '@/lib/constants/lesson-blueprints'
+import { lessonStatus } from '@/lib/constants/lessons'
+import { readPlanContent } from '@/lib/lesson-plan'
 import { appBaseUrl } from '@/lib/payments'
+import { listActiveTeachers } from '@/lib/queries/teachers'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Aula' }
 
-const STATUS_OPTS = [
-  { value: 'scheduled', label: 'Agendada' },
-  { value: 'in_progress', label: 'Em andamento' },
-  { value: 'completed', label: 'Realizada' },
-  { value: 'late', label: 'Atrasado' },
-  { value: 'missed', label: 'Faltou' },
-  { value: 'canceled', label: 'Cancelada' },
-]
-
-// Botões de presença rápida (modo dar-aula).
-const ATTENDANCE_BTNS = [
-  { value: 'completed', label: 'Presente', cls: 'bg-accent-600 text-white hover:bg-accent-700' },
-  { value: 'late', label: 'Atrasado', cls: 'bg-amber-500 text-white hover:bg-amber-600' },
-  { value: 'missed', label: 'Faltou', cls: 'bg-red-600 text-white hover:bg-red-700' },
-] as const
-
-const PRIMARY_BTN = 'rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700'
+const TZ = 'America/Sao_Paulo'
+const DONE_STATUSES: ReadonlyArray<string> = ['completed', 'late', 'missed']
 
 // Decide em qual fase abrir: em andamento / na janela / aguardando presença → Aula;
 // já realizada/atrasada/faltou → Avaliar; resto (agendada futura) → Planejar.
 function computeDefaultTab(status: string, hasStarted: boolean, isLive: boolean): string {
   if (status === 'in_progress' || isLive || (status === 'scheduled' && hasStarted)) return 'live'
-  if (['completed', 'late', 'missed'].includes(status)) return 'evaluate'
+  if (DONE_STATUSES.includes(status)) return 'evaluate'
   return 'plan'
+}
+
+/** "segunda-feira, 23 de novembro, 09:00 às 09:50" (como no detalhe da agenda). */
+function formatWhen(start: string, end: string | null): string {
+  const day = new Date(start).toLocaleDateString('pt-BR', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long' })
+  const time = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit' })
+  return `${day}, ${time(start)}${end ? ` às ${time(end)}` : ''}`
+}
+
+/** Instrumento do aluno (jsonb pode ser string ou array) → string única. */
+function firstInstrument(raw: unknown): string | null {
+  if (Array.isArray(raw)) return raw[0] != null ? String(raw[0]) : null
+  return typeof raw === 'string' && raw ? raw : null
+}
+
+type ResourceRef = {
+  id: string
+  section: string
+  pedagogical_resources: { id: string; title: string; category: string; difficulty: string; instrument: string | null } | null
 }
 
 export default async function PlannerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
   const me = await getCurrentUser()
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) notFound()
   const { features } = await getPlanContext()
+  const isAdmin = me.role === 'admin'
 
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, title, start_datetime, end_datetime, status, notes, goals, private_notes, room_id, teacher_id, series_id, student_id, users!lessons_student_id_fkey(name, instrument, instrument_category, phone)')
+    .select('id, title, start_datetime, end_datetime, status, notes, goals, room_id, teacher_id, series_id, student_id, users!lessons_student_id_fkey(name, instrument, instrument_category, phone)')
     .eq('id', id)
+    .eq('school_id', me.schoolId)
     .maybeSingle()
 
   if (!lesson) notFound()
 
-  const [{ data: plan }, { data: report }, { data: attached }, { data: rooms }, { data: teachers }, { data: templates }] = await Promise.all([
+  // Staff-only data is authorized by the database, never read through the
+  // student-readable lessons projection. Fail closed if the migration is missing.
+  const { data: privateNotes, error: privateNotesError } = await supabase.rpc('get_lesson_private_notes', { p_lesson_id: id })
+  if (privateNotesError) throw new Error('Não foi possível carregar as notas privadas da aula.')
+
+  const [{ data: plan }, { data: report }, { data: attached }, { data: rooms }, teacherList, { data: templates }] = await Promise.all([
     supabase.from('lesson_plans').select('*').eq('lesson_id', id).maybeSingle(),
     supabase.from('lesson_reports').select('*').eq('lesson_id', id).maybeSingle(),
     supabase
@@ -69,24 +86,14 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
       .select('id, section, pedagogical_resources(id, title, category, difficulty, instrument)')
       .eq('lesson_id', id),
     supabase.from('rooms').select('id, name').eq('active', true).order('name'),
-    me?.role === 'admin'
-      ? supabase.from('users').select('id, name').eq('role', 'teacher').eq('status', 'active').order('name')
-      : Promise.resolve({ data: [] }),
+    isAdmin ? listActiveTeachers(supabase, me.schoolId) : Promise.resolve([]),
     supabase.from('lesson_plan_templates').select('id, name, instrument_category, instrument').order('name'),
   ])
   const roomList = (rooms ?? []) as { id: string; name: string }[]
-  const teacherList = (teachers ?? []) as { id: string; name: string }[]
   const templateList = (templates ?? []) as TemplateOption[]
 
-  type ResourceRef = {
-    id: string
-    section: string
-    pedagogical_resources: { id: string; title: string; category: string; difficulty: string; instrument: string | null } | null
-  }
-  const attachedList = (attached ?? []) as unknown as ResourceRef[]
-
-  // Lista normalizada (com id do recurso) para o editor e o checklist.
-  const editorAttached: AttachedResource[] = attachedList
+  // Lista normalizada (com id do recurso) para o editor e o plano de hoje.
+  const editorAttached: AttachedResource[] = ((attached ?? []) as unknown as ResourceRef[])
     .filter((r) => r.pedagogical_resources)
     .map((r) => ({
       pivotId: r.id,
@@ -98,20 +105,11 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
       instrument: r.pedagogical_resources!.instrument,
     }))
 
-  // Agrupa recursos por id de seção (usado no checklist de "Dar aula").
-  const bySection = editorAttached.reduce<Record<string, AttachedResource[]>>((acc, r) => {
-    ;(acc[r.section] ??= []).push(r)
-    return acc
-  }, {})
-
   const student = lesson.users as { name: string; instrument: unknown; instrument_category: string | null; phone: string | null } | null
-
-  // Instrumento do aluno (jsonb pode ser string ou array) → string única p/ sugerir recursos.
-  const rawInstrument = student?.instrument
-  const studentInstrument = Array.isArray(rawInstrument)
-    ? (rawInstrument[0] != null ? String(rawInstrument[0]) : null)
-    : (typeof rawInstrument === 'string' && rawInstrument ? rawInstrument : null)
+  const studentName = student?.name ?? 'Aluno'
+  const studentInstrument = firstInstrument(student?.instrument)
   const studentInstrumentCategory = student?.instrument_category ?? null
+  const instrumentLabel = studentInstrument ?? studentInstrumentCategory
 
   // Estrutura do plano conforme a categoria do aluno + conteúdo normalizado.
   const blueprint = resolveBlueprint(studentInstrument, studentInstrumentCategory)
@@ -125,24 +123,19 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
   const hasStarted = now >= start
   // Aula já começou/passou e ainda está "Agendada" → presença pendente.
   const awaitingAttendance = lesson.status === 'scheduled' && hasStarted
-  const isInProgress = lesson.status === 'in_progress'
-  const isDone = ['completed', 'late', 'missed'].includes(lesson.status)
+  const status = lessonStatus(lesson.status)
 
-  const defaultTab = computeDefaultTab(lesson.status, hasStarted, isLive)
+  const hasPlan = Boolean(
+    lesson.goals ||
+      Object.values(planContent.sections).some(Boolean) ||
+      Object.values(planContent.fields).some(Boolean) ||
+      planContent.planNotes ||
+      editorAttached.length,
+  )
 
   // ── Fase 1: Planejar (antes da aula) ──────────────────────────────────────
   const planTab = (
-    <div className="space-y-5">
-      {(studentInstrument || studentInstrumentCategory) && (
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-ink-muted">Estrutura de</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
-            🎵 {studentInstrument ?? studentInstrumentCategory}
-            {studentInstrument && studentInstrumentCategory ? ` · ${studentInstrumentCategory}` : ''}
-          </span>
-          <span className="text-xs text-ink-muted">— seções e campos adaptados a esta categoria</span>
-        </div>
-      )}
+    <div className={styles.stack}>
       <LessonTemplateBar
         lessonId={lesson.id}
         templates={templateList}
@@ -161,180 +154,15 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
     </div>
   )
 
-  // Checklist do plano (read-only) para guiar a execução durante a aula.
-  const blueprintSectionIds = new Set(blueprint.sections.map((s) => s.id))
-  const otherItems = editorAttached.filter((r) => r.section === 'general' || !blueprintSectionIds.has(r.section))
-  const planFieldEntries = blueprint.fields
-    .map((f) => ({ label: f.label, value: planContent.fields[f.key] ?? '' }))
-    .filter((f) => f.value)
-  const hasPlan = Boolean(
-    lesson.goals ||
-      Object.values(planContent.sections).some(Boolean) ||
-      planFieldEntries.length ||
-      planContent.planNotes ||
-      editorAttached.length,
-  )
-
-  // ── Fase 2: Dar aula (durante) ────────────────────────────────────────────
+  // ── Fase 2: Aula (durante) ────────────────────────────────────────────────
   const liveTab = (
-    <div className="space-y-6">
-      <Card>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-ink">Plano de hoje</h2>
-          <span className="text-xs text-ink-muted">do que você planejou →</span>
-        </div>
-        {!hasPlan ? (
-          <p className="text-sm text-ink-muted">
-            Nada planejado ainda. Você pode planejar na aba <strong className="text-ink">Planejar</strong>.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {lesson.goals && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Objetivos</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{lesson.goals}</p>
-              </div>
-            )}
-            {blueprint.sections.map((s) => {
-              const note = planContent.sections[s.id] ?? ''
-              const items = bySection[s.id] ?? []
-              if (!note && items.length === 0) return null
-              return (
-                <div key={s.id}>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{s.label}</p>
-                  {note && <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{note}</p>}
-                  {items.length > 0 && (
-                    <ul className="mt-1.5 space-y-1">
-                      {items.map((r) => (
-                        <li key={r.pivotId} className="flex items-center gap-2 text-sm text-ink">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
-                          {r.title}
-                          <span className="text-xs text-ink-muted">· {r.category}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )
-            })}
-            {otherItems.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{GENERAL_SECTION.label}</p>
-                <ul className="mt-1.5 space-y-1">
-                  {otherItems.map((r) => (
-                    <li key={r.pivotId} className="flex items-center gap-2 text-sm text-ink">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
-                      {r.title}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {planFieldEntries.length > 0 && (
-              <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {planFieldEntries.map((f) => (
-                  <div key={f.label}>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{f.label}</p>
-                    <p className="mt-0.5 text-sm font-medium text-ink">{f.value}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {planContent.planNotes && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Notas</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{planContent.planNotes}</p>
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
-
-      <Card className={isInProgress ? 'border-accent-500 bg-accent-50/40' : awaitingAttendance ? 'border-amber-300' : ''}>
-        {isInProgress ? (
-          // EM ANDAMENTO → encerrar registrando a presença
-          <div>
-            <span className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-700">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-accent-600" />
-              Aula em andamento
-            </span>
-            <h2 className="text-base font-semibold text-ink">Encerrar a aula</h2>
-            <p className="mb-3 text-sm text-ink-muted">Como a aula terminou? Isso conclui e leva para a avaliação.</p>
-            <div className="flex flex-wrap gap-2">
-              {ATTENDANCE_BTNS.map((b) => (
-                <form key={b.value} action={markAttendance}>
-                  <input type="hidden" name="lessonId" value={lesson.id} />
-                  <input type="hidden" name="status" value={b.value} />
-                  <button type="submit" className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-opacity ${b.cls} opacity-90 hover:opacity-100`}>
-                    {b.label}
-                  </button>
-                </form>
-              ))}
-            </div>
-          </div>
-        ) : isDone ? (
-          // JÁ REGISTRADA
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-ink">Aula registrada</h2>
-              <p className="mt-1 text-sm text-ink-muted">
-                Resultado: <Badge tone={lessonStatus(lesson.status).tone}>{lessonStatus(lesson.status).label}</Badge> — abra <strong className="text-ink">Avaliar</strong> para o relatório.
-              </p>
-            </div>
-          </div>
-        ) : (
-          // AGENDADA → iniciar
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-semibold text-ink">Pronto para começar?</h2>
-              <p className="mt-1 text-sm text-ink-muted">
-                {awaitingAttendance
-                  ? 'Passou do horário — inicie a aula ou registre que o aluno faltou.'
-                  : 'Ao começar, inicie a aula para conduzir pelo plano e registrar o fim.'}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <form action={startLesson}>
-                <input type="hidden" name="lessonId" value={lesson.id} />
-                <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-700">
-                  ▶ Iniciar aula
-                </button>
-              </form>
-              <form action={markAttendance}>
-                <input type="hidden" name="lessonId" value={lesson.id} />
-                <input type="hidden" name="status" value="missed" />
-                <button type="submit" className="rounded-xl border border-red-200 bg-surface px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50">
-                  Aluno faltou
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        <details className="mt-4 border-t border-hairline pt-3">
-          <summary className="cursor-pointer text-xs font-medium text-ink-muted hover:text-ink">Ajustar status manualmente</summary>
-          <form action={updateLesson} className="mt-3 flex flex-wrap items-end gap-3">
-            <input type="hidden" name="lessonId" value={lesson.id} />
-            <Field label="Status" htmlFor="status">
-              <Select id="status" name="status" defaultValue={lesson.status}>
-                {STATUS_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </Select>
-            </Field>
-            <button type="submit" className="rounded-xl border border-hairline bg-surface px-4 py-2.5 text-sm font-semibold text-ink hover:bg-surface-muted">
-              Salvar status
-            </button>
-          </form>
-        </details>
-      </Card>
-
-      <details className="rounded-2xl border border-hairline bg-surface p-4">
-        <summary className="flex cursor-pointer items-center justify-between gap-3 text-sm font-semibold text-ink">
-          <span>Horário e atribuição</span>
-          {lesson.series_id && (
-            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">série semanal</span>
-          )}
-        </summary>
-        <div className="mt-4">
+    <div className={styles.liveGrid}>
+      <div className={styles.liveAction}>
+        <LiveActionCard lessonId={lesson.id} status={lesson.status} awaitingAttendance={awaitingAttendance} isLive={isLive} />
+      </div>
+      <div className={styles.liveMain}>
+        <TodayPlan goals={lesson.goals} blueprint={blueprint} content={planContent} attached={editorAttached} />
+        <ScheduleDisclosure lessonId={lesson.id} inSeries={Boolean(lesson.series_id)}>
           <LessonScheduleForm
             lessonId={lesson.id}
             startDatetime={lesson.start_datetime}
@@ -343,84 +171,90 @@ export default async function PlannerPage({ params }: { params: Promise<{ id: st
             currentTeacherId={lesson.teacher_id}
             rooms={roomList}
             teachers={teacherList}
-            canEditTeacher={me?.role === 'admin'}
+            canEditTeacher={isAdmin}
             isInSeries={Boolean(lesson.series_id)}
           />
-          {lesson.series_id && (
-            <form action={cancelLessonSeries} className="mt-3 border-t border-hairline pt-3">
-              <input type="hidden" name="lessonId" value={lesson.id} />
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-surface px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-50"
-              >
-                Cancelar esta aula e todas as próximas da série
-              </button>
-            </form>
-          )}
-        </div>
-      </details>
+        </ScheduleDisclosure>
+      </div>
     </div>
   )
 
   // ── Fase 3: Avaliar (depois da aula) ──────────────────────────────────────
   const evaluateTab = (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Card>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-ink">Relatório de desempenho</h2>
-          {report && <Badge tone="success">Preenchido</Badge>}
+    <div className={styles.evalGrid}>
+      <section className={styles.panel} aria-labelledby="report-title">
+        <div className={styles.panelHead}>
+          <h2 id="report-title" className={styles.panelTitle}>Relatório de desempenho</h2>
+          {report && <StatusPill tone="success">Preenchido</StatusPill>}
         </div>
         <LessonReportForm
           lessonId={lesson.id}
           report={report}
           canSend={features.reports}
-          studentName={student?.name ?? ''}
+          studentName={studentName}
           studentPhone={student?.phone ?? null}
           reportUrl={`${appBaseUrl()}/relatorio/${lesson.id}`}
         />
-      </Card>
+      </section>
 
-      <Card>
-        <h2 className="mb-4 text-base font-semibold text-ink">Feedback e anotações</h2>
-        <form action={updateLesson} className="space-y-4">
+      <section className={styles.panel} aria-labelledby="notes-title">
+        <div className={styles.panelHead}>
+          <h2 id="notes-title" className={styles.panelTitle}>Recado e anotações</h2>
+        </div>
+        <form action={updateLesson} className={styles.notesForm}>
           <input type="hidden" name="lessonId" value={lesson.id} />
-          <Field label="Observações (visíveis ao aluno)" htmlFor="notes">
+          <Field label="Recado para o aluno" htmlFor="notes">
             <Textarea id="notes" name="notes" defaultValue={lesson.notes ?? ''} rows={4} />
           </Field>
-          <Field label="Notas privadas (só você vê)" htmlFor="private_notes">
-            <Textarea id="private_notes" name="private_notes" defaultValue={lesson.private_notes ?? ''} rows={4} />
+          <Field label="Notas da equipe (o aluno não vê)" htmlFor="private_notes">
+            <Textarea id="private_notes" name="private_notes" defaultValue={privateNotes ?? ''} rows={4} />
           </Field>
-          <button type="submit" className={PRIMARY_BTN}>Salvar anotações</button>
+          <SubmitButton pendingLabel="Salvando…">Salvar anotações</SubmitButton>
         </form>
-      </Card>
+      </section>
     </div>
   )
 
   const tabs: PlannerTab[] = [
-    { id: 'plan', label: 'Planejar', hint: 'Defina objetivos, planeje o conteúdo e anexe recursos antes da aula.', content: planTab },
-    { id: 'live', label: 'Aula', hint: 'Inicie a aula, conduza pelo plano e encerre registrando a presença.', content: liveTab },
-    { id: 'evaluate', label: 'Avaliar', hint: 'Depois da aula: avalie o desempenho e deixe feedback ao aluno.', content: evaluateTab },
+    {
+      id: 'plan', label: 'Planejar', hash: 'planejar', done: hasPlan, content: planTab,
+      hint: 'Antes da aula: defina os objetivos, escreva o plano de cada parte e anexe os recursos. As partes do plano mudam conforme o instrumento do aluno.',
+    },
+    {
+      id: 'live', label: 'Aula', hash: 'aula', done: DONE_STATUSES.includes(lesson.status), content: liveTab,
+      hint: 'Durante a aula: inicie, conduza pelo plano e, no fim, registre a presença.',
+    },
+    {
+      id: 'evaluate', label: 'Avaliar', hash: 'avaliar', done: Boolean(report), content: evaluateTab,
+      hint: 'Depois da aula: avalie o desempenho, envie o relatório e deixe um recado para o aluno.',
+    },
   ]
 
   return (
-    <>
-      <PageHeader
-        title={`Aula — ${student?.name ?? ''}`}
-        subtitle={new Date(lesson.start_datetime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo',
-          weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
-        })}
-        action={
-          me?.role === 'admin' ? (
-            <Link
-              href={`/admin/students/${lesson.student_id}`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-hairline bg-surface px-4 py-2 text-sm font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted"
-            >
-              Ver perfil do aluno →
-            </Link>
-          ) : undefined
-        }
-      />
-      <PlannerTabs tabs={tabs} defaultTab={defaultTab} />
-    </>
+    <article className={styles.page} aria-labelledby="lesson-student">
+      <Link href="/schedule" className={styles.back}><IconArrowLeft /> Agenda</Link>
+
+      <header className={`${styles.panel} ${styles.hero}`}>
+        <div className={styles.heroWho}>
+          <Avatar name={studentName} tone={instrumentTone(student?.instrument)} className={styles.heroAvatar} />
+          <div>
+            <p className={styles.when}>{formatWhen(lesson.start_datetime, lesson.end_datetime)}</p>
+            <h1 id="lesson-student" className={styles.heroName}>{studentName}</h1>
+            <div className={styles.heroMeta}>
+              <StatusPill tone={status.tone}>{status.label}</StatusPill>
+              {instrumentLabel && <span className={styles.chip} data-tone={instrumentTone(student?.instrument)}>{instrumentLabel}</span>}
+              {lesson.series_id && <span className={`${styles.chip} ${styles.chipPlain}`}><IconRepeat /> Toda semana</span>}
+            </div>
+          </div>
+        </div>
+        {isAdmin && (
+          <div className={styles.heroActions}>
+            <LinkButton href={`/admin/students/${lesson.student_id}`} variant="soft">Ficha do aluno</LinkButton>
+          </div>
+        )}
+      </header>
+
+      <PlannerTabs tabs={tabs} defaultTab={computeDefaultTab(lesson.status, hasStarted, isLive)} />
+    </article>
   )
 }

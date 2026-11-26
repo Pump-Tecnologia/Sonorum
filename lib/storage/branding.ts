@@ -1,3 +1,4 @@
+import { matchesDeclaredMime } from '@/lib/storage/validate'
 import { createAdminClient } from '@/lib/supabase/server'
 
 // Logo da escola (marca personalizada). Bucket PÚBLICO 'branding' — leitura
@@ -18,6 +19,10 @@ export async function uploadSchoolLogo(file: File, schoolId: string): Promise<Lo
   if (file.size > MAX_BYTES) return { ok: false, error: 'Logo acima do limite de 2MB.' }
   const ext = EXT_BY_MIME[file.type]
   if (!ext) return { ok: false, error: 'Formato inválido. Use PNG, JPG, WEBP ou SVG.' }
+  // MIME do navegador é falsificável — confirma pelos magic bytes do conteúdo.
+  if (!(await matchesDeclaredMime(file))) {
+    return { ok: false, error: 'O conteúdo do arquivo não corresponde ao formato declarado.' }
+  }
 
   const admin = await createAdminClient()
   const path = `${schoolId}/logo-${crypto.randomUUID()}.${ext}`

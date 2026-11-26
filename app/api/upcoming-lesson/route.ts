@@ -4,10 +4,11 @@ import { getCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
 // Próxima aula iminente do professor (para o lembrete global): agendada/em
-// andamento, que comece nos próximos 30 min ou já esteja rolando. Só professor.
+// andamento, que comece nos próximos 30 min ou já esteja rolando. Só pra quem
+// dá aula (role='teacher' ou admin que também dá aula — ver isTeacher).
 export async function GET() {
   const me = await getCurrentUser()
-  if (!me || me.role !== 'teacher') return NextResponse.json({ lesson: null })
+  if (!me || !me.isTeacher) return NextResponse.json({ lesson: null })
 
   const now = new Date()
   const soon = new Date(now.getTime() + 30 * 60 * 1000)

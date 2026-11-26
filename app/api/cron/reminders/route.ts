@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { notify } from '@/lib/notifications/notify'
+import { safeEqual } from '@/lib/security/compare'
 import { createAdminClient } from '@/lib/supabase/server'
 import { startOfTodayBR, startOfTomorrowBR } from '@/lib/timezone'
 
@@ -43,7 +44,7 @@ async function alreadySent(
 export async function GET(req: Request) {
   const auth = req.headers.get('authorization')
   const expected = process.env.CRON_SECRET
-  if (!expected || auth !== `Bearer ${expected}`) {
+  if (!expected || !auth || !safeEqual(auth, `Bearer ${expected}`)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

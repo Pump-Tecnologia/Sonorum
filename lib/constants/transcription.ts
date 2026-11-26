@@ -1,5 +1,10 @@
 // Constantes da transcrição de áudio por IA (geração de cifra/acordes).
 
+// Desligada até a função ficar pronta (decisão de 11/11/2026): some do menu,
+// da página de planos e das rotas, e as server actions recusam. O código fica
+// no projeto; para reativar, troque para true.
+export const TRANSCRIPTION_ENABLED = false
+
 export const TRANSCRIPTION_STATUSES = [
   'processing',
   'pending_review',

@@ -28,7 +28,7 @@ export function CopyButton({ value, label = 'Copiar', className }: CopyButtonPro
       onClick={copy}
       className={
         className ??
-        'inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700'
+        'sn-btn sn-btn-primary'
       }
       aria-live="polite"
     >

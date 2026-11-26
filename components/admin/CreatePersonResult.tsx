@@ -1,38 +1,31 @@
-import Link from 'next/link'
-
+import { LinkButton } from '@/components/ds/Button'
+import { IconArrowLeft, IconCheck } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { Card } from '@/components/ui/Card'
 
-// Resultado compartilhado após criar professor/aluno: mostra a senha temporária.
+// Resultado compartilhado após criar professor/aluno: confirma envio do link seguro.
 export function CreatePersonResult({
   email,
-  tempPassword,
   backHref,
   backLabel,
   roleLabel,
 }: {
   email: string
-  tempPassword: string
   backHref: string
   backLabel: string
   roleLabel: string
 }) {
   return (
-    <Card className="space-y-3">
-      <p className="text-sm font-semibold text-accent-800">{roleLabel} criado! ✓</p>
-      <p className="text-sm text-ink-muted">
-        Acesso: <span className="font-medium text-ink">{email}</span>
-        <br />
-        Senha temporária:{' '}
-        <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-ink">
-          {tempPassword}
-        </code>
+    <Card className="max-w-xl" role="status">
+      <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-(--sn-mint-soft) text-(--sn-ink-soft)" aria-hidden="true">
+        <IconCheck className="h-6 w-6" />
+      </span>
+      <h2 className="m-0 text-2xl font-semibold tracking-tight text-(--sn-ink)">{roleLabel} criado</h2>
+      <p className="mt-2 flex items-center gap-1 text-[15px] leading-relaxed text-(--sn-text-muted)">
+        <span>Enviamos para <strong className="font-medium text-(--sn-ink)">{email}</strong> um link para definir a senha e entrar.</span>
+        <InfoButton label="Sobre o link de acesso">O link só funciona uma vez e expira conforme a política de recuperação de senha.</InfoButton>
       </p>
-      <p className="text-xs text-ink-muted">
-        Anote agora — esta senha não será exibida de novo. Oriente a trocá-la no primeiro acesso.
-      </p>
-      <Link href={backHref} className="inline-block text-sm font-semibold text-brand-600">
-        ← {backLabel}
-      </Link>
+      <LinkButton href={backHref} variant="soft" className="mt-6"><IconArrowLeft /> {backLabel}</LinkButton>
     </Card>
   )
 }

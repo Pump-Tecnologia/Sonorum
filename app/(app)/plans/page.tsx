@@ -1,22 +1,48 @@
 import { redirect } from 'next/navigation'
 
-import Link from 'next/link'
-
 import { PageHeader } from '@/components/app/PageHeader'
+import { LockedFeatureCard } from '@/components/billing/LockedFeatureCard'
 import { type Plan } from '@/components/financial/PlanForm'
 import { PlansList } from '@/components/financial/PlansList'
-import { Button } from '@/components/ui/Button'
-import { requireFeature } from '@/lib/auth/plan'
+import { LinkButton } from '@/components/ds/Button'
+import { IconPlus } from '@/components/ds/icons'
+import { getPlanContext } from '@/lib/auth/plan'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 
 export const metadata = { title: 'Planos' }
 
 export default async function PlansPage() {
-  await requireFeature('financial')
-  const user = await getCurrentUser()
+  const [user, plan] = await Promise.all([getCurrentUser(), getPlanContext()])
   if (!user?.schoolId) redirect('/admin')
   const schoolId = user.schoolId
+
+  if (!plan.features.financial) {
+    return (
+      <>
+        <PageHeader
+          title="Planos de mensalidade"
+          info="Crie planos, matricule alunos e cobre no Financeiro"
+        />
+        <LockedFeatureCard
+          title="Planos de Mensalidade"
+          subtitle="Organize as modalidades de cobrança dos seus alunos"
+          description="Crie planos mensais ou baseados em aulas realizadas, com regras flexíveis de vencimento e descontos de pontualidade para incentivar o pagamento em dia."
+          benefits={[
+            'Planos com cobrança mensal fixa ou valor por aula realizada',
+            'Dia de vencimento configurável por aluno ou por turma',
+            'Desconto automático de pontualidade para quem pagar até a data limite',
+            'Matrícula rápida de alunos com valores padrão ou valores customizados',
+            'Integração total com a geração de cobranças do módulo Financeiro',
+          ]}
+          planRequirement="Disponível a partir do plano Solo (R$ 49,90/mês) ou Profissional (R$ 99/mês)."
+          isExpired={plan.isExpired}
+          inGracePeriod={plan.inGracePeriod}
+          graceDaysRemaining={plan.graceDaysRemaining}
+        />
+      </>
+    )
+  }
 
   const supabase = await createClient()
   const [{ data: plans }, { data: students }, { data: enrolls }] = await Promise.all([
@@ -39,12 +65,8 @@ export default async function PlansPage() {
     <>
       <PageHeader
         title="Planos de mensalidade"
-        subtitle="Crie planos, matricule alunos e cobre no Financeiro"
-        action={
-          <Link href="/plans/new">
-            <Button>Novo plano</Button>
-          </Link>
-        }
+        info="Crie planos, matricule alunos e cobre no Financeiro"
+        action={<LinkButton href="/plans/new"><IconPlus /> Novo plano</LinkButton>}
       />
 
       <PlansList

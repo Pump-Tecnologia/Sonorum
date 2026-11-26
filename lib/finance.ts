@@ -1,4 +1,5 @@
 import type { ChargeStatus } from '@/lib/types/app'
+import { dateInBR } from '@/lib/timezone'
 
 export type StatusTone = 'success' | 'warning' | 'danger' | 'neutral'
 
@@ -16,7 +17,7 @@ export function effectiveChargeStatus(
   dueDate: string | null,
   today: Date = new Date(),
 ): ChargeStatus {
-  if (status === 'pending' && dueDate && dueDate < today.toISOString().slice(0, 10)) {
+  if (status === 'pending' && dueDate && dueDate < dateInBR(today)) {
     return 'overdue'
   }
   return status as ChargeStatus
@@ -27,6 +28,19 @@ export function chargeStatusMeta(status: string): { label: string; tone: StatusT
 }
 
 export const PAYMENT_METHODS = ['Pix', 'Dinheiro', 'Cartão', 'Transferência', 'Boleto'] as const
+
+// Como o pagamento entra numa frase ("Pago pelo Pix em 08/10/2026"). Vazio sem forma de pagamento.
+const PAID_VIA: Record<string, string> = {
+  Pix: 'pelo Pix',
+  Dinheiro: 'em dinheiro',
+  Cartão: 'no cartão',
+  Transferência: 'por transferência',
+  Boleto: 'no boleto',
+}
+export function paidVia(method: string | null | undefined): string {
+  if (!method) return ''
+  return `${PAID_VIA[method] ?? `via ${method}`} `
+}
 
 // ── Tipo de cobrança do plano ────────────────────────────────────────────────
 export type BillingType = 'monthly' | 'per_class'

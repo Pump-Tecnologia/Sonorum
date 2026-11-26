@@ -3,6 +3,11 @@
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
 
+import { Button } from '@/components/ds/Button'
+import { Input, Select } from '@/components/ds/Field'
+import { IconArrowRight } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
+import styles from '@/components/schedule/planner.module.css'
 import { applyTemplateToLesson, saveLessonAsTemplate } from '@/lib/actions/lesson-templates'
 
 export interface TemplateOption {
@@ -12,14 +17,11 @@ export interface TemplateOption {
   instrument: string | null
 }
 
-const GHOST_BTN = 'rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted disabled:opacity-50'
-const INPUT_CLS = 'rounded-xl border border-hairline bg-surface px-3 py-1.5 text-sm focus:outline-2 focus:outline-brand-500'
-
 // Barra de modelos no topo do "Planejar": aplicar um modelo (pré-preenche o
 // plano) ou salvar o plano atual como modelo. Aplicar SUBSTITUI o texto do
 // plano. Como os campos do editor são não-controlados (defaultValue),
 // recarregamos a página para repopular — router.refresh() não atualizaria os
-// inputs já montados. Por isso o aviso explícito antes de aplicar.
+// inputs já montados. Por isso a confirmação explícita antes de aplicar.
 export function LessonTemplateBar({
   lessonId,
   templates,
@@ -73,66 +75,69 @@ export function LessonTemplateBar({
   }
 
   return (
-    <div className="rounded-2xl border border-hairline bg-surface-muted/40 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {templates.length > 0 ? (
-          <>
-            <select
+    <div className={styles.toolbar} role="group" aria-label="Modelos de aula">
+      {savingOpen ? (
+        <div className={styles.toolbarGroup}>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nome do modelo"
+            aria-label="Nome do modelo"
+            className={styles.pillControl}
+            autoFocus
+          />
+          <Button size="sm" onClick={save} disabled={saving || !name.trim()}>
+            {saving ? 'Salvando…' : 'Salvar modelo'}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSavingOpen(false)}>Cancelar</Button>
+        </div>
+      ) : (
+        <div className={styles.toolbarGroup}>
+          {templates.length > 0 ? (
+            <Select
               value={selected}
               onChange={(e) => { setSelected(e.target.value); setConfirming(false) }}
-              className={INPUT_CLS}
               aria-label="Modelo de aula"
+              className={styles.pillControl}
             >
-              <option value="">Aplicar um modelo…</option>
+              <option value="">Usar um modelo</option>
               {sorted.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name}{t.instrument ? ` · ${t.instrument}` : t.instrument_category ? ` · ${t.instrument_category}` : ''}
+                  {t.name}{t.instrument ? ` (${t.instrument})` : t.instrument_category ? ` (${t.instrument_category})` : ''}
                 </option>
               ))}
-            </select>
-            {selected && !confirming && (
-              <button type="button" onClick={() => setConfirming(true)} disabled={applying} className={GHOST_BTN}>
-                Aplicar
-              </button>
-            )}
-            {selected && confirming && (
-              <span className="inline-flex items-center gap-2">
-                <span className="text-xs text-ink-muted">Substitui o plano e descarta alterações não salvas.</span>
-                <button type="button" onClick={apply} disabled={applying} className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50">
-                  {applying ? 'Aplicando…' : 'Confirmar'}
-                </button>
-                <button type="button" onClick={() => setConfirming(false)} className="text-xs font-medium text-ink-muted hover:text-ink">cancelar</button>
-              </span>
-            )}
-          </>
-        ) : (
-          <span className="text-xs text-ink-muted">Nenhum modelo ainda.</span>
-        )}
+            </Select>
+          ) : (
+            <p className={styles.toolbarNote}>Nenhum modelo ainda</p>
+          )}
 
-        <span className="mx-1 hidden h-4 w-px bg-hairline sm:inline-block" />
+          {selected && !confirming && (
+            <Button size="sm" variant="soft" onClick={() => setConfirming(true)} disabled={applying}>Aplicar</Button>
+          )}
+          {selected && confirming && (
+            <span className={styles.confirm} role="alert">
+              Isso troca o plano atual pelo do modelo.
+              <Button size="sm" onClick={apply} disabled={applying}>{applying ? 'Aplicando…' : 'Trocar'}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>Cancelar</Button>
+            </span>
+          )}
+          {!confirming && (
+            <Button size="sm" variant="ghost" onClick={() => { setSavingOpen(true); setSaved(false) }}>
+              Salvar como modelo
+            </Button>
+          )}
+          {saved && <p className={`${styles.toolbarNote} ${styles.ok}`} role="status">Modelo salvo</p>}
+          {error && <p className={`${styles.toolbarNote} ${styles.bad}`} role="alert">{error}</p>}
+        </div>
+      )}
 
-        {!savingOpen ? (
-          <button type="button" onClick={() => { setSavingOpen(true); setSaved(false) }} className={GHOST_BTN}>
-            Salvar como modelo
-          </button>
-        ) : (
-          <span className="inline-flex flex-wrap items-center gap-2">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do modelo" className={INPUT_CLS} autoFocus />
-            <button type="button" onClick={save} disabled={saving || !name.trim()} className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50">
-              {saving ? 'Salvando…' : 'Salvar'}
-            </button>
-            <button type="button" onClick={() => setSavingOpen(false)} className="text-xs font-medium text-ink-muted hover:text-ink">cancelar</button>
-          </span>
-        )}
-
-        {saved && <span className="text-xs font-medium text-accent-700">Modelo salvo ✓</span>}
-
-        <Link href="/modelos" className="ml-auto text-xs font-semibold text-brand-600 hover:underline">
-          Gerenciar modelos →
-        </Link>
+      <div className={styles.toolbarEnd}>
+        <InfoButton label="Como funcionam os modelos" align="end">
+          Aplicar um modelo troca o que está escrito no plano. Salvar como modelo guarda o planejamento
+          que já está salvo (objetivos, seções e campos), então salve o plano antes.
+        </InfoButton>
+        <Link href="/modelos" className={styles.toolbarLink}>Modelos <IconArrowRight /></Link>
       </div>
-      {error && <p className="mt-2 text-xs font-medium text-red-600">{error}</p>}
-      <p className="mt-1.5 text-[11px] text-ink-muted">Salvar como modelo usa o planejamento já salvo (objetivos, aquecimento, repertório, tarefa e BPM) — salve o plano antes.</p>
     </div>
   )
 }

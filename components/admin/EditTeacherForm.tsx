@@ -22,12 +22,16 @@ export function EditTeacherForm({ teacher }: { teacher: TeacherData }) {
   const fe = state.fieldErrors ?? {}
 
   return (
-    <Card>
-      <form action={action} className="max-w-lg space-y-5">
+    <Card className="max-w-xl">
+      <form
+        action={action}
+        onReset={(event) => event.preventDefault()}
+        className="space-y-5"
+      >
         <input type="hidden" name="teacherId" value={teacher.id} />
 
         {state.error && (
-          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <p className="sn-alert" role="alert">
             {state.error}
           </p>
         )}
@@ -42,15 +46,6 @@ export function EditTeacherForm({ teacher }: { teacher: TeacherData }) {
 
         <Field label="Instrumentos" htmlFor="instruments" error={fe.instruments} hint="Separe por vírgula">
           <Input id="instruments" name="instruments" defaultValue={(teacher.instruments ?? []).join(', ')} />
-        </Field>
-
-        <Field
-          label="Nova senha (deixe em branco para não alterar)"
-          htmlFor="newPassword"
-          error={fe.newPassword}
-          hint="Mínimo de 8 caracteres"
-        >
-          <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" />
         </Field>
 
         <SubmitButton pendingLabel="Salvando…">Salvar alterações</SubmitButton>

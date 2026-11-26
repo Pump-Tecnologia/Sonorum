@@ -5,9 +5,11 @@ import { useActionState, useState } from 'react'
 
 import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Card } from '@/components/ui/Card'
-import { Field, Input } from '@/components/ui/Field'
-import { Badge } from '@/components/ui/Badge'
+import { LinkButton } from '@/components/ds/Button'
+import { InfoButton } from '@/components/ds/InfoButton'
+import { Field, Input, Select } from '@/components/ui/Field'
 import { updateSchoolSettings, type SettingsActionState } from '@/lib/actions/settings'
+import { SCHOOL_BRAND_COLOR_ENABLED } from '@/lib/constants/branding'
 import { PLAN_FEATURES } from '@/lib/constants/plans'
 
 interface SchoolData {
@@ -32,7 +34,7 @@ const PIX_KEY_TYPES = [
 
 const initial: SettingsActionState = { ok: false }
 
-const DEFAULT_PRIMARY = '#2B4C79'
+const DEFAULT_PRIMARY = '#25463C'
 
 export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; canBrand: boolean }) {
   const [state, action] = useActionState(updateSchoolSettings, initial)
@@ -41,25 +43,24 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
 
   return (
     <Card>
-      <h2 className="mb-4 text-base font-semibold text-ink">Identidade</h2>
-        <form action={action} className="space-y-5">
+      <h2 className="sn-card-title mb-5">Identidade</h2>
+        <form
+          action={action}
+          onReset={(event) => event.preventDefault()}
+          className="space-y-5"
+        >
           {state.ok && (
-            <p className="rounded-xl bg-accent-100 px-4 py-3 text-sm font-medium text-accent-800">
-              Configurações salvas!
-            </p>
+            <p className="sn-notice-ok" role="status">Configurações salvas</p>
           )}
           {state.error && (
-            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            <p className="sn-alert" role="alert">
               {state.error}
             </p>
           )}
 
           <Field
-            label={
-              canBrand
-                ? 'Nome da marca (até 10 caracteres — aparece ao lado da logo)'
-                : 'Nome exibido (deixe em branco para usar o nome do cadastro)'
-            }
+            label={canBrand ? 'Nome da marca' : 'Nome exibido'}
+            hint={canBrand ? 'Até 10 caracteres. Aparece ao lado da logo.' : 'Em branco, usa o nome do cadastro.'}
             htmlFor="customName"
             error={fe.customName}
           >
@@ -74,6 +75,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
 
           {canBrand ? (
             <>
+              {SCHOOL_BRAND_COLOR_ENABLED && (
               <Field
                 label="Cor da marca"
                 htmlFor="brandPrimary"
@@ -85,57 +87,55 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
                     type="color"
                     value={primary}
                     onChange={(e) => setPrimary(e.target.value)}
-                    className="h-10 w-10 cursor-pointer rounded-lg border border-hairline"
+                    className="h-11 w-11 cursor-pointer rounded-full border-0 bg-transparent"
                   />
                   <Input id="brandPrimary" name="brandPrimary" value={primary} onChange={(e) => setPrimary(e.target.value)} placeholder={DEFAULT_PRIMARY} className="max-w-[180px] font-mono" />
                 </div>
               </Field>
+              )}
 
-              <Field label="Logo (PNG, JPG, WEBP ou SVG · até 2MB)" htmlFor="logo" error={fe.logo}>
+              <Field label="Logo" htmlFor="logo" error={fe.logo} hint="PNG, JPG, WEBP ou SVG de até 2 MB.">
                 <input
                   id="logo"
                   name="logo"
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  className="block w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+                  className="block w-full text-sm text-(--sn-text-muted) file:mr-3 file:min-h-10 file:cursor-pointer file:rounded-full file:border-0 file:bg-(--sn-mint-soft) file:px-4 file:text-sm file:font-medium file:text-(--sn-ink-soft) hover:file:bg-(--sn-mint-hover)"
                 />
                 {school.logoUrl && (
-                  <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2">
+                  <div className="sn-subpanel mt-2 flex items-center justify-between gap-3 py-2.5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={school.logoUrl} alt="Logo atual" className="h-8 w-8 object-contain" />
-                    <label className="flex items-center gap-1.5 text-xs text-ink-muted">
-                      <input type="checkbox" name="removeLogo" /> Remover logo
+                    <label className="flex cursor-pointer items-center gap-2 text-sm text-(--sn-ink)">
+                      <input type="checkbox" name="removeLogo" className="h-4 w-4 accent-(--sn-ink)" /> Remover logo
                     </label>
                   </div>
                 )}
               </Field>
 
               {/* Preview do acento: botão + link */}
-              <div className="flex items-center gap-3 rounded-xl border border-hairline bg-surface-muted/30 px-4 py-3">
+              {SCHOOL_BRAND_COLOR_ENABLED && (
+              <div className="sn-subpanel flex items-center gap-3 py-3">
                 <span className="inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold text-white" style={{ backgroundColor: primary }}>
                   Botão
                 </span>
                 <span className="text-sm font-semibold" style={{ color: primary }}>Link de exemplo</span>
-                <span className="text-xs text-ink-muted">← cor de acento</span>
+                <span className="text-xs text-(--sn-text-muted)">cor de acento</span>
               </div>
+              )}
             </>
           ) : (
-            <div className="rounded-xl border border-dashed border-hairline bg-surface-muted/40 p-4">
-              <p className="text-sm font-medium text-ink">Logo e cores da marca — Premium</p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Personalize a identidade da sua escola (logo e cores) no plano Premium.{' '}
-                <Link href="/upgrade" className="font-medium text-brand-600 hover:underline">Fazer upgrade</Link>
-              </p>
+            <div className="sn-subpanel flex flex-wrap items-center justify-between gap-3 border border-dashed border-(--sn-hairline-strong) shadow-none">
+              <p className="m-0 text-[15px] text-(--sn-ink)">{SCHOOL_BRAND_COLOR_ENABLED ? 'Logo e cores da marca' : 'Logo e nome da marca'} no plano Premium</p>
+              <Link href="/upgrade" className="sn-btn sn-btn-sm sn-btn-secondary">Ver planos</Link>
             </div>
           )}
 
           {/* Chave PIX — disponível em todos os planos (cobrança avulsa) */}
-          <div className="space-y-4 rounded-xl border border-hairline bg-surface-muted/30 p-4">
-            <div>
-              <p className="text-sm font-semibold text-ink">Recebimento PIX</p>
-              <p className="mt-0.5 text-xs text-ink-muted">
-                Sua chave PIX é usada para gerar a cobrança dos alunos. O pagamento cai direto na sua conta — o Sonorum não intermedia.
-              </p>
+          <div className="sn-subpanel space-y-4">
+            <div className="flex items-center gap-1">
+              <h3 className="sn-card-title text-[15px]">Recebimento PIX</h3>
+              <InfoButton label="Sobre o recebimento PIX">Sua chave PIX é usada para gerar a cobrança dos alunos. O pagamento cai direto na sua conta, sem intermediação do Sonorum.</InfoButton>
             </div>
             <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
               <Field label="Chave PIX" htmlFor="pixKey" error={fe.pixKey}>
@@ -147,21 +147,17 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
                 />
               </Field>
               <Field label="Tipo da chave" htmlFor="pixKeyType" error={fe.pixKeyType}>
-                <select
-                  id="pixKeyType"
-                  name="pixKeyType"
-                  defaultValue={school.pixKeyType ?? ''}
-                  className="w-full rounded-lg border border-hairline bg-surface px-3 py-2 text-sm"
-                >
+                <Select id="pixKeyType" name="pixKeyType" defaultValue={school.pixKeyType ?? ''}>
                   <option value="">—</option>
                   {PIX_KEY_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
-                </select>
+                </Select>
               </Field>
             </div>
             <Field
-              label="Cidade do recebedor (aparece no comprovante PIX)"
+              label="Cidade do recebedor"
+              hint="Aparece no comprovante do PIX."
               htmlFor="pixCity"
               error={fe.pixCity}
             >
@@ -180,16 +176,12 @@ export function PlanSummaryCard({ planType }: { planType: string }) {
   const features = PLAN_FEATURES[planType as keyof typeof PLAN_FEATURES] ?? PLAN_FEATURES.free
   return (
     <Card>
-      <h2 className="mb-3 text-sm font-semibold text-ink">Plano atual</h2>
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <p className="text-sm font-medium text-ink">{features.label}</p>
-          <p className="text-xs text-ink-muted">
-            {Number.isFinite(features.studentLimit) ? `Até ${features.studentLimit} alunos` : 'Alunos ilimitados'}
-          </p>
-        </div>
-        <Badge tone={planType === 'free' ? 'neutral' : 'brand'}>{features.label}</Badge>
-      </div>
+      <h2 className="sn-card-title">Plano atual</h2>
+      <p className="mt-3 mb-0 text-[28px] font-light tracking-tight text-(--sn-ink)">{features.label}</p>
+      <p className="mt-1 mb-0 text-sm text-(--sn-text-muted)">
+        {Number.isFinite(features.studentLimit) ? `Até ${features.studentLimit} alunos` : 'Alunos ilimitados'}
+      </p>
+      <LinkButton href="/upgrade" variant="soft" size="sm" className="mt-4">Ver planos</LinkButton>
     </Card>
   )
 }

@@ -17,37 +17,23 @@ export function CreateSchoolForm() {
 
   if (state.ok) {
     return (
-      <AppCard>
-        <p className={styles.success}>Escola criada! ✓</p>
+      <AppCard className={styles.cardNarrow}>
+        <p className={styles.success} role="status">Escola criada</p>
         <p style={{ margin: '0.875rem 0 0.5rem 0', fontSize: '0.9375rem' }}>
           Admin: <strong>{state.createdEmail}</strong>
           <br />
-          Senha temporária:{' '}
-          <code
-            style={{
-              padding: '0.125rem 0.5rem',
-              background: 'var(--ds-canvas)',
-              borderRadius: '0.375rem',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-              fontSize: '0.875rem',
-            }}
-          >
-            {state.tempPassword}
-          </code>
         </p>
         <p className={styles.hint} style={{ marginBottom: '1rem' }}>
-          Anote agora — esta senha não será exibida de novo. Peça ao admin para trocá-la no primeiro acesso.
+          Enviamos um link de uso único para o administrador definir a senha e entrar.
         </p>
-        <Link href="/superadmin" className={styles.rowLink}>
-          ← Voltar para escolas
-        </Link>
+        <Link href="/superadmin" className={styles.rowLink}>Voltar para a visão geral</Link>
       </AppCard>
     )
   }
 
   return (
-    <AppCard>
-      <form action={action} className={styles.form} style={{ maxWidth: '32rem' }}>
+    <AppCard className={styles.cardNarrow}>
+      <form action={action} className={styles.form}>
         {state.error && <p className={styles.alert}>{state.error}</p>}
 
         <AppField label="Nome da escola" htmlFor="name" error={fe.name}>
@@ -75,6 +61,9 @@ export function CreateSchoolForm() {
           <AppField label="Plano" htmlFor="planType" error={fe.planType}>
             <AppSelect id="planType" name="planType" defaultValue="free">
               <option value="free">Essencial (grátis)</option>
+              <option value="solo_free">Solo Essencial (grátis)</option>
+              <option value="solo">Solo</option>
+              <option value="solo_pro">Solo Pro</option>
               <option value="professional">Profissional</option>
               <option value="premium">Premium</option>
               <option value="enterprise">Sob medida</option>

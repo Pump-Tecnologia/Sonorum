@@ -1,20 +1,19 @@
-import { AppBadge } from '@/components/app/AppBadge'
-import { AppLinkButton } from '@/components/app/AppButton'
-import { AppEmpty, AppTable, cellMuted, cellPrimary, cellSub, tableRight } from '@/components/app/AppTable'
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
-import { PageHeader } from '@/components/app/PageHeader'
-import { LinkButton } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { DashHeader, Panel, StatTile } from '@/components/dashboard/parts'
+import styles from '@/components/dashboard/dashboard.module.css'
+import { LinkButton } from '@/components/ds/Button'
+import { IconPlus } from '@/components/ds/icons'
+import { StatusPill } from '@/components/ds/StatusPill'
 import { FinanceToggle, MoneyValue } from '@/components/ui/FinanceVisibility'
 import { Sparkline } from '@/components/ui/Sparkline'
-import { StatCard } from '@/components/ui/StatCard'
 import { monthRange } from '@/lib/format'
+import { dateInBR } from '@/lib/timezone'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export const metadata = { title: 'Visão geral da rede' }
 
 const PLAN_LABEL: Record<string, string> = {
-  free: 'Essencial', basic: 'Básico', professional: 'Profissional', premium: 'Premium', enterprise: 'Sob medida',
+  free: 'Essencial', basic: 'Básico', solo_free: 'Solo Essencial', solo: 'Solo', solo_pro: 'Solo Pro', professional: 'Profissional', premium: 'Premium', enterprise: 'Sob medida',
 }
 
 function relTime(iso: string, now: Date): string {
@@ -36,7 +35,7 @@ export default async function SuperAdminDashboard() {
   const admin = await createAdminClient()
   const now = new Date()
   const month = monthRange(now)
-  const todayISO = now.toISOString().slice(0, 10)
+  const todayISO = dateInBR(now)
 
   const [schoolsRes, studentsRes, chargesRes, lessonsMonth] = await Promise.all([
     admin.from('schools').select('id, name, custom_name, plan_type, monthly_price, expiration_date, created_at, users!inner(id, name, role)').eq('users.role', 'admin').order('created_at', { ascending: false }),
@@ -86,113 +85,104 @@ export default async function SuperAdminDashboard() {
   const schoolName = (id: string | null) => schools.find((s) => s.id === id)?.custom_name || schools.find((s) => s.id === id)?.name || '—'
   const activity: Activity[] = [
     ...schools.map((s) => ({ id: `sc-${s.id}`, label: 'Nova escola na rede', sub: s.custom_name || s.name, at: s.created_at, tone: 'brand' as const })),
-    ...students.map((s) => ({ id: `st-${s.id}`, label: 'Novo aluno matriculado', sub: `${s.name} · ${schoolName(s.school_id)}`, at: s.created_at, tone: 'success' as const })),
+    ...students.map((s) => ({ id: `st-${s.id}`, label: 'Novo aluno matriculado', sub: `${s.name} na escola ${schoolName(s.school_id)}`, at: s.created_at, tone: 'success' as const })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 6)
 
   return (
-    <>
-      <PageHeader
+    <div className={styles.page}>
+      <DashHeader
+        kicker={totalSchools === 1 ? '1 escola na rede' : `${totalSchools} escolas na rede`}
         title="Visão geral da rede"
-        subtitle={`Monitoramento de ${totalSchools} unidade(s) Sonorum`}
-        action={
-          <div className="flex items-center gap-2">
+        actions={
+          <>
             <FinanceToggle />
-            <AppLinkButton href="/superadmin/schools/new">Nova escola</AppLinkButton>
-          </div>
+            <LinkButton href="/superadmin/schools/new"><IconPlus /> Nova escola</LinkButton>
+          </>
         }
       />
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Unidades" value={totalSchools} hint={newSchools > 0 ? `+${newSchools} nova(s) este mês` : undefined} />
-        <StatCard label="Alunos na rede" value={totalStudents} hint={newStudents > 0 ? `+${newStudents} este mês` : undefined} />
-        <StatCard label="Receita da rede (mês)" value={<MoneyValue value={revenueMonth} />} />
-        <StatCard label="Aulas na rede (mês)" value={lessonsMonth.count ?? 0} />
+      <div className={styles.stats}>
+        <StatTile label="Escolas" value={totalSchools} hint={newSchools > 0 ? `+${newSchools} ${newSchools === 1 ? 'nova' : 'novas'} este mês` : undefined} trend={newSchools > 0 ? 'up' : undefined} />
+        <StatTile label="Alunos na rede" value={totalStudents} hint={newStudents > 0 ? `+${newStudents} este mês` : undefined} trend={newStudents > 0 ? 'up' : undefined} />
+        <StatTile label="Receita da rede no mês" value={<MoneyValue value={revenueMonth} />} />
+        <StatTile label="Aulas na rede no mês" value={lessonsMonth.count ?? 0} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Receita consolidada */}
-        <Card className="lg:col-span-2">
-          <h2 className="mb-1 text-base font-semibold text-ink">Receita consolidada</h2>
-          <p className="mb-4 text-xs text-ink-muted">Últimos 6 meses · <MoneyValue value={series.reduce((s, m) => s + m.value, 0)} /> no período</p>
+      <div className={styles.grid}>
+        <Panel id="revenue-title" title="Receita consolidada" className={styles.span2}>
           {series.every((m) => m.value === 0) ? (
-            <p className="py-8 text-center text-sm text-ink-muted">Sem receita registrada ainda na rede.</p>
+            <p className={styles.empty}>Sem receita registrada ainda na rede.</p>
           ) : (
             <>
-              <div className="text-brand-600">
+              <p className={styles.statHint}><MoneyValue value={series.reduce((sum, m) => sum + m.value, 0)} /> recebidos nos últimos 6 meses</p>
+              <div className={styles.spark}>
                 <Sparkline values={series.map((m) => m.value)} width={560} height={120} className="w-full" />
               </div>
-              <div className="mt-2 flex justify-between text-xs text-ink-muted">
-                {series.map((m) => <span key={m.label} className="capitalize">{m.label}</span>)}
+              <div className={styles.sparkLabels}>
+                {series.map((m) => <span key={m.label}>{m.label}</span>)}
               </div>
             </>
           )}
-        </Card>
+        </Panel>
 
-        {/* Atividade global */}
-        <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Atividade global</h2>
+        <Panel id="activity-title" title="Atividade">
           {activity.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhuma atividade ainda.</p>
+            <p className={styles.empty}>Nenhuma atividade ainda.</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className={styles.rows}>
               {activity.map((a) => (
-                <li key={a.id} className="flex gap-3">
-                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${a.tone === 'success' ? 'bg-accent-500' : 'bg-brand-500'}`} />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-ink">{a.label}</p>
-                    <p className="truncate text-xs text-ink-muted">{a.sub}</p>
-                    <p className="text-xs text-ink-muted/70">{relTime(a.at, now)}</p>
+                <li key={a.id}>
+                  <div className={styles.row}>
+                    <span className={`${styles.dot} ${a.tone === 'success' ? styles.dotOk : ''}`} aria-hidden="true" />
+                    <span className={styles.rowMain}>
+                      <span className={styles.rowName}>{a.label}</span>
+                      <span className={styles.rowMeta}>{a.sub}</span>
+                    </span>
+                    <span className={styles.rowEnd}>{relTime(a.at, now)}</span>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </Card>
-      </div>
+        </Panel>
 
-      {/* Ranking de unidades */}
-      <section className="mt-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-ink">Ranking de unidades</h2>
-          <LinkButton href="/superadmin/schools/new" variant="secondary" size="sm">Nova escola →</LinkButton>
-        </div>
-        <AppTable>
-          <thead>
-            <tr>
-              <th>Escola</th>
-              <th>Plano</th>
-              <th>Alunos</th>
-              <th>Faturamento (mês)</th>
-              <th>Status</th>
-              <th className={tableRight} />
-            </tr>
-          </thead>
-          <tbody>
-            {ranking.length === 0 && <AppEmpty colSpan={6}>Nenhuma escola ainda.</AppEmpty>}
-            {ranking.map((s) => {
-              const adminUser = s.users?.[0]
-              return (
-                <tr key={s.id}>
-                  <td>
-                    <span className={cellPrimary}>{s.custom_name || s.name}</span>
-                    {adminUser && <span className={cellSub}>Admin: {adminUser.name}</span>}
-                  </td>
-                  <td><AppBadge tone={s.plan_type === 'free' ? 'neutral' : 'brand'}>{PLAN_LABEL[s.plan_type] ?? s.plan_type}</AppBadge></td>
-                  <td className={cellMuted}>{s.alunos}</td>
-                  <td className={cellMuted}><MoneyValue value={s.faturamento} /></td>
-                  <td><AppBadge tone={s.ativa ? 'success' : 'danger'}>{s.ativa ? 'Ativa' : 'Expirada'}</AppBadge></td>
-                  <td className={tableRight}>
-                    <div className="flex items-center justify-end gap-2">
-                      <LinkButton href={`/superadmin/schools/${s.id}/edit`} variant="secondary" size="sm">Editar</LinkButton>
-                      {adminUser && <ImpersonateButton targetUserId={adminUser.id} label="Entrar como admin" />}
-                    </div>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </AppTable>
-      </section>
-    </>
+        <Panel id="ranking-title" title="Ranking de escolas" className={styles.span3}>
+          {ranking.length === 0 ? (
+            <p className={styles.empty}>Nenhuma escola ainda.</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr><th>Escola</th><th>Plano</th><th className={styles.num}>Alunos</th><th className={styles.num}>Faturamento no mês</th><th>Status</th><th /></tr>
+                </thead>
+                <tbody>
+                  {ranking.map((s) => {
+                    const adminUser = s.users?.[0]
+                    return (
+                      <tr key={s.id}>
+                        <td>
+                          <span className={styles.rowName}>{s.custom_name || s.name}</span>
+                          {adminUser && <span className={`${styles.rowMeta} ${styles.block}`}>Admin: {adminUser.name}</span>}
+                        </td>
+                        <td><StatusPill tone={s.plan_type === 'free' ? 'neutral' : 'brand'}>{PLAN_LABEL[s.plan_type] ?? s.plan_type}</StatusPill></td>
+                        <td className={styles.num}>{s.alunos}</td>
+                        <td className={styles.num}><MoneyValue value={s.faturamento} /></td>
+                        <td><StatusPill tone={s.ativa ? 'success' : 'danger'}>{s.ativa ? 'Ativa' : 'Expirada'}</StatusPill></td>
+                        <td className={styles.num}>
+                          <div className={styles.rowEnd}>
+                            <LinkButton href={`/superadmin/schools/${s.id}/edit`} variant="soft" size="sm">Editar</LinkButton>
+                            {adminUser && <ImpersonateButton targetUserId={adminUser.id} label="Entrar como admin" />}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Panel>
+      </div>
+    </div>
   )
 }

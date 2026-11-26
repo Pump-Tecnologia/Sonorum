@@ -1,11 +1,35 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useSyncExternalStore } from 'react'
 
 import { cn } from '@/lib/cn'
 import { formatBRL } from '@/lib/format'
 
 const STORAGE_KEY = 'sonorum.finance.hidden'
+const STORAGE_EVENT = 'sonorum:finance-visibility'
+let hiddenSnapshot = true
+
+function subscribeVisibility(callback: () => void) {
+  window.addEventListener('storage', callback)
+  window.addEventListener(STORAGE_EVENT, callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener(STORAGE_EVENT, callback)
+  }
+}
+
+function getVisibilitySnapshot() {
+  try {
+    hiddenSnapshot = window.localStorage.getItem(STORAGE_KEY) !== 'false'
+  } catch {
+    // Mantém a última escolha em memória quando o navegador bloqueia storage.
+  }
+  return hiddenSnapshot
+}
+
+function getVisibilityServerSnapshot() {
+  return true
+}
 
 interface Ctx {
   hidden: boolean
@@ -17,27 +41,20 @@ const FinanceVisibilityContext = createContext<Ctx | null>(null)
 // Default OCULTO (padrão Nubank/banco). Persiste a escolha em localStorage para
 // preservar entre navegações. Provider vive no shell da área autenticada.
 export function FinanceVisibilityProvider({ children }: { children: React.ReactNode }) {
-  const [hidden, setHidden] = useState(true)
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY)
-      if (stored === 'false') setHidden(false)
-    } catch {
-      // localStorage indisponível (modo privado, SSR) — segue com default oculto.
-    }
-  }, [])
+  const hidden = useSyncExternalStore(
+    subscribeVisibility,
+    getVisibilitySnapshot,
+    getVisibilityServerSnapshot,
+  )
 
   const toggle = () => {
-    setHidden((prev) => {
-      const next = !prev
-      try {
-        window.localStorage.setItem(STORAGE_KEY, String(next))
-      } catch {
-        // ignora
-      }
-      return next
-    })
+    hiddenSnapshot = !hidden
+    try {
+      window.localStorage.setItem(STORAGE_KEY, String(hiddenSnapshot))
+    } catch {
+      // A escolha continua funcional durante a sessão mesmo sem persistência.
+    }
+    window.dispatchEvent(new Event(STORAGE_EVENT))
   }
 
   return <FinanceVisibilityContext.Provider value={{ hidden, toggle }}>{children}</FinanceVisibilityContext.Provider>
@@ -83,7 +100,7 @@ export function FinanceToggle({ className }: { className?: string }) {
       aria-label={hidden ? 'Mostrar valores' : 'Ocultar valores'}
       title={hidden ? 'Mostrar valores' : 'Ocultar valores'}
       className={cn(
-        'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-surface text-ink-muted transition-colors hover:border-brand-300 hover:text-ink',
+        'inline-grid h-10 w-10 place-items-center rounded-full bg-(--sn-mint-soft) text-(--sn-ink-soft) transition-colors hover:bg-(--sn-mint-hover) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--sn-green)',
         className,
       )}
     >

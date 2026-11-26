@@ -9,7 +9,8 @@ import { removeLessonFromCalendars, syncLessonToCalendars } from '@/lib/calendar
 import { notify } from '@/lib/notifications/notify'
 import { RECURRENCE_PRESETS, presetWeeks } from '@/lib/constants/recurrence'
 import { CATEGORIES, CONTENT_TYPES } from '@/lib/constants/resources'
-import { localBrToServerISO } from '@/lib/timezone'
+import { isActiveTeacherOfSchool } from '@/lib/queries/teachers'
+import { addDaysToBRDate, dateInBR, diffInBRDays, localBrToServerISO, timeInBR } from '@/lib/timezone'
 
 export type LessonActionState = {
   ok: boolean
@@ -78,11 +79,13 @@ export async function createLesson(
   }
 
   const d = parsed.data
-  // Professor: teacher cria → vincula a si; admin → seleção obrigatória.
-  if (me.role === 'admin' && !d.teacherId) {
+  // Professor (role='teacher' ou admin que também dá aula, ver isTeacher em
+  // lib/auth/session.ts): vincula a si por padrão se não escolher outro na
+  // seleção. Admin que NÃO dá aula precisa selecionar obrigatoriamente.
+  if (!d.teacherId && !me.isTeacher) {
     return { ok: false, fieldErrors: { teacherId: 'Selecione o professor da aula.' } }
   }
-  const teacherId = me.role === 'teacher' ? me.id : (d.teacherId || null)
+  const teacherId = d.teacherId || (me.isTeacher ? me.id : null)
   const roomId = d.roomId || null
   const supabase = await createClient()
 
@@ -99,17 +102,15 @@ export async function createLesson(
   // Cross-tenant: aluno/professor/sala precisam ser da MESMA escola do user.
   // RLS protege o INSERT (school_id colado é o meu), mas sem essa checagem
   // dá pra criar uma aula apontando aluno/prof/sala de outra escola.
-  const [studentCheck, teacherCheck, roomCheck] = await Promise.all([
+  const [studentCheck, teacherOk, roomCheck] = await Promise.all([
     supabase.from('users').select('id').eq('id', d.studentId).eq('school_id', me.schoolId).eq('role', 'student').maybeSingle(),
-    teacherId
-      ? supabase.from('users').select('id').eq('id', teacherId).eq('school_id', me.schoolId).eq('role', 'teacher').maybeSingle()
-      : Promise.resolve({ data: 'skip' as const }),
+    teacherId ? isActiveTeacherOfSchool(supabase, teacherId, me.schoolId) : Promise.resolve(true),
     roomId
       ? supabase.from('rooms').select('id').eq('id', roomId).eq('school_id', me.schoolId).maybeSingle()
       : Promise.resolve({ data: 'skip' as const }),
   ])
   if (!studentCheck.data) return { ok: false, fieldErrors: { studentId: 'Aluno não encontrado na escola.' } }
-  if (teacherCheck.data === null) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
+  if (!teacherOk) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
   if (roomCheck.data === null) return { ok: false, fieldErrors: { roomId: 'Sala não encontrada na escola.' } }
 
   // Todas as ocorrências (aula principal + recorrência semanal por preset).
@@ -175,7 +176,7 @@ export async function createLesson(
 // Atualiza status / notas / notas privadas
 export async function updateLesson(formData: FormData) {
   const me = await getCurrentUser()
-  if (!me?.schoolId) return
+  if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return
 
   const lessonId = String(formData.get('lessonId') ?? '')
   const supabase = await createClient()
@@ -297,21 +298,30 @@ export async function updateLessonSchedule(
     if (!d.teacherId || d.teacherId === 'clear') {
       update.teacher_id = null
     } else {
-      const { data: t } = await supabase.from('users').select('id').eq('id', d.teacherId).eq('school_id', me.schoolId).eq('role', 'teacher').maybeSingle()
-      if (!t) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
+      const teacherOk = await isActiveTeacherOfSchool(supabase, d.teacherId, me.schoolId)
+      if (!teacherOk) return { ok: false, fieldErrors: { teacherId: 'Professor não encontrado na escola.' } }
       update.teacher_id = d.teacherId
     }
   }
 
   if (Object.keys(update).length === 0) return { ok: true }
 
-  // Propagação p/ futuras ocorrências da série: aplica o MESMO delta de
-  // tempo em todas as aulas com mesmo series_id cujo start_datetime >= esta.
-  // Sala/professor são aplicados como valores absolutos (todas viram o
-  // mesmo). Conflito de sala é checado por ocorrência.
+  // "Esta aula e as próximas", como no Google Agenda: cada aula seguinte da
+  // série anda o mesmo número de dias que esta e passa a ter o horário e a
+  // duração novos. Não usa a diferença de horário desta aula, que pode já ter
+  // sido remarcada sozinha antes. Sala/professor viram o mesmo valor em todas.
+  // Conflito de sala é checado por ocorrência.
   if (d.apply === 'future' && lesson.series_id) {
-    const startDeltaMs = update.start_datetime ? new Date(update.start_datetime).getTime() - new Date(lesson.start_datetime).getTime() : 0
-    const endDeltaMs = update.end_datetime ? new Date(update.end_datetime).getTime() - new Date(lesson.end_datetime).getTime() : 0
+    const timeChanged = Boolean(update.start_datetime || update.end_datetime)
+    const dayDelta = diffInBRDays(dateInBR(new Date(lesson.start_datetime)), dateInBR(new Date(nextStart)))
+    const newStartTime = update.start_datetime ? timeInBR(new Date(nextStart)) : null
+    const durationMs = new Date(nextEnd).getTime() - new Date(nextStart).getTime()
+    const shifted = (s: { start_datetime: string; end_datetime: string }) => {
+      if (!timeChanged) return { start: s.start_datetime, end: s.end_datetime }
+      const day = addDaysToBRDate(dateInBR(new Date(s.start_datetime)), dayDelta)
+      const start = new Date(localBrToServerISO(`${day}T${newStartTime ?? timeInBR(new Date(s.start_datetime))}`))
+      return { start: start.toISOString(), end: new Date(start.getTime() + durationMs).toISOString() }
+    }
 
     const { data: siblings } = await supabase
       .from('lessons')
@@ -324,10 +334,9 @@ export async function updateLessonSchedule(
     // Pré-checa conflito de sala em todas as futuras (com horário novo).
     if (nextRoom) {
       for (const s of siblings ?? []) {
-        const newStart = new Date(new Date(s.start_datetime).getTime() + startDeltaMs).toISOString()
-        const newEnd = new Date(new Date(s.end_datetime).getTime() + endDeltaMs).toISOString()
+        const { start: newStart, end: newEnd } = shifted(s)
         if (await roomHasConflict(supabase, nextRoom, newStart, newEnd, s.id)) {
-          const when = new Date(newStart).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          const when = new Date(newStart).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' })
           return { ok: false, fieldErrors: { roomId: `Conflito de sala em ${when}.` } }
         }
       }
@@ -337,17 +346,22 @@ export async function updateLessonSchedule(
     // tem horário próprio + delta). Lote de UPDATEs.
     for (const s of siblings ?? []) {
       const sibUpdate: LessonUpdate = { ...update }
-      if (update.start_datetime) sibUpdate.start_datetime = new Date(new Date(s.start_datetime).getTime() + startDeltaMs).toISOString()
-      if (update.end_datetime) sibUpdate.end_datetime = new Date(new Date(s.end_datetime).getTime() + endDeltaMs).toISOString()
+      if (timeChanged) {
+        const { start, end } = shifted(s)
+        sibUpdate.start_datetime = start
+        sibUpdate.end_datetime = end
+      }
       await supabase.from('lessons').update(sibUpdate).eq('id', s.id).eq('school_id', me.schoolId)
     }
+    // Reflete o novo horário/sala/professor de TODAS as aulas mudadas nas
+    // agendas externas (no-op sem Google).
+    await Promise.all((siblings ?? []).map((s) => syncLessonToCalendars(s.id).catch(() => {})))
   } else {
     const { error } = await supabase.from('lessons').update(update).eq('id', d.lessonId).eq('school_id', me.schoolId)
     if (error) return { ok: false, error: 'Não foi possível atualizar a aula.' }
+    // Reflete o novo horário/sala/professor nas agendas externas (no-op sem Google).
+    await syncLessonToCalendars(d.lessonId).catch(() => {})
   }
-
-  // Reflete o novo horário/sala/professor nas agendas externas (no-op sem Google).
-  await syncLessonToCalendars(d.lessonId).catch(() => {})
 
   revalidatePath(`/lessons/${d.lessonId}/planner`)
   revalidatePath('/schedule')
@@ -370,13 +384,17 @@ export async function cancelLessonSeries(formData: FormData) {
     .maybeSingle()
   if (!lesson?.series_id) return
 
-  await supabase
+  const { data: canceled } = await supabase
     .from('lessons')
     .update({ status: 'canceled' })
     .eq('series_id', lesson.series_id)
     .eq('school_id', me.schoolId)
     .gte('start_datetime', lesson.start_datetime)
     .neq('status', 'canceled')
+    .select('id')
+
+  // Tira as aulas canceladas das agendas externas (no-op sem Google).
+  await Promise.all((canceled ?? []).map((l) => removeLessonFromCalendars(l.id).catch(() => {})))
 
   revalidatePath('/schedule')
   revalidatePath(`/lessons/${lessonId}/planner`)
@@ -478,12 +496,6 @@ export async function saveLessonPlan(
     .maybeSingle()
   if (!owned) return { ok: false, error: 'Aula não encontrada.' }
 
-  await supabase
-    .from('lessons')
-    .update({ goals: String(formData.get('goals') ?? '') || null })
-    .eq('id', lessonId)
-    .eq('school_id', me.schoolId)
-
   // Seções (sec.<id>) e campos (fld.<key>) são dinâmicos — vêm do blueprint da
   // categoria. Guardamos tudo num envelope em specific_data e espelhamos as
   // seções/campos canônicos nas colunas legadas (relatório e "Dar aula" leem delas).
@@ -498,8 +510,6 @@ export async function saveLessonPlan(
   const planNotes = String(formData.get('plan_notes') ?? '') || null
 
   const plan = {
-    school_id: me.schoolId,
-    lesson_id: lessonId,
     // espelho legado (subconjunto canônico)
     warmup: sections.warmup ?? null,
     repertoire: sections.repertoire ?? null,
@@ -509,8 +519,12 @@ export async function saveLessonPlan(
     // fonte completa (dinâmica)
     specific_data: { v: 1, blueprintKey, sections, fields },
   }
-  const { error } = await supabase.from('lesson_plans').upsert(plan, { onConflict: 'lesson_id' })
-  if (error) return { ok: false, error: 'Não foi possível salvar o planejamento.' }
+  const { data: saved, error } = await supabase.rpc('save_lesson_plan', {
+    p_lesson_id: lessonId,
+    p_goals: String(formData.get('goals') ?? '') || null,
+    p_plan: plan,
+  })
+  if (error || saved !== true) return { ok: false, error: 'Não foi possível salvar o planejamento.' }
 
   revalidatePath(`/lessons/${lessonId}/planner`)
   revalidatePath('/schedule')

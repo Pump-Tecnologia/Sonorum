@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { SubmitButton } from '@/components/auth/SubmitButton'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
 import { createRoom, deleteRoom, type RoomActionState } from '@/lib/actions/rooms'
@@ -21,16 +22,20 @@ export function RoomsManager({ rooms }: { rooms: Room[] }) {
 
   return (
     <Card>
-      <h2 className="mb-1 text-base font-semibold text-ink">Salas</h2>
-      <p className="mb-4 text-sm text-ink-muted">As salas aparecem ao agendar uma aula. Uma sala não pode ter duas aulas no mesmo horário.</p>
+      <div className="mb-4 flex items-center gap-1">
+        <h2 className="sn-card-title">Salas</h2>
+        <InfoButton label="Sobre as salas" align="end">
+          As salas aparecem ao agendar uma aula. Uma sala não pode ter duas aulas no mesmo horário.
+        </InfoButton>
+      </div>
 
       {rooms.length === 0 ? (
-        <p className="mb-4 text-sm text-ink-muted">Nenhuma sala cadastrada.</p>
+        <p className="mb-4 text-sm text-(--sn-text-muted)">Nenhuma sala cadastrada.</p>
       ) : (
-        <ul className="mb-4 space-y-2">
+        <ul className="mb-4 flex flex-col pl-0">
           {rooms.map((r) => (
-            <li key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-hairline px-3 py-2 text-sm">
-              <span className="font-medium text-ink">{r.name}</span>
+            <li key={r.id} className="flex min-h-12 list-none items-center justify-between gap-3 py-1.5 text-[15px] text-(--sn-ink) not-first:shadow-[inset_0_1px_0_var(--sn-hairline)]">
+              <span className="font-medium">{r.name}</span>
               <DeleteButton
                 action={deleteRoom}
                 hidden={{ roomId: r.id }}
@@ -42,14 +47,22 @@ export function RoomsManager({ rooms }: { rooms: Room[] }) {
         </ul>
       )}
 
-      <form action={action} className="border-t border-hairline pt-4">
-        {state.error && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
-        {state.ok && <p className="mb-3 rounded-lg bg-accent-100 px-3 py-2 text-sm text-accent-800">Sala criada!</p>}
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label="Nova sala" htmlFor="name" error={fe.name}>
-            <Input id="name" name="name" placeholder="Sala 1, Estúdio…" required />
-          </Field>
-          <SubmitButton pendingLabel="Criando…">Adicionar</SubmitButton>
+      <form
+        action={action}
+        onReset={(event) => {
+          if (!state.ok) event.preventDefault()
+        }}
+        className="space-y-3 pt-4 shadow-[inset_0_1px_0_var(--sn-hairline)]"
+      >
+        {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
+        {state.ok && <p className="sn-notice-ok" role="status">Sala criada</p>}
+        <div className="flex items-end gap-2">
+          <div className="min-w-0 flex-1">
+            <Field label="Nova sala" htmlFor="name" error={fe.name}>
+              <Input id="name" name="name" placeholder="Sala 1, Estúdio" required />
+            </Field>
+          </div>
+          <SubmitButton fullWidth={false} pendingLabel="Criando…">Adicionar</SubmitButton>
         </div>
       </form>
     </Card>

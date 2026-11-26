@@ -1,9 +1,9 @@
-import Link from 'next/link'
-
 import { PageHeader } from '@/components/app/PageHeader'
 import { DeleteButton } from '@/components/admin/DeleteButton'
-import { Badge } from '@/components/ui/Badge'
-import { Button, LinkButton } from '@/components/ui/Button'
+import { LinkButton, SubmitButton } from '@/components/ds/Button'
+import { IconArrowRight, IconPlus } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
+import { StatusPill } from '@/components/ds/StatusPill'
 import { Card } from '@/components/ui/Card'
 import { TranscriptionUpsell } from '@/components/transcription/TranscriptionUpsell'
 import { deleteTranscription, retryTranscription } from '@/lib/actions/transcription'
@@ -33,29 +33,20 @@ export default async function TranscriptionQueuePage() {
     <>
       <PageHeader
         title="Transcrições por IA"
-        subtitle="Áudios enviados para virar cifra. Revise os rascunhos e publique na biblioteca."
-        action={
-          <Link href="/resources/transcribe/new">
-            <Button>Transcrever áudio</Button>
-          </Link>
-        }
+        info="Áudios enviados para virar cifra. Revise os rascunhos e publique na biblioteca."
+        action={<LinkButton href="/resources/transcribe/new"><IconPlus /> Transcrever áudio</LinkButton>}
       />
 
-      <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-        <span aria-hidden="true" className="text-lg leading-none">🚧</span>
-        <div>
-          <p className="text-sm font-semibold text-amber-900">Recurso em desenvolvimento</p>
-          <p className="mt-0.5 text-sm text-amber-800">
-            A transcrição de áudio por IA ainda está sendo finalizada. Os resultados podem ser imprecisos ou ficar indisponíveis enquanto ajustamos o recurso.
-          </p>
-        </div>
+      <div className="mb-6 flex flex-wrap items-center gap-2 px-2">
+        <StatusPill tone="warning">Em desenvolvimento</StatusPill>
+        <InfoButton label="Sobre a transcrição">
+          A transcrição por IA ainda está sendo finalizada. Os resultados podem sair imprecisos ou ficar indisponíveis enquanto ajustamos o recurso.
+        </InfoButton>
       </div>
 
       {list.length === 0 ? (
         <Card>
-          <p className="text-sm text-ink-muted">
-            Nenhuma transcrição ainda. Envie um áudio para gerar uma cifra automaticamente.
-          </p>
+          <p className="m-0 text-[15px] text-(--sn-text-muted)">Nenhuma transcrição ainda.</p>
         </Card>
       ) : (
         <div className="flex flex-col gap-3">
@@ -65,25 +56,23 @@ export default async function TranscriptionQueuePage() {
               <Card key={j.id} className="flex flex-wrap items-center justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-ink">{j.title}</p>
-                    <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
+                    <p className="m-0 text-[15px] font-medium text-(--sn-ink)">{j.title}</p>
+                    <StatusPill tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</StatusPill>
                   </div>
-                  <p className="text-xs text-ink-muted">
-                    {j.instrument ? `${j.instrument} · ` : ''}{fmtDate(j.created_at)}
-                    {status === 'failed' && j.error ? ` · ${j.error}` : ''}
+                  <p className="mt-0.5 mb-0 text-[13px] text-(--sn-text-muted)">
+                    {j.instrument ? `${j.instrument}, enviado em ` : 'Enviado em '}{fmtDate(j.created_at)}
+                    {status === 'failed' && j.error ? `. ${j.error}` : ''}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                   {status === 'pending_review' && (
-                    <LinkButton href={`/resources/transcribe/${j.id}`} variant="secondary" size="sm">Revisar →</LinkButton>
+                    <LinkButton href={`/resources/transcribe/${j.id}`} variant="soft" size="sm">Revisar <IconArrowRight /></LinkButton>
                   )}
                   {status === 'failed' && (
                     <form action={retryTranscription}>
                       <input type="hidden" name="jobId" value={j.id} />
-                      <button type="submit" className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted">
-                        Tentar de novo
-                      </button>
+                      <SubmitButton variant="soft" size="sm" pendingLabel="Enviando…">Tentar de novo</SubmitButton>
                     </form>
                   )}
                   <DeleteButton

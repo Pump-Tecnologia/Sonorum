@@ -20,7 +20,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     price: 0,
     studentLimit: 5,
     teacherLimit: 1, // o admin já pode lecionar; ajuste aqui se quiser outro teto
-    financial: true, // planos, matrículas e cobranças liberados no Essencial
+    financial: false, // módulo financeiro indisponível no Essencial (requer Solo ou Profissional)
     reports: false, // relatórios seguem diferencial pago (Profissional+)
     transcription: false,
     branding: false,
@@ -34,6 +34,46 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
     financial: true,
     reports: false,
     transcription: false,
+    branding: false,
+    whatsappOfficial: false,
+  },
+  // Planos do professor autônomo (sem escola/equipe): "escola de 1 pessoa só".
+  // solo_free é a porta de entrada gratuita (espelha o 'free' da escola:
+  // mesmo studentLimit, mesmas features) — fora de SELLABLE_PLANS, como o
+  // 'free'; atribuído por padrão no cadastro, não por checkout.
+  solo_free: {
+    label: 'Solo Essencial',
+    price: 0,
+    studentLimit: 5,
+    teacherLimit: 1,
+    financial: false, // módulo financeiro indisponível no Solo Essencial (requer Solo ou Solo Pro)
+    reports: false,
+    transcription: false,
+    branding: false,
+    whatsappOfficial: false,
+  },
+  // Preço fixo, sem depender de quantidade de aluno — teto real é a agenda do
+  // professor, não um limite artificial. Diferencial entre os dois segue o
+  // mesmo critério do Profissional→Premium: relatórios + transcrição por IA.
+  solo: {
+    label: 'Solo',
+    price: 49.9,
+    studentLimit: Infinity,
+    teacherLimit: 1,
+    financial: true,
+    reports: false,
+    transcription: false,
+    branding: false,
+    whatsappOfficial: false,
+  },
+  solo_pro: {
+    label: 'Solo Pro',
+    price: 99.9,
+    studentLimit: Infinity,
+    teacherLimit: 1,
+    financial: true,
+    reports: true,
+    transcription: true,
     branding: false,
     whatsappOfficial: false,
   },
@@ -75,7 +115,7 @@ export const PLAN_FEATURES: Record<SchoolPlanType, PlanFeatures> = {
 }
 
 // Planos vendáveis por auto-serviço (na ordem exibida).
-export const SELLABLE_PLANS: SchoolPlanType[] = ['professional', 'premium']
+export const SELLABLE_PLANS: SchoolPlanType[] = ['professional', 'premium', 'solo', 'solo_pro']
 
 // Preço efetivo: override negociado da escola (monthly_price>0) tem prioridade
 // sobre o preço de tabela do plano.
@@ -111,3 +151,12 @@ export function planFeatures(planType: string | null | undefined, overrides?: un
 }
 
 export type PlanFeatureKey = 'financial' | 'reports' | 'transcription' | 'branding'
+
+// Conta estruturalmente presa a 1 professor (Essencial, Solo, Solo Pro) — quem
+// dá aula é sempre o próprio admin, então UI de "equipe" (nav de professores,
+// CRUD completo, rankings/destaques) não se aplica. Diferente de "só tem 1
+// professor no momento" (uma escola Profissional pode crescer); aqui o teto do
+// plano é 1 pra sempre, a menos que faça upgrade.
+export function isSingleTeacherAccount(features: PlanFeatures): boolean {
+  return features.teacherLimit === 1
+}

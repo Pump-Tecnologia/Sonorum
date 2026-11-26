@@ -5,6 +5,7 @@ import { GoogleCalendarConnect } from '@/components/app/GoogleCalendarConnect'
 import { DeleteAccountForm } from '@/components/profile/DeleteAccountForm'
 import { PasswordForm } from '@/components/profile/PasswordForm'
 import { ProfileForm } from '@/components/profile/ProfileForm'
+import { TeachingToggle } from '@/components/profile/TeachingToggle'
 import { Card } from '@/components/ui/Card'
 import { getCurrentUser } from '@/lib/auth/session'
 import { isGoogleCalendarEnabled } from '@/lib/calendar'
@@ -17,7 +18,12 @@ export default async function ProfilePage() {
   if (!me) redirect('/login')
 
   const supabase = await createClient()
-  const { data } = await supabase.from('users').select('phone').eq('id', me.id).single()
+  const [{ data }, { data: teacherRow }] = await Promise.all([
+    supabase.from('users').select('phone').eq('id', me.id).single(),
+    me.role === 'admin'
+      ? supabase.from('teachers').select('instruments').eq('user_id', me.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
   const gcalEnabled = isGoogleCalendarEnabled()
   const { data: gcalConn } = gcalEnabled
@@ -32,29 +38,41 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <PageHeader title="Meu perfil" subtitle="Atualize seus dados e senha" />
+      <PageHeader title="Meu perfil" />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Dados pessoais</h2>
+          <h2 className="sn-card-title mb-5">Dados pessoais</h2>
           <ProfileForm user={{ name: me.name, email: me.email ?? '', phone: data?.phone ?? null }} />
         </Card>
 
         <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Alterar senha</h2>
+          <h2 className="sn-card-title mb-5">Alterar senha</h2>
           <PasswordForm />
         </Card>
+
+        {me.role === 'admin' && (
+          <Card className="lg:col-span-2">
+            <TeachingToggle isTeacher={me.isTeacher} instruments={teacherRow?.instruments as string[] | null} />
+          </Card>
+        )}
 
         <div className="lg:col-span-2">
           <GoogleCalendarConnect enabled={gcalEnabled} connected={Boolean(gcalConn)} />
         </div>
 
-        <Card className="lg:col-span-2 border-red-200">
-          <h2 className="mb-2 text-base font-semibold text-ink">Zona de perigo</h2>
-          <p className="mb-4 text-sm text-ink-muted">
-            Ao excluir sua conta, todos os seus dados serão removidos permanentemente.
+        <Card className="lg:col-span-2">
+          <h2 className="sn-card-title mb-2">Excluir conta</h2>
+          {me.role === 'admin' ? (
+            <p className="m-0 text-[15px] text-(--sn-text-muted)">
+              Peça a exclusão da conta da escola pelo <a href="mailto:suporte@sonorum.com.br" className="font-medium text-(--sn-ink) underline underline-offset-2">suporte@sonorum.com.br</a>, para exportarmos os dados dos alunos com segurança.
           </p>
-          <DeleteAccountForm />
+          ) : (
+            <>
+              <p className="mt-0 mb-4 text-[15px] text-(--sn-text-muted)">Seus dados são apagados de vez.</p>
+              <DeleteAccountForm />
+            </>
+          )}
         </Card>
       </div>
     </>

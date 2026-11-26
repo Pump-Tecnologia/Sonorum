@@ -6,7 +6,9 @@ import { z } from 'zod'
 
 import { createAdminClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
-import { planFeatures } from '@/lib/constants/plans'
+import { effectivePlanFeatures } from '@/lib/auth/plan'
+import { isActiveTeacherOfSchool } from '@/lib/queries/teachers'
+import { sendCredentialsEmail } from '@/lib/notifications/credentials'
 import { createUserWithProfile, generatePassword } from '@/lib/users/admin'
 
 const createStudentSchema = z.object({
@@ -27,7 +29,6 @@ export type StudentActionState = {
   ok: boolean
   error?: string
   fieldErrors?: Record<string, string>
-  tempPassword?: string
   createdEmail?: string
 }
 
@@ -43,11 +44,11 @@ export async function createStudent(
   // Limite de alunos conforme o plano (Essencial = 5; pagos = ilimitado).
   const { data: school } = await admin
     .from('schools')
-    .select('plan_type, feature_overrides')
+    .select('plan_type, feature_overrides, expiration_date, name, custom_name')
     .eq('id', me.schoolId)
     .single()
 
-  const features = planFeatures(school?.plan_type, school?.feature_overrides)
+  const features = effectivePlanFeatures(school?.plan_type, school?.expiration_date, school?.feature_overrides)
   if (Number.isFinite(features.studentLimit)) {
     const { count } = await admin
       .from('users')
@@ -94,14 +95,8 @@ export async function createStudent(
   // Professor fixo (opcional) precisa ser um professor da mesma escola.
   if (d.defaultTeacherId) {
     const adminCheck = await createAdminClient()
-    const { data: teacher } = await adminCheck
-      .from('users')
-      .select('id')
-      .eq('id', d.defaultTeacherId)
-      .eq('school_id', me.schoolId)
-      .eq('role', 'teacher')
-      .maybeSingle()
-    if (!teacher) return { ok: false, fieldErrors: { defaultTeacherId: 'Professor não encontrado nesta escola.' } }
+    const isTeacher = await isActiveTeacherOfSchool(adminCheck, d.defaultTeacherId, me.schoolId)
+    if (!isTeacher) return { ok: false, fieldErrors: { defaultTeacherId: 'Professor não encontrado nesta escola.' } }
   }
 
   const tempPassword = generatePassword()
@@ -142,8 +137,20 @@ export async function createStudent(
     await admin.from('student_goals').insert(goals)
   }
 
+  const setupEmail = await sendCredentialsEmail({
+    admin,
+    to: d.email,
+    name: d.name,
+    schoolName: school?.custom_name || school?.name || null,
+    kind: 'new',
+  })
+  if (!setupEmail.ok) {
+    await admin.auth.admin.deleteUser(result.userId)
+    return { ok: false, error: 'Não foi possível enviar o link de definição de senha. O aluno não foi criado.' }
+  }
+
   revalidatePath('/admin/students')
-  return { ok: true, tempPassword, createdEmail: d.email }
+  return { ok: true, createdEmail: d.email }
 }
 
 // Exclui um aluno (apaga o auth user → cascata em perfil, metas e notas).

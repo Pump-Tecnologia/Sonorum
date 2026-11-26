@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/Card'
 
+// Número grande e fino sobre vidro, como no progresso da ficha do aluno.
 export function StatCard({
   label,
   value,
@@ -11,9 +12,9 @@ export function StatCard({
 }) {
   return (
     <Card className="p-5">
-      <p className="text-sm font-medium text-ink-muted">{label}</p>
-      <p className="mt-2 text-3xl font-bold tracking-tight text-ink">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
+      <p className="sn-stat-label">{label}</p>
+      <p className="sn-stat-value">{value}</p>
+      {hint && <p className="sn-stat-hint">{hint}</p>}
     </Card>
   )
 }

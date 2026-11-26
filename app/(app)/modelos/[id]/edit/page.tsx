@@ -19,7 +19,7 @@ export default async function EditModeloPage({ params }: { params: Promise<{ id:
 
   return (
     <>
-      <PageHeader title="Editar modelo de aula" subtitle={template.name} />
+      <PageHeader title="Editar modelo de aula" subtitle={template.name} back={{ href: '/modelos', label: 'Modelos de aula' }} />
       <ModeloForm template={template} />
     </>
   )

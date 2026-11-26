@@ -1,33 +1,26 @@
-import Link from 'next/link'
-
-import { PageHeader } from '@/components/app/PageHeader'
-import { Badge } from '@/components/ui/Badge'
-import { Card } from '@/components/ui/Card'
-import { LinkButton } from '@/components/ui/Button'
-import { StatCard } from '@/components/ui/StatCard'
-import { lessonStatus } from '@/lib/constants/lessons'
-import { getCurrentUser } from '@/lib/auth/session'
+import { Avatar } from '@/components/ds/Avatar'
+import { LinkButton } from '@/components/ds/Button'
+import { IconArrowRight } from '@/components/ds/icons'
+import { Bar, DashHeader, LessonRow, Panel, StatTile } from '@/components/dashboard/parts'
+import styles from '@/components/dashboard/dashboard.module.css'
+import { requireCurrentUser } from '@/lib/auth/session'
+import { instrumentTone } from '@/lib/constants/instrument-tone'
 import { dayRange } from '@/lib/format'
+import { greetingInBR, hourInBR, longDateInBR } from '@/lib/timezone'
 import { createClient } from '@/lib/supabase/server'
+import { cn } from '@/lib/cn'
 
 export const metadata = { title: 'Dashboard' }
 
-const QUICK_ACTIONS = [
-  { label: 'Agenda', href: '/schedule', desc: 'Ver e criar aulas' },
-  { label: 'Recursos', href: '/resources', desc: 'Materiais e partituras' },
-]
+const NEXT_SOON_MINUTES = 360
 
-function ProgressBar({ value, total, tone }: { value: number; total: number; tone: string }) {
-  const pct = total > 0 ? Math.min(100, (value / total) * 100) : 0
-  return (
-    <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
-      <div className={`h-full rounded-full ${tone}`} style={{ width: `${pct}%` }} />
-    </div>
-  )
+function instrumentLabel(instrument: unknown): string {
+  if (Array.isArray(instrument)) return instrument.join(', ')
+  return typeof instrument === 'string' ? instrument : ''
 }
 
 export default async function TeacherDashboard() {
-  const user = await getCurrentUser()
+  const user = await requireCurrentUser()
   const supabase = await createClient()
   const today = dayRange()
   const now = new Date()
@@ -46,20 +39,20 @@ export default async function TeacherDashboard() {
     supabase
       .from('lessons')
       .select('id, title, start_datetime, end_datetime, status, goals, notes, users!lessons_student_id_fkey(name, instrument), room:rooms(name)')
-      .eq('teacher_id', user!.id)
+      .eq('teacher_id', user.id)
       .gte('start_datetime', today.start)
       .lte('start_datetime', today.end)
       .order('start_datetime'),
     supabase
       .from('lessons')
       .select('status, lesson_reports(id)')
-      .eq('teacher_id', user!.id)
+      .eq('teacher_id', user.id)
       .gte('start_datetime', weekStart.toISOString())
       .lt('start_datetime', weekEnd.toISOString()),
     supabase
       .from('lessons')
       .select('status, student_id')
-      .eq('teacher_id', user!.id)
+      .eq('teacher_id', user.id)
       .gte('start_datetime', monthStart),
   ])
 
@@ -70,7 +63,6 @@ export default async function TeacherDashboard() {
   const nextEnd = nextLesson ? new Date(nextLesson.end_datetime) : null
   const isLive = nextStart && nextEnd ? nextStart <= now && now <= nextEnd : false
   const minsTo = nextStart ? Math.round((nextStart.getTime() - now.getTime()) / 60000) : null
-  const countdown = isLive ? 'Agora' : minsTo !== null && minsTo > 0 && minsTo <= 360 ? `em ${minsTo} min` : nextStart ? nextStart.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }) : ''
 
   // Semana — metas
   const week = (weekRes.data ?? []) as unknown as WeekRow[]
@@ -85,126 +77,92 @@ export default async function TeacherDashboard() {
   const attendanceRate = monthDone + monthMissed > 0 ? Math.round((monthDone / (monthDone + monthMissed)) * 100) : null
   const activeStudents = new Set(month.map((l) => l.student_id)).size
 
-  const greeting = now.getHours() < 12 ? 'Bom dia' : now.getHours() < 18 ? 'Boa tarde' : 'Boa noite'
+  const firstName = (user?.name ?? '').split(' ')[0]
+  const when = isLive
+    ? nextLesson?.status === 'in_progress' ? 'Aula em andamento' : `Agora, até ${hourInBR(nextLesson!.end_datetime)}`
+    : minsTo !== null && minsTo > 0 && minsTo <= NEXT_SOON_MINUTES
+      ? `Próxima aula daqui a ${minsTo} min`
+      : nextLesson ? `Próxima aula às ${hourInBR(nextLesson.start_datetime)}` : ''
+  const nextMeta = nextLesson
+    ? `${nextLesson.title}${nextLesson.room?.name ? `, sala ${nextLesson.room.name}` : ''}`
+    : ''
 
   return (
-    <>
-      <PageHeader title="Dashboard" subtitle={`${greeting}, ${user?.name ?? ''}`} />
+    <div className={styles.page}>
+      <DashHeader
+        kicker={longDateInBR(now)}
+        title={firstName ? `${greetingInBR(now)}, ${firstName}` : greetingInBR(now)}
+        actions={
+          <>
+            <LinkButton href="/resources" variant="soft">Recursos</LinkButton>
+            <LinkButton href="/schedule">Agenda</LinkButton>
+          </>
+        }
+      />
 
-      {/* Próxima aula — hero */}
+      {/* Próxima aula */}
       {nextLesson ? (
-        <Card className={`mb-6 ${isLive ? 'border-accent-500 bg-accent-50/30' : ''}`}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-600">
-                {isLive ? '● Aula em andamento' : 'Próxima aula'} · {countdown}
-              </p>
-              <p className="text-xl font-bold text-ink">{nextLesson.title}</p>
-              <p className="text-sm text-ink-muted">
-                {nextStudent?.name ?? '—'}
-                {nextStart && <> · {nextStart.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}</>}
-                {nextLesson.room?.name && <> · {nextLesson.room.name}</>}
-              </p>
-              {(nextLesson.goals || nextLesson.notes) && (
-                <p className="mt-2 max-w-xl rounded-lg bg-surface-muted/60 px-3 py-2 text-sm text-ink-muted">
-                  {nextLesson.goals || nextLesson.notes}
-                </p>
-              )}
+        <section className={cn(styles.panel, styles.next, isLive && styles.nextLive)} aria-labelledby="next-lesson">
+          <div className={styles.nextWho}>
+            <Avatar name={nextStudent?.name ?? 'Aluno'} tone={instrumentTone(nextStudent?.instrument)} className={styles.nextAvatar} />
+            <div>
+              <p className={styles.nextWhen}>{isLive && <span className={styles.pulse} aria-hidden="true" />}{when}</p>
+              <h2 id="next-lesson" className={styles.nextName}>{nextStudent?.name ?? nextLesson.title}</h2>
+              {nextMeta && <p className={styles.nextMeta}>{nextMeta}</p>}
+              {(nextLesson.goals || nextLesson.notes) && <p className={styles.nextNote}>{nextLesson.goals || nextLesson.notes}</p>}
             </div>
-            <Link href={`/lessons/${nextLesson.id}/planner`}>
-              <span className="inline-flex items-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                {isLive ? 'Iniciar aula' : 'Abrir aula'} →
-              </span>
-            </Link>
           </div>
-        </Card>
+          <LinkButton href={`/lessons/${nextLesson.id}/planner${isLive ? '#aula' : ''}`} className={styles.nextCta}>
+            {isLive ? 'Conduzir a aula' : 'Abrir aula'} <IconArrowRight />
+          </LinkButton>
+        </section>
       ) : (
-        <Card className="mb-6"><p className="text-sm text-ink-muted">Nenhuma aula restante hoje. 🎵</p></Card>
+        <section className={cn(styles.panel, styles.next)} aria-label="Próxima aula">
+          <p className={styles.empty}>Nenhuma aula restante hoje.</p>
+          <LinkButton href="/schedule" variant="soft">Ver a semana <IconArrowRight /></LinkButton>
+        </section>
       )}
 
-      {/* Ações rápidas */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {nextLesson && (
-          <Link href={`/lessons/${nextLesson.id}/planner`} className="rounded-2xl border border-hairline bg-surface p-4 transition-colors hover:border-brand-300">
-            <p className="text-sm font-semibold text-ink">Aula</p>
-            <p className="text-xs text-ink-muted">Planejar, dar aula e avaliar</p>
-          </Link>
-        )}
-        {QUICK_ACTIONS.map((a) => (
-          <Link key={a.href} href={a.href} className="rounded-2xl border border-hairline bg-surface p-4 transition-colors hover:border-brand-300">
-            <p className="text-sm font-semibold text-ink">{a.label}</p>
-            <p className="text-xs text-ink-muted">{a.desc}</p>
-          </Link>
-        ))}
+      <div className={styles.stats}>
+        <StatTile href="/schedule" label="Aulas hoje" value={lessons.length} />
+        <StatTile label="Aulas dadas no mês" value={monthDone} />
+        <StatTile label="Alunos no mês" value={activeStudents} />
+        <StatTile label="Presença no mês" value={attendanceRate !== null ? <>{attendanceRate}<small>%</small></> : '—'} />
       </div>
 
-      {/* KPIs (sem financeiro) */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Aulas hoje" value={lessons.length} />
-        <StatCard label="Aulas no mês" value={monthDone} />
-        <StatCard label="Alunos ativos" value={activeStudents} />
-        <StatCard label="Presença (mês)" value={attendanceRate !== null ? `${attendanceRate}%` : '—'} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Agenda do dia */}
-        <Card className="lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-ink">Agenda do dia</h2>
-            <LinkButton href="/schedule" variant="ghost" size="sm">Ver agenda completa →</LinkButton>
-          </div>
+      <div className={styles.grid}>
+        <Panel id="day-title" title="Agenda do dia" link={{ href: '/schedule', label: 'Agenda' }} className={styles.span2}>
           {lessons.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhuma aula hoje.</p>
+            <p className={styles.empty}>Nenhuma aula hoje.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className={styles.rows}>
               {lessons.map((l) => {
                 const student = l.users as { name: string; instrument: unknown } | null
                 const live = new Date(l.start_datetime) <= now && now <= new Date(l.end_datetime) && l.status !== 'canceled'
                 return (
-                  <li key={l.id} className={`flex items-center justify-between gap-4 rounded-xl border p-3 ${live ? 'border-accent-400 bg-accent-50/30' : 'border-hairline'}`}>
-                    <div>
-                      <p className="text-sm font-medium text-ink">{student?.name ?? '—'}</p>
-                      <p className="text-xs text-ink-muted">
-                        {new Date(l.start_datetime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}
-                        {' – '}
-                        {new Date(l.end_datetime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' })}
-                        {l.room?.name && <> · {l.room.name}</>}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge tone={lessonStatus(l.status).tone}>{lessonStatus(l.status).label}</Badge>
-                      <LinkButton href={`/lessons/${l.id}/planner`} variant="secondary" size="sm">
-                        {live ? 'Iniciar' : 'Abrir'}
-                      </LinkButton>
-                    </div>
-                  </li>
+                  <LessonRow
+                    key={l.id}
+                    href={`/lessons/${l.id}/planner${live ? '#aula' : ''}`}
+                    time={hourInBR(l.start_datetime)}
+                    name={student?.name ?? 'Aluno'}
+                    meta={[instrumentLabel(student?.instrument), l.room?.name].filter(Boolean).join(', ')}
+                    tone={instrumentTone(student?.instrument)}
+                    status={l.status}
+                    live={live}
+                  />
                 )
               })}
             </ul>
           )}
-        </Card>
+        </Panel>
 
-        {/* Metas da semana */}
-        <Card>
-          <h2 className="mb-4 text-base font-semibold text-ink">Metas da semana</h2>
-          <div className="space-y-5">
-            <div>
-              <div className="mb-1.5 flex items-center justify-between text-sm">
-                <span className="text-ink">Aulas ministradas</span>
-                <span className="font-semibold text-ink">{weekDone}/{weekScheduled}</span>
-              </div>
-              <ProgressBar value={weekDone} total={weekScheduled} tone="bg-brand-600" />
-            </div>
-            <div>
-              <div className="mb-1.5 flex items-center justify-between text-sm">
-                <span className="text-ink">Laudos preenchidos</span>
-                <span className="font-semibold text-ink">{weekReports}/{weekDone}</span>
-              </div>
-              <ProgressBar value={weekReports} total={weekDone} tone="bg-accent-500" />
-            </div>
-          </div>
-        </Card>
+        <Panel id="week-title" title="Semana" info="Aulas dadas sobre as agendadas da semana, e relatórios preenchidos sobre as aulas dadas.">
+          <ul className={styles.bars}>
+            <Bar label="Aulas dadas" value={weekDone} total={weekScheduled} display={`${weekDone} de ${weekScheduled}`} />
+            <Bar label="Relatórios preenchidos" value={weekReports} total={weekDone} display={`${weekReports} de ${weekDone}`} tone="mint" />
+          </ul>
+        </Panel>
       </div>
-    </>
+    </div>
   )
 }

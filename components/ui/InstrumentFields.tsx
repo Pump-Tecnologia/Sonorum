@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+import { Field as DsField, Select as DsSelect } from '@/components/ds/Field'
+import { IconClose } from '@/components/ds/icons'
 import { Field, Select } from '@/components/ui/Field'
 import { INST_CATEGORIES, INSTRUMENTS_BY_CATEGORY, instrumentsForCategory } from '@/lib/constants/resources'
 
@@ -13,6 +15,8 @@ interface InstrumentFieldsProps {
   categoryName?: string
   instrumentName?: string
   instrumentLabel?: string
+  /** Usa os campos do padrão novo (components/ds). */
+  ds?: boolean
 }
 
 // Categoria + instrumento como selects dependentes: o instrumento mostra só os
@@ -25,7 +29,10 @@ export function InstrumentFields({
   categoryName = 'instrumentCategory',
   instrumentName = 'instrument',
   instrumentLabel = 'Instrumento',
+  ds = false,
 }: InstrumentFieldsProps) {
+  const F = ds ? DsField : Field
+  const S = ds ? DsSelect : Select
   const [category, setCategory] = useState(defaultCategory ?? '')
   const [instrument, setInstrument] = useState(defaultInstrument ?? '')
   const options = instrumentsForCategory(category)
@@ -33,8 +40,8 @@ export function InstrumentFields({
 
   return (
     <>
-      <Field label="Categoria do instrumento" htmlFor={categoryName} error={categoryError}>
-        <Select
+      <F label="Categoria do instrumento" htmlFor={categoryName} error={categoryError}>
+        <S
           id={categoryName}
           name={categoryName}
           value={category}
@@ -46,11 +53,11 @@ export function InstrumentFields({
         >
           <option value="">—</option>
           {INST_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </Select>
-      </Field>
+        </S>
+      </F>
 
-      <Field label={instrumentLabel} htmlFor={instrumentName} error={instrumentError}>
-        <Select
+      <F label={instrumentLabel} htmlFor={instrumentName} error={instrumentError}>
+        <S
           id={instrumentName}
           name={instrumentName}
           value={instrument}
@@ -60,8 +67,8 @@ export function InstrumentFields({
           <option value="">{category ? 'Selecione…' : 'Escolha a categoria primeiro'}</option>
           {extra && <option value={extra}>{extra}</option>}
           {options.map((i) => <option key={i} value={i}>{i}</option>)}
-        </Select>
-      </Field>
+        </S>
+      </F>
     </>
   )
 }
@@ -131,7 +138,7 @@ export function MultiInstrumentField({
             type="button"
             onClick={add}
             disabled={!instrument}
-            className="shrink-0 rounded-xl border border-hairline bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted disabled:opacity-50"
+            className="sn-btn sn-btn-secondary shrink-0"
           >
             Adicionar
           </button>
@@ -141,15 +148,15 @@ export function MultiInstrumentField({
       {list.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {list.map((i) => (
-            <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700">
+            <span key={i} className="sn-badge sn-badge-brand pr-1.5 text-sm">
               {i}
               <button
                 type="button"
                 onClick={() => setList(list.filter((x) => x !== i))}
                 aria-label={`Remover ${i}`}
-                className="text-brand-400 hover:text-brand-700"
+                className="grid h-6 w-6 place-items-center rounded-full hover:bg-(--sn-mint-hover)"
               >
-                ×
+                <IconClose className="h-3.5 w-3.5" />
               </button>
             </span>
           ))}

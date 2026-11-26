@@ -1,9 +1,11 @@
 'use server'
 
 import { getCurrentUser } from '@/lib/auth/session'
+import { randomUUID } from 'node:crypto'
 import { SELLABLE_PLANS, planPrice } from '@/lib/constants/plans'
 import { appBaseUrl, getPaymentProvider } from '@/lib/payments'
 import { createAdminClient } from '@/lib/supabase/server'
+import { dateInBR } from '@/lib/timezone'
 
 export type CheckoutActionState = { ok: boolean; error?: string; url?: string }
 export type SubscribeResult = { ok: boolean; error?: string; status?: string }
@@ -45,8 +47,10 @@ export async function startSaasCheckout(
   let provider
   try { provider = getPaymentProvider() } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Pagamento indisponível.' } }
 
-  const periodStart = new Date().toISOString().slice(0, 10)
-  const externalReference = `${school.id}:${planType}:${periodStart}`
+  const periodStart = dateInBR()
+  // Cada tentativa tem uma referência própria. Referências diárias repetidas
+  // deixam webhooks atrasados ambíguos quando a escola tenta pagar novamente.
+  const externalReference = `${school.id}:${planType}:${periodStart}:${randomUUID()}`
   const { data: payment, error: insErr } = await admin
     .from('saas_payments')
     .insert({ school_id: school.id, plan_type: planType, amount, provider: provider.name, external_reference: externalReference, status: 'pending', period_start: periodStart })
@@ -64,7 +68,7 @@ export async function startSaasCheckout(
       successUrl: `${base}/billing/retorno?status=sucesso`,
       failureUrl: `${base}/billing/retorno?status=falha`,
       pendingUrl: `${base}/billing/retorno?status=pendente`,
-      notificationUrl: `${base}/api/webhooks/mercadopago`,
+      notificationUrl: `${base}/api/webhooks/asaas`,
     })
     await admin.from('saas_payments').update({ provider_preference_id: checkout.preferenceId, updated_at: new Date().toISOString() }).eq('id', payment.id)
     return { ok: true, url: checkout.checkoutUrl }
@@ -96,7 +100,7 @@ export async function subscriptionCheckout(planTypeRaw: string): Promise<Checkou
       schoolId: school.id, planType, amount,
       reason: `Sonorum — plano ${planType} (${school.name})`,
       payerEmail: me.email ?? '',
-      externalReference: `${school.id}:${planType}:sub`,
+      externalReference: `${school.id}:${planType}:sub:${sub.id}`,
       backUrl: `${appBaseUrl()}/billing/retorno?status=sucesso`,
     })
     await admin.from('saas_subscriptions').update({ provider_subscription_id: result.subscriptionId, updated_at: new Date().toISOString() }).eq('id', sub.id)
@@ -145,7 +149,7 @@ export async function createSaasSubscription(input: {
       reason: `Sonorum — plano ${planType} (${school.name})`,
       payerEmail: input.payerEmail || me.email || '',
       cardTokenId: input.cardTokenId,
-      externalReference: `${school.id}:${planType}:sub`,
+      externalReference: `${school.id}:${planType}:sub:${sub.id}`,
       backUrl: `${appBaseUrl()}/billing/retorno?status=sucesso`,
     })
     await admin.from('saas_subscriptions').update({
@@ -158,7 +162,7 @@ export async function createSaasSubscription(input: {
       return { ok: false, error: 'A assinatura não foi autorizada. Verifique os dados do cartão.', status: result.status }
     }
 
-    const today = new Date().toISOString().slice(0, 10)
+    const today = dateInBR()
     const current = school.expiration_date as string | null
     const base = current && current > today ? current : today
     await admin.from('schools').update({

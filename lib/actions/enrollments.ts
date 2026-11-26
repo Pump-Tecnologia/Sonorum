@@ -47,24 +47,17 @@ export async function enrollStudent(
   const d = parsed.data
   const supabase = await createClient()
 
-  // Cancela matrícula ativa anterior (um aluno = uma matrícula ativa por vez).
-  await supabase
-    .from('enrollments')
-    .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
-    .eq('school_id', me.schoolId)
-    .eq('student_id', d.studentId)
-    .eq('status', 'active')
-
-  const { error } = await supabase.from('enrollments').insert({
-    school_id: me.schoolId,
-    student_id: d.studentId,
-    plan_id: d.planId,
-    due_day: d.dueDay,
-    custom_amount: d.customAmount ?? null,
-    status: 'active',
+  // Troca a matrícula dentro de uma transação. Uma falha não deixa o aluno
+  // sem a matrícula anterior, e o banco valida escola/plano/aluno sob lock.
+  const { data, error } = await supabase.rpc('replace_active_enrollment', {
+    p_student_id: d.studentId,
+    p_plan_id: d.planId,
+    p_due_day: d.dueDay,
+    p_custom_amount: d.customAmount ?? null,
   })
-
-  if (error) return { ok: false, error: 'Não foi possível criar a matrícula.' }
+  if (error || !(data as { ok?: boolean } | null)?.ok) {
+    return { ok: false, error: 'Não foi possível criar a matrícula. Confira o aluno e o plano selecionados.' }
+  }
 
   revalidatePath(`/admin/students/${d.studentId}`)
   revalidatePath('/plans')

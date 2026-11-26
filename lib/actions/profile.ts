@@ -59,11 +59,11 @@ export async function updateProfile(_prev: ProfileActionState, formData: FormDat
     }
   }
 
-  const supabase = await createClient()
-  await supabase
+  const { error: profileError } = await admin
     .from('users')
     .update({ name: d.name, email: d.email, phone: d.phone ?? null })
     .eq('id', me.id)
+  if (profileError) return { ok: false, error: 'Não foi possível salvar o perfil.' }
 
   revalidatePath('/profile')
   revalidatePath('/', 'layout')
@@ -96,10 +96,10 @@ export async function updateOwnPassword(_prev: ProfileActionState, formData: For
   return { ok: true }
 }
 
-// Apaga a própria conta — disponível para qualquer usuário
+// Apaga a própria conta — disponível para professores e alunos (administrador encerra via suporte)
 export async function deleteOwnAccount(formData: FormData) {
   const me = await getCurrentUser()
-  if (!me?.email) return
+  if (!me?.email || me.role === 'admin') return
 
   const password = String(formData.get('password') ?? '')
   if (!password) return

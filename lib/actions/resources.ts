@@ -33,7 +33,8 @@ function fe(error: { flatten: () => { fieldErrors: Record<string, string[]> } })
 async function requireStaff() {
   const me = await getCurrentUser()
   if (!me?.schoolId || !['admin', 'teacher'].includes(me.role)) return null
-  return me
+  // Re-tipa schoolId como string (o guard acima garante presença).
+  return { ...me, schoolId: me.schoolId }
 }
 
 export async function createResource(_prev: ResourceActionState, formData: FormData): Promise<ResourceActionState> {
@@ -112,21 +113,24 @@ export async function updateResource(_prev: ResourceActionState, formData: FormD
   const schoolId = me.role === 'superadmin' ? null : me.schoolId
   const supabase = await createClient()
 
-  // Estado atual do arquivo, p/ decidir troca/remoção.
+  // Estado atual do arquivo, p/ decidir troca/remoção. O filtro de school_id é
+  // defesa em profundidade: a RLS já barra cross-tenant, mas não dependemos só dela.
   const { data: existing } = await supabase
     .from('pedagogical_resources')
     .select('file_path')
     .eq('id', resourceId)
+    .eq('school_id', me.schoolId)
     .maybeSingle()
+  if (!existing) return { ok: false, error: 'Recurso não encontrado.' }
 
-  let filePath: string | null = existing?.file_path ?? null
+  let filePath: string | null = existing.file_path ?? null
   const file = formData.get('file')
   if (file instanceof File && file.size > 0) {
     const up = await uploadResourceFile(file, schoolId)
     if (!up.ok) return { ok: false, fieldErrors: { file: up.error } }
-    if (existing?.file_path) await deleteResourceFile(existing.file_path)
+    if (existing.file_path) await deleteResourceFile(existing.file_path)
     filePath = up.path
-  } else if (formData.get('removeFile') === 'on' && existing?.file_path) {
+  } else if (formData.get('removeFile') === 'on' && existing.file_path) {
     await deleteResourceFile(existing.file_path)
     filePath = null
   }
@@ -137,7 +141,7 @@ export async function updateResource(_prev: ResourceActionState, formData: FormD
     body: d.body || null, content_link: d.contentLink || null, description: d.description || null,
     file_path: filePath,
     customized: true, // editar uma cópia marca que ela divergiu do catálogo
-  }).eq('id', resourceId)
+  }).eq('id', resourceId).eq('school_id', me.schoolId)
 
   revalidatePath('/resources')
   redirect('/resources')
@@ -148,13 +152,16 @@ export async function deleteResource(formData: FormData) {
   if (!me) return
   const resourceId = String(formData.get('resourceId') ?? '')
   const supabase = await createClient()
+  // school_id como defesa em profundidade além da RLS.
   const { data: existing } = await supabase
     .from('pedagogical_resources')
     .select('file_path')
     .eq('id', resourceId)
+    .eq('school_id', me.schoolId)
     .maybeSingle()
-  await supabase.from('pedagogical_resources').delete().eq('id', resourceId)
-  if (existing?.file_path) await deleteResourceFile(existing.file_path)
+  if (!existing) return
+  await supabase.from('pedagogical_resources').delete().eq('id', resourceId).eq('school_id', me.schoolId)
+  if (existing.file_path) await deleteResourceFile(existing.file_path)
   revalidatePath('/resources')
 }
 
@@ -168,10 +175,12 @@ export async function restoreResource(formData: FormData) {
   if (!resourceId) return
 
   const supabase = await createClient()
+  // school_id como defesa em profundidade além da RLS.
   const { data: resource } = await supabase
     .from('pedagogical_resources')
     .select('template_id')
     .eq('id', resourceId)
+    .eq('school_id', me.schoolId)
     .maybeSingle()
   if (!resource?.template_id) return
 
@@ -199,6 +208,7 @@ export async function restoreResource(formData: FormData) {
       customized: false,
     })
     .eq('id', resourceId)
+    .eq('school_id', me.schoolId)
 
   revalidatePath('/resources')
 }

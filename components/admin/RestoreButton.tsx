@@ -16,12 +16,15 @@ export function RestoreButton({
   label = 'Restaurar',
   confirmText,
   className,
+  buttonClassName,
 }: {
   action: Action
   hidden: Record<string, string>
   label?: string
   confirmText?: string
   className?: string
+  /** Substitui o estilo padrão do botão (ex.: item do menu "⋯"). */
+  buttonClassName?: string
 }) {
   // Sem confirmText: envia direto. Com confirmText: duas etapas inline (sem window.confirm).
   const [armed, setArmed] = useState(false)
@@ -38,8 +41,8 @@ export function RestoreButton({
   }
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
 
-  const baseClass = cn(
-    'inline-flex items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-300 hover:bg-surface-muted',
+  const baseClass = buttonClassName ?? cn(
+    'sn-btn sn-btn-sm sn-btn-secondary',
     className,
   )
 
@@ -60,7 +63,7 @@ export function RestoreButton({
           <button
             type="button"
             onClick={disarm}
-            className="inline-flex items-center justify-center rounded-lg px-2 py-1.5 text-xs font-semibold text-ink-muted transition-colors hover:text-ink"
+            className="sn-btn sn-btn-sm sn-btn-ghost"
           >
             Voltar
           </button>

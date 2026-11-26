@@ -6,22 +6,16 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type Size = 'sm' | 'md'
 
 const VARIANTS: Record<Variant, string> = {
-  primary:
-    'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-brand disabled:bg-brand-300',
-  secondary:
-    'bg-surface text-ink border border-hairline hover:bg-surface-muted hover:border-brand-300 active:bg-surface-muted',
-  ghost: 'text-ink-muted hover:text-ink hover:bg-surface-muted',
-  danger:
-    'bg-surface text-red-600 border border-red-200 hover:bg-red-50 hover:border-red-300 active:bg-red-100',
+  primary: 'sn-btn-primary',
+  secondary: 'sn-btn-secondary',
+  ghost: 'sn-btn-ghost',
+  danger: 'sn-btn-danger',
 }
 
-const SIZES: Record<Size, string> = {
-  sm: 'gap-1.5 rounded-lg px-3 py-1.5 text-xs',
-  md: 'gap-2 rounded-xl px-4 py-2.5 text-sm',
+// Botão em pílula do padrão novo (.sn-btn em app/globals.css). Telas novas usam components/ds/Button.
+function buttonClass(variant: Variant, size: Size, className?: string): string {
+  return cn('sn-btn', size === 'sm' && 'sn-btn-sm', VARIANTS[variant], className)
 }
-
-const BASE =
-  'inline-flex items-center justify-center font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-70'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -29,7 +23,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export function Button({ variant = 'primary', size = 'md', className, ...props }: ButtonProps) {
-  return <button className={cn(BASE, SIZES[size], VARIANTS[variant], className)} {...props} />
+  return <button className={buttonClass(variant, size, className)} {...props} />
 }
 
 interface LinkButtonProps extends Omit<React.ComponentProps<typeof Link>, 'className'> {
@@ -40,5 +34,5 @@ interface LinkButtonProps extends Omit<React.ComponentProps<typeof Link>, 'class
 
 // Link com aparência de botão — para ações que redirecionam (Editar, Ver mais, etc.).
 export function LinkButton({ variant = 'secondary', size = 'sm', className, ...props }: LinkButtonProps) {
-  return <Link className={cn(BASE, SIZES[size], VARIANTS[variant], className)} {...props} />
+  return <Link className={buttonClass(variant, size, className)} {...props} />
 }

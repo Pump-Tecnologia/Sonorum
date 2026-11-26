@@ -1,0 +1,100 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   Sonorum — Lista de alunos (padrão novo: página de lançamento)
+   A linha inteira abre a ficha do aluno; ações secundárias ficam no "⋯".
+   Tokens em app/globals.css (--sn-*); componentes em components/ds.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.page { padding: 16px 8px 8px; color: var(--sn-ink); font-family: var(--sn-font); }
+
+/* ── Cabeçalho ───────────────────────────────────────────────────────────── */
+.header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 24px; }
+.kicker { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: -.1px; color: var(--sn-text-muted); }
+.count { margin: 4px 0 0; font-size: clamp(30px, 2rem + 1.4vw, 48px); font-weight: 600; letter-spacing: -.04em; line-height: 1.05; color: var(--sn-ink); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── Busca: pílula de vidro com botão redondo ────────────────────────────── */
+.search {
+  display: flex; align-items: center; gap: 6px;
+  width: min(100%, 440px); margin-bottom: 20px; padding: 6px 6px 6px 18px;
+  border-radius: var(--sn-radius-pill);
+  background: var(--sn-glass); border: var(--sn-glass-border); box-shadow: var(--sn-glass-shadow);
+  -webkit-backdrop-filter: var(--sn-glass-blur); backdrop-filter: var(--sn-glass-blur);
+  transition: box-shadow var(--sn-duration) var(--sn-ease);
+}
+.search:focus-within { box-shadow: var(--sn-focus-ring), var(--sn-glass-shadow); }
+.searchIcon { flex-shrink: 0; width: 20px; height: 20px; color: var(--sn-text-muted); }
+.searchInput { flex: 1; min-width: 0; padding: 10px 4px; border: 0; background: transparent; outline: none; font: inherit; font-size: 15px; color: var(--sn-ink); }
+.searchInput::placeholder { color: var(--sn-placeholder); }
+.searchButton { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--sn-mint-soft); color: var(--sn-ink-soft); cursor: pointer; transition: background-color var(--sn-duration) var(--sn-ease), transform var(--sn-duration) var(--sn-ease); }
+.searchButton svg { width: 18px; height: 18px; }
+.searchButton:hover { background: var(--sn-mint-hover); transform: translateX(2px); }
+.searchButton:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
+
+/* ── Lista ───────────────────────────────────────────────────────────────── */
+.list {
+  --cols: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1fr) 100px 144px;
+  margin: 0; padding: 8px; list-style: none;
+  border-radius: var(--sn-radius-xl);
+  background: var(--sn-glass); border: var(--sn-glass-border); box-shadow: var(--sn-glass-shadow);
+  -webkit-backdrop-filter: var(--sn-glass-blur); backdrop-filter: var(--sn-glass-blur);
+}
+.columns { display: grid; grid-template-columns: var(--cols); gap: 16px; padding: 10px 16px 8px; font-size: 12px; font-weight: 500; color: var(--sn-text-subtle); }
+
+.row {
+  position: relative; display: grid; grid-template-columns: var(--cols); align-items: center; gap: 16px;
+  padding: 12px 16px; border-radius: var(--sn-radius-lg);
+  transition: background-color var(--sn-duration) var(--sn-ease), box-shadow var(--sn-duration) var(--sn-ease);
+}
+.row + .row { box-shadow: inset 0 1px 0 var(--sn-hairline); }
+.row:hover { background: #ffffffd9; box-shadow: 0 10px 28px -16px #1c362e40; }
+.row:hover + .row { box-shadow: none; }
+.row:has(.rowLink:focus-visible) { box-shadow: var(--sn-focus-ring); }
+
+.who { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.identity { display: flex; flex-direction: column; min-width: 0; }
+.rowLink { font-size: 15px; font-weight: 600; letter-spacing: -.1px; color: var(--sn-ink); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; outline: none; }
+/* o link "estica" e cobre a linha inteira */
+.rowLink::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.email { font-size: 13px; color: var(--sn-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.cell { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; font-size: 14px; color: var(--sn-ink); }
+.amount { font-size: 13px; color: var(--sn-text-muted); font-variant-numeric: tabular-nums; }
+.none { color: var(--sn-text-subtle); }
+
+.rowActions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+/* o "⋯" fica acima do link esticado para continuar clicável */
+.rowActions > :last-child { position: relative; z-index: 1; }
+/* com o menu aberto, a linha fica acima das seguintes (senão o "⋯" de baixo aparece por cima) */
+.row:has([aria-expanded="true"]) { z-index: 5; }
+.open { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; min-height: 34px; border-radius: var(--sn-radius-pill); font-size: 13px; font-weight: 500; color: var(--sn-ink-soft); background: var(--sn-mint-soft); white-space: nowrap; transition: background-color var(--sn-duration) var(--sn-ease); }
+.open svg { width: 15px; height: 15px; transition: transform var(--sn-duration) var(--sn-ease); }
+.row:hover .open { background: var(--sn-ink); color: #fff; }
+.row:hover .open svg { transform: translateX(2px); }
+
+.empty { margin: 0; padding: 48px 16px; border-radius: var(--sn-radius-xl); background: var(--sn-glass); border: var(--sn-glass-border); text-align: center; font-size: 15px; color: var(--sn-text-muted); }
+
+/* ── Telas médias: some a coluna de instrumento ──────────────────────────── */
+@media (max-width: 1080px) {
+  .list { --cols: minmax(0, 2fr) minmax(0, 1fr) 100px 144px; }
+  .columns span:nth-child(2), .row > .cell[data-label="Instrumento"] { display: none; }
+}
+
+/* ── Celular: cada aluno vira um card ────────────────────────────────────── */
+@media (max-width: 720px) {
+  .page { padding: 8px 4px 4px; }
+  .list { padding: 6px; }
+  .columns { display: none; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 10px 12px; padding: 14px; }
+  .row + .row { box-shadow: inset 0 1px 0 var(--sn-hairline); }
+  .who { grid-column: 1 / -1; padding-right: 44px; }
+  .row > .cell[data-label="Instrumento"] { display: none; }
+  .cell[data-label="Plano"] { flex-direction: row; align-items: baseline; gap: 8px; font-size: 13px; }
+  .cell[data-label="Status"] { justify-self: end; }
+  .rowActions { position: absolute; top: 12px; right: 10px; }
+  .open { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row, .open, .open svg, .searchButton { transition: none; }
+  .row:hover .open svg, .searchButton:hover { transform: none; }
+}

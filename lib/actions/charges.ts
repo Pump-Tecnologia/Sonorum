@@ -1,14 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
-
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/lib/auth/session'
 import { getPlanContext } from '@/lib/auth/plan'
 import { notify } from '@/lib/notifications/notify'
 import { amountForPayment } from '@/lib/finance'
 import { appBaseUrl } from '@/lib/payments'
+import { brMonthBounds, dateInBR, isValidCalendarDate } from '@/lib/timezone'
 
 // Status de aula que contam como "aula dada" para planos por-aula.
 const ATTENDED_STATUSES = ['completed', 'late']
@@ -57,15 +56,15 @@ async function resolvePlanCharge(
 
   if (plan?.billing_type === 'per_class') {
     const [y, m] = dueDate.split('-').map(Number)
-    const monthStart = new Date(y, m - 1, 1)
-    const monthEnd = new Date(y, m, 1) // exclusivo
+    const bounds = brMonthBounds(y, m)
+    if (!bounds) return { error: 'Data de vencimento inválida.' }
     const { data: lessons } = await supabase
       .from('lessons')
       .select('id')
       .eq('school_id', schoolId)
       .eq('student_id', studentId)
-      .gte('start_datetime', monthStart.toISOString())
-      .lt('start_datetime', monthEnd.toISOString())
+      .gte('start_datetime', bounds.startISO)
+      .lt('start_datetime', bounds.endISO)
       .in('status', ATTENDED_STATUSES)
     const count = lessons?.length ?? 0
     if (count === 0) return { error: 'Sem aulas realizadas no mês do vencimento para cobrar por aula.' }
@@ -89,7 +88,7 @@ export async function createCharge(
   const studentId = String(formData.get('studentId') ?? '')
   const dueDate = String(formData.get('dueDate') ?? '')
   if (!/^[0-9a-f-]{32,36}$/i.test(studentId)) return { ok: false, fieldErrors: { studentId: 'Selecione o aluno.' } }
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return { ok: false, fieldErrors: { dueDate: 'Data inválida.' } }
+  if (!isValidCalendarDate(dueDate)) return { ok: false, fieldErrors: { dueDate: 'Data inválida.' } }
 
   const supabase = await createClient()
 
@@ -179,7 +178,7 @@ export async function updateChargeStatus(formData: FormData) {
   let paidAmount: number | null = null
 
   if (status === 'paid') {
-    const paidOn = new Date().toISOString().slice(0, 10)
+    const paidOn = dateInBR()
     paidAmount = amountForPayment(
       Number(charge.amount),
       charge.early_pay_amount != null ? Number(charge.early_pay_amount) : null,
@@ -225,6 +224,8 @@ export async function generateMonthlyCharges(formData: FormData) {
   if (!/^\d{4}-\d{2}$/.test(monthStr)) return
 
   const [year, month] = monthStr.split('-').map(Number)
+  const bounds = brMonthBounds(year, month)
+  if (!bounds) return
   const supabase = await createClient()
 
   const { data: enrollments } = await supabase
@@ -236,14 +237,12 @@ export async function generateMonthlyCharges(formData: FormData) {
   if (!enrollments?.length) return
 
   // Conta aulas realizadas no mês por aluno (necessário só p/ planos por-aula).
-  const monthStart = new Date(year, month - 1, 1)
-  const monthEnd = new Date(year, month, 1) // exclusivo
   const { data: lessons } = await supabase
     .from('lessons')
     .select('student_id, status')
     .eq('school_id', me.schoolId)
-    .gte('start_datetime', monthStart.toISOString())
-    .lt('start_datetime', monthEnd.toISOString())
+    .gte('start_datetime', bounds.startISO)
+    .lt('start_datetime', bounds.endISO)
     .in('status', ATTENDED_STATUSES)
 
   const attendedByStudent = new Map<string, number>()
@@ -267,7 +266,7 @@ export async function generateMonthlyCharges(formData: FormData) {
   for (const e of enrollments) {
     const plan = e.plan as { amount: number; billing_type: string; early_pay_amount: number | null } | null
     const dueDay = Math.min(e.due_day, lastDayOfMonth)
-    const dueDate = new Date(year, month - 1, dueDay).toISOString().slice(0, 10)
+    const dueDate = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(dueDay).padStart(2, '0')}`
     const unit = e.custom_amount != null ? Number(e.custom_amount) : Number(plan?.amount ?? 0)
 
     if (plan?.billing_type === 'per_class') {

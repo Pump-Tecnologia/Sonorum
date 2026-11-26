@@ -13,8 +13,18 @@ const env = Object.fromEntries(
     }),
 )
 
-const email = process.argv[2] || 'superadmin@sonorum.com.br'
-const password = process.argv[3] || 'Sonorum#Super2026'
+const email = process.argv[2]
+const password = process.argv[3]
+
+if (!email || !password) {
+  console.error('Uso: node scripts/seed-superadmin.mjs <email> <senha>')
+  console.error('A senha é obrigatória — não existe senha padrão.')
+  process.exit(1)
+}
+if (password.length < 12) {
+  console.error('❌ Senha muito curta: use ao menos 12 caracteres.')
+  process.exit(1)
+}
 
 const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
@@ -44,4 +54,3 @@ if (e2) {
 console.log('✓ Superadmin criado')
 console.log('  id   :', data.user.id)
 console.log('  email:', email)
-console.log('  senha:', password)
