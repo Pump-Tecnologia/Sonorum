@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useRef, useSyncExternalStore, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useSyncExternalStore, type KeyboardEvent, type ReactNode } from 'react'
 
 import { IconCheck } from '@/components/ds/icons'
 import { InfoButton } from '@/components/ds/InfoButton'
@@ -34,6 +34,15 @@ export function PlannerTabs({ tabs, defaultTab }: { tabs: PlannerTab[]; defaultT
   const hash = useSyncExternalStore(subscribe, readHash, serverHash)
   const baseId = useId()
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
+  const listRef = useRef<HTMLDivElement>(null)
+
+  // Ao abrir por link com âncora (#avaliar), o server desenha a fase padrão e o
+  // navegador troca logo depois. A animação das abas só liga após essa troca,
+  // para ela não aparecer como um piscar na abertura.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => listRef.current?.setAttribute('data-ready', ''))
+    return () => cancelAnimationFrame(frame)
+  }, [])
 
   const current = tabs.find((t) => t.hash === hash) ?? tabs.find((t) => t.id === defaultTab) ?? tabs[0]
   const select = (tab: PlannerTab) => goToHash(tab.hash)
@@ -51,7 +60,7 @@ export function PlannerTabs({ tabs, defaultTab }: { tabs: PlannerTab[]; defaultT
   return (
     <>
       <div className={styles.phaseBar}>
-        <div role="tablist" aria-label="Fases da aula" className={styles.phases}>
+        <div ref={listRef} role="tablist" aria-label="Fases da aula" className={styles.phases}>
           {tabs.map((t, i) => {
             const selected = t.id === current?.id
             return (

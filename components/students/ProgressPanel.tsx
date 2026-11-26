@@ -18,22 +18,25 @@ interface ProgressPanelProps {
   progress: StudentProgress
   /** Ação no canto do título (ex.: enviar relatório ao aluno). */
   action?: React.ReactNode
+  /** Esconde o título "Progresso" quando a página já se chama assim (portal do aluno). */
+  hideTitle?: boolean
 }
 
-export function ProgressPanel({ progress, action }: ProgressPanelProps) {
-  const head = (
+export function ProgressPanel({ progress, action, hideTitle = false }: ProgressPanelProps) {
+  const head = hideTitle ? null : (
     <div className={styles.panelHead}>
       <h2 id="progress-title" className={styles.panelTitle}>Progresso</h2>
       {action}
     </div>
   )
+  const label = hideTitle ? { 'aria-label': 'Progresso' } : { 'aria-labelledby': 'progress-title' }
 
   if (!progress.hasData) {
     return (
-      <section className={styles.panel} aria-labelledby="progress-title">
+      <section className={styles.panel} {...label}>
         {head}
         <p className={styles.empty}>
-          Ainda sem dados. A evolução aparece conforme as aulas e os laudos de desempenho são registrados.
+          Ainda sem aulas avaliadas.
         </p>
       </section>
     )
@@ -44,7 +47,7 @@ export function ProgressPanel({ progress, action }: ProgressPanelProps) {
   const hasScores = scores.some((s) => s.current !== null || s.series.length > 0)
 
   return (
-    <section className={styles.panel} aria-labelledby="progress-title">
+    <section className={styles.panel} {...label}>
       {head}
 
       {/* Notas de desempenho: evolução por dimensão */}

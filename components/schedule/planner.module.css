@@ -59,6 +59,8 @@
 .phase[aria-selected="true"] { background: var(--sn-ink); color: #fff; }
 .phase[aria-selected="true"] .phaseNum { background: var(--sn-mint); color: var(--sn-ink-strong); box-shadow: none; }
 .phasePanel:focus-visible { outline: none; }
+/* sem animação até a fase certa estar marcada (abertura por link com âncora) */
+.phases:not([data-ready]) .phase, .phases:not([data-ready]) .phaseNum { transition: none; }
 
 /* ── Planejar ────────────────────────────────────────────────────────────── */
 .stack { display: flex; flex-direction: column; gap: 20px; }
