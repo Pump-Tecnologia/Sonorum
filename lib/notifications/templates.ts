@@ -1,4 +1,5 @@
 import { SCHOOL_BRAND_COLOR_ENABLED } from '@/lib/constants/branding'
+import { escapeHtml } from '@/lib/notifications/escape-html'
 import type { NotificationEvent, NotificationPayload } from '@/lib/notifications/types'
 
 interface Template {
@@ -40,7 +41,7 @@ function htmlWrap(p: NotificationPayload, inner: string): string {
   </div></body></html>`
 }
 
-export const TEMPLATES: Record<NotificationEvent, Template> = {
+const BASE_TEMPLATES: Record<NotificationEvent, Template> = {
   'charge.created': {
     subject: (p) => `Nova cobrança de ${money(p.amount)} para ${v(p.dueDate)}`,
     email: (p) => {
@@ -137,3 +138,17 @@ export const TEMPLATES: Record<NotificationEvent, Template> = {
     whatsapp: (p) => `${greeting(p)} 🎵\n\nResumo do seu mês em ${v(p.schoolName)}:\n• Aulas: *${v(p.lessonsDone)}*\n• Frequência: *${v(p.attendanceRate)}%*\n• Metas: ${v(p.goalsDone)}/${v(p.goalsTotal)}\n\nContinue assim!`,
   },
 }
+
+const escapePayload = (p: NotificationPayload): NotificationPayload =>
+  Object.fromEntries(Object.entries(p).map(([key, x]) => [key, typeof x === 'string' ? escapeHtml(x) : x]))
+
+// Nomes, títulos e observações são digitados por usuários. Por isso o HTML é montado com o
+// payload escapado e o texto puro com o original, em todo evento (inclusive os novos).
+const withSafeHtml = (template: Template): Template => ({
+  ...template,
+  email: (p) => ({ text: template.email(p).text, html: template.email(escapePayload(p)).html }),
+})
+
+export const TEMPLATES = Object.fromEntries(
+  Object.entries(BASE_TEMPLATES).map(([event, template]) => [event, withSafeHtml(template)]),
+) as Record<NotificationEvent, Template>

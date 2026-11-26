@@ -276,7 +276,7 @@ export async function reconcileStudentCharge(
       await notify('charge.paid', studentId, {
         amount: paidAmount,
         paymentMethod: method,
-      }, { relatedId: charge.id })
+      }, { schoolId: charge.school_id, relatedId: charge.id })
     }
 
     return { handled: true, chargeId: charge.id, status: 'paid' }

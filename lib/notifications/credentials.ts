@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { sendEmail, type EmailResult } from '@/lib/notifications/email'
+import { escapeHtml } from '@/lib/notifications/escape-html'
 import { appBaseUrl } from '@/lib/payments'
 import { createAdminClient } from '@/lib/supabase/server'
 
@@ -12,16 +13,6 @@ interface CredentialsEmailInput {
   name: string | null
   schoolName: string | null
   kind: 'new' | 'reset'
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  })[char]!)
 }
 
 // Gera um token de recuperação e entrega somente um link de uso único; senha

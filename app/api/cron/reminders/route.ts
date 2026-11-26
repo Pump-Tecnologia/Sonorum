@@ -63,7 +63,7 @@ export async function GET(req: Request) {
   try {
     const { data: lessons } = await admin
       .from('lessons')
-      .select('id, title, start_datetime, student_id, room:rooms(name), teacher:users!lessons_teacher_id_fkey(name)')
+      .select('id, school_id, title, start_datetime, student_id, room:rooms(name), teacher:users!lessons_teacher_id_fkey(name)')
       .gte('start_datetime', startOfTomorrow.toISOString())
       .lt('start_datetime', endOfTomorrow.toISOString())
       .neq('status', 'canceled')
@@ -79,7 +79,7 @@ export async function GET(req: Request) {
         time: start.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }),
         room: (l.room as { name: string } | null)?.name ?? null,
         teacherName: (l.teacher as { name: string } | null)?.name ?? null,
-      }, { relatedId: l.id })
+      }, { schoolId: l.school_id, relatedId: l.id })
       summary.lessons++
     }
   } catch (err) {
@@ -92,7 +92,7 @@ export async function GET(req: Request) {
     const in3ISO = in3.toISOString().slice(0, 10)
     const { data: charges } = await admin
       .from('charges')
-      .select('id, amount, due_date, enrollment:enrollments(student_id, plan:plans(name))')
+      .select('id, school_id, amount, due_date, enrollment:enrollments(student_id, plan:plans(name))')
       .eq('status', 'pending')
       .eq('due_date', in3ISO)
     for (const c of charges ?? []) {
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
         dueDate: new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR'),
         daysLeft: 3,
         planName: enr.plan?.name ?? null,
-      }, { relatedId: c.id })
+      }, { schoolId: c.school_id, relatedId: c.id })
       summary.dueSoon++
     }
   } catch (err) {
@@ -119,7 +119,7 @@ export async function GET(req: Request) {
     const yesterdayISO = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
     const { data: charges } = await admin
       .from('charges')
-      .select('id, amount, due_date, enrollment:enrollments(student_id, plan:plans(name))')
+      .select('id, school_id, amount, due_date, enrollment:enrollments(student_id, plan:plans(name))')
       .eq('status', 'pending')
       .eq('due_date', yesterdayISO)
     for (const c of charges ?? []) {
@@ -133,7 +133,7 @@ export async function GET(req: Request) {
         amount: Number(c.amount),
         dueDate: new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR'),
         planName: enr.plan?.name ?? null,
-      }, { relatedId: c.id })
+      }, { schoolId: c.school_id, relatedId: c.id })
       summary.overdue++
     }
   } catch (err) {
