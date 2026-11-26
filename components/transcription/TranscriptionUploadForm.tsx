@@ -32,7 +32,7 @@ export function TranscriptionUploadForm() {
           label="Áudio"
           htmlFor="file"
           error={fe.file}
-          hint="MP3, WAV ou M4A de até 25 MB. Funciona melhor com instrumento solo e gravação limpa. A IA gera um rascunho — você revisa antes de aprovar."
+          hint="MP3, WAV ou M4A de até 25 MB."
         >
           <input
             id="file"

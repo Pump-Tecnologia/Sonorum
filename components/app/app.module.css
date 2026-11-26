@@ -18,7 +18,7 @@
   --ds-surface: #FFFFFF;
   --ds-text: #1c362e;
   --ds-text-muted: #5c7568;
-  --ds-text-subtle: #7b9085;
+  --ds-text-subtle: #607669;
   --ds-hairline: #e3ece6;
   --ds-warning: #C77F00;
   --ds-warning-bg: #FFF4D6;
@@ -598,7 +598,7 @@
 }
 .label {
   font-family: var(--sn-font);
-  font-size: 13px;
+  font-size: var(--sn-field-label);
   font-weight: 500;
   color: var(--sn-ink);
 }
@@ -612,7 +612,7 @@
   border-radius: var(--sn-radius-md);
   background: #ffffffcc;
   font-family: var(--sn-font);
-  font-size: 15px;
+  font-size: var(--sn-field-text);
   color: var(--sn-ink);
   outline: none;
   transition: border-color var(--sn-duration), box-shadow var(--sn-duration), background-color var(--sn-duration);
@@ -638,8 +638,8 @@
   background-position: right 14px center;
 }
 .textarea { min-height: 84px; resize: vertical; line-height: 1.5; }
-.hint { font-size: 12px; color: var(--sn-text-muted); }
-.error { font-size: 12px; color: var(--sn-danger); }
+.hint { font-size: var(--sn-field-hint); color: var(--sn-text-muted); }
+.error { font-size: var(--sn-field-hint); color: var(--sn-danger); }
 
 .alert {
   padding: 12px 14px;
@@ -732,3 +732,7 @@
 
 /* Cartão de formulário curto (superadmin): não estica na largura toda */
 .cardNarrow { max-width: 600px; }
+
+/* Área de toque de 44px sem mudar o desenho do botão */
+.reminderClose { position: relative; }
+.reminderClose::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; }

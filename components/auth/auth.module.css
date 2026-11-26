@@ -15,7 +15,7 @@
   --ds-canvas: #FFFFFF;
   --ds-surface: #FFFFFF;
   --ds-text: #25463c;
-  --ds-text-muted: #71867a;
+  --ds-text-muted: #5c7568;
   --ds-hairline: #e3ece6;
 
   --font-display: var(--font-sans), system-ui, sans-serif;
@@ -213,9 +213,9 @@
 }
 .label {
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: var(--sn-field-label);
   font-weight: 500;
-  color: var(--ds-text-muted);
+  color: var(--sn-ink);
 }
 .input {
   width: 100%;
@@ -224,14 +224,14 @@
   background: #ffffff8c;
   border-radius: 28px;
   font-family: var(--font-body);
-  font-size: 0.8125rem;
+  font-size: var(--sn-field-text);
   line-height: 1.5;
   color: var(--ds-text);
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 .input::placeholder {
-  /* Escala compacta compartilhada por todas as telas de autenticação. */
-  font-size: 0.75rem;
+  /* Mesmo tamanho do texto digitado e do rótulo (tokens --sn-field-*). */
+  font-size: inherit;
   color: color-mix(in oklab, var(--ds-text-muted) 80%, transparent);
 }
 .input:focus {
@@ -243,8 +243,8 @@
   border-color: #DC2626;
   box-shadow: 0 0 0 4px rgb(220 38 38 / 0.1);
 }
-.hint { font-size: 0.75rem; color: var(--ds-text-muted); }
-.error { font-size: 0.75rem; font-weight: 500; color: #DC2626; }
+.hint { font-size: var(--sn-field-hint); color: var(--ds-text-muted); }
+.error { font-size: var(--sn-field-hint); font-weight: 500; color: #DC2626; }
 
 .alert {
   padding: 0.75rem 1rem;
@@ -327,6 +327,7 @@
   text-decoration: none;
 }
 .backLink:hover { color: var(--ds-green-deep); }
+.backIcon { width: 16px; height: 16px; flex: none; }
 
 @keyframes auth-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @media(max-width: 639px) {

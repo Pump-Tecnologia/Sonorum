@@ -1,5 +1,7 @@
+import { PlainSubmit } from '@/components/ds/PlainSubmit'
 import { impersonate } from '@/lib/actions/impersonate'
 
+// A troca de sessão leva alguns segundos: o botão mostra "Entrando…" enquanto isso.
 export function ImpersonateButton({
   targetUserId,
   label = 'Entrar como',
@@ -13,12 +15,9 @@ export function ImpersonateButton({
   return (
     <form action={impersonate} className={className ? undefined : 'inline-flex'}>
       <input type="hidden" name="targetUserId" value={targetUserId} />
-      <button
-        type="submit"
-        className={className ?? 'sn-btn sn-btn-sm sn-btn-secondary'}
-      >
+      <PlainSubmit className={className ?? 'sn-btn sn-btn-sm sn-btn-secondary'} pendingLabel="Entrando…">
         {label}
-      </button>
+      </PlainSubmit>
     </form>
   )
 }

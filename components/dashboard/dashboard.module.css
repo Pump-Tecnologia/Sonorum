@@ -172,7 +172,7 @@ a.row:hover .chevron { transform: translateX(2px); color: var(--sn-ink); }
 /* ── Data em bloco nas listas de aulas ───────────────────────────────────── */
 .dateBlock { display: flex; flex: none; flex-direction: column; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: var(--sn-radius-md); background: #ffffffb3; box-shadow: inset 0 0 0 1px var(--sn-hairline); line-height: 1; }
 .dateBlock strong { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.dateBlock span { margin-top: 3px; font-size: 11px; font-weight: 500; color: var(--sn-text-muted); }
+.dateBlock span { margin-top: 3px; font-size: 12px; font-weight: 500; color: var(--sn-text-muted); }
 
 /* ── Fatos (detalhe da aula do aluno) ────────────────────────────────────── */
 .back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; font-size: 14px; font-weight: 500; color: var(--sn-text-muted); text-decoration: none; border-radius: var(--sn-radius-pill); }
@@ -193,7 +193,7 @@ a.row:hover .chevron { transform: translateX(2px); color: var(--sn-ink); }
 
 /* ── Filtro de período (relatórios) ──────────────────────────────────────── */
 .range { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.range input { width: auto; min-height: 40px; padding: 0 14px; border-radius: var(--sn-radius-pill); font-size: 14px; }
+.range input { width: auto; min-height: 40px; padding: 0 14px; border-radius: var(--sn-radius-pill); font-size: var(--sn-field-text); }
 .rangeSep { font-size: 14px; color: var(--sn-text-muted); }
 
 /* ── Grade de cartões (modelos de aula, planos) ──────────────────────────── */
@@ -220,3 +220,7 @@ a.row:hover .chevron { transform: translateX(2px); color: var(--sn-ink); }
 .dotOk { background: var(--sn-mint); box-shadow: 0 0 0 4px #7cc99b33; }
 .block { display: block; }
 .rowEnd form { display: inline-flex; }
+
+/* Área de toque de 44px sem mudar o desenho do botão */
+.check { position: relative; }
+.check::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; }

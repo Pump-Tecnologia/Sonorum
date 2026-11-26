@@ -68,7 +68,7 @@ export function ResourceForm({
           <Field label="Título" htmlFor="title" error={fe.title}>
             <Input id="title" name="title" defaultValue={resource?.title ?? ''} placeholder="Ex.: Escala de Dó maior em duas oitavas" required invalid={!!fe.title} />
           </Field>
-          <Field label="Descrição curta" htmlFor="description" error={fe.description} hint="Aparece no cartão, para o aluno saber do que se trata.">
+          <Field label="Descrição curta" htmlFor="description" error={fe.description} hint="Aparece no cartão do recurso.">
             <Textarea id="description" name="description" rows={2} defaultValue={resource?.description ?? ''} />
           </Field>
         </div>

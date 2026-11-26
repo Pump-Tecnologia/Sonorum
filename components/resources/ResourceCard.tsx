@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { RestoreButton } from '@/components/admin/RestoreButton'
 import { IconArrowRight, IconPlus } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { MoreMenu } from '@/components/ds/MoreMenu'
 import dsStyles from '@/components/ds/ds.module.css'
 import { areaMeta, contentMeta, coverFor, difficultyLevel, topicMeta, type Cover } from '@/components/resources/resource-meta'
@@ -192,8 +193,10 @@ export function Shelf({
     <section className={styles.topic} aria-labelledby={id}>
       <header className={styles.topicHead}>
         <div className={styles.topicText}>
-          <h2 id={id} className={styles.topicName}>{title}</h2>
-          <p className={styles.topicHint}>{hint}</p>
+          <div className={styles.topicNameRow}>
+            <h2 id={id} className={styles.topicName}>{title}</h2>
+            <InfoButton label={`Sobre ${title.toLowerCase()}`}>{hint}</InfoButton>
+          </div>
         </div>
         <span className={styles.topicCount}>{count} {count === 1 ? 'recurso' : 'recursos'}</span>
       </header>
@@ -222,8 +225,10 @@ export function TopicSection({
       <header className={styles.topicHead}>
         <span className={styles.topicIcon}><topic.Icon /></span>
         <div className={styles.topicText}>
-          <h2 id={id} className={styles.topicName}>{category}</h2>
-          {topic.hint && <p className={styles.topicHint}>{topic.hint}</p>}
+          <div className={styles.topicNameRow}>
+            <h2 id={id} className={styles.topicName}>{category}</h2>
+            {topic.hint && <InfoButton label={`Sobre ${category.toLowerCase()}`}>{topic.hint}</InfoButton>}
+          </div>
         </div>
         <span className={styles.topicCount}>{count} {count === 1 ? unit[0] : unit[1]}</span>
       </header>

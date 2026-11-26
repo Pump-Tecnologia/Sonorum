@@ -10,7 +10,7 @@
 .header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 24px; }
 .kicker { margin: 0; font-size: 14px; font-weight: 500; letter-spacing: -.1px; color: var(--sn-text-muted); }
 .title { margin: 4px 0 0; font-size: clamp(30px, 2rem + 1.4vw, 48px); font-weight: 600; letter-spacing: -.04em; line-height: 1.05; color: var(--sn-ink); }
-.lead { margin: 8px 0 0; max-width: 520px; font-size: 15px; line-height: 1.5; color: var(--sn-text-muted); }
+.titleRow { display: flex; align-items: center; gap: 4px; }
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .backLink { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; font-size: 14px; font-weight: 500; color: var(--sn-text-muted); text-decoration: none; }
 .backLink svg { width: 16px; height: 16px; transition: transform var(--sn-duration) var(--sn-ease); }
@@ -30,7 +30,7 @@
 }
 .search:focus-within { box-shadow: var(--sn-focus-ring), var(--sn-glass-shadow); }
 .search svg { flex-shrink: 0; width: 20px; height: 20px; color: var(--sn-text-muted); }
-.searchInput { flex: 1; min-width: 0; padding: 12px 4px; border: 0; background: transparent; outline: none; font: inherit; font-size: 15px; color: var(--sn-ink); }
+.searchInput { flex: 1; min-width: 0; padding: 12px 4px; border: 0; background: transparent; outline: none; font: inherit; font-size: var(--sn-field-text); color: var(--sn-ink); }
 .searchInput::placeholder { color: var(--sn-placeholder); }
 
 .pillSelect {
@@ -83,7 +83,7 @@
 .topicIcon svg { width: 24px; height: 24px; }
 .topicText { min-width: 0; }
 .topicName { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.3px; color: var(--sn-ink); }
-.topicHint { margin: 2px 0 0; font-size: 14px; color: var(--sn-text-muted); }
+.topicNameRow { display: flex; align-items: center; gap: 2px; }
 .topicCount { margin-left: auto; padding: 4px 12px; border-radius: var(--sn-radius-pill); background: #ffffffa8; box-shadow: inset 0 0 0 1px var(--sn-hairline); font-size: 13px; font-weight: 500; color: var(--sn-text-muted); white-space: nowrap; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: 16px; margin: 0; padding: 0; list-style: none; }

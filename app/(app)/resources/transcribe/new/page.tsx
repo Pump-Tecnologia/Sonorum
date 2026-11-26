@@ -14,7 +14,7 @@ export default async function NewTranscriptionPage() {
     <>
       <PageHeader
         title="Transcrever áudio"
-        info="A IA gera um rascunho de cifra a partir do áudio e você revisa antes de publicar. O recurso ainda está sendo finalizado e os resultados podem sair imprecisos."
+        info="A IA gera um rascunho de cifra a partir do áudio e você revisa antes de publicar. Funciona melhor com instrumento solo e gravação limpa. O recurso ainda está sendo finalizado e os resultados podem sair imprecisos."
         back={{ href: '/resources/transcribe', label: 'Transcrições' }}
       />
       <div className="mb-6 px-2">

@@ -1,5 +1,6 @@
 import { LinkButton, SubmitButton } from '@/components/ds/Button'
 import { IconPlus } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { NewResourceTile, ResourceCard, ResourceRow, Shelf, type ResourceItem } from '@/components/resources/ResourceCard'
 import { ResourceFilters } from '@/components/resources/ResourceFilters'
 import styles from '@/components/resources/resources.module.css'
@@ -66,8 +67,10 @@ export default async function ResourcesPage({ searchParams }: { searchParams: Pr
       <header className={styles.header}>
         <div>
           <h1 id="resources-title" className={styles.kicker}>Recursos pedagógicos</h1>
-          <p className={styles.title}>{filtered ? `${count} no filtro` : count}</p>
-          <p className={styles.lead}>O material das suas aulas. Use nas aulas e o aluno encontra tudo no portal dele.</p>
+          <div className={styles.titleRow}>
+            <p className={styles.title}>{filtered ? `${count} no filtro` : count}</p>
+            <InfoButton label="Sobre os recursos">O material das suas aulas. Use nas aulas e o aluno encontra tudo no portal dele.</InfoButton>
+          </div>
         </div>
         <div className={styles.actions}>
           <form action={restoreLibrary}>

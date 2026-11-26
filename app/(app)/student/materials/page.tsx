@@ -1,3 +1,4 @@
+import { InfoButton } from '@/components/ds/InfoButton'
 import { ResourceCard, TopicSection, type ResourceItem } from '@/components/resources/ResourceCard'
 import { topicOrder } from '@/components/resources/resource-meta'
 import styles from '@/components/resources/resources.module.css'
@@ -40,8 +41,10 @@ export default async function StudentMaterialsPage() {
       <header className={styles.header}>
         <div>
           <h1 id="materials-title" className={styles.kicker}>Meus materiais</h1>
-          <p className={styles.title}>{materials.length ? count : 'Seus materiais'}</p>
-          <p className={styles.lead}>Tudo o que o seu professor usou nas aulas, separado por tópico, para você praticar em casa.</p>
+          <div className={styles.titleRow}>
+            <p className={styles.title}>{materials.length ? count : 'Seus materiais'}</p>
+            <InfoButton label="Sobre os materiais">Tudo o que o seu professor usou nas aulas, separado por tópico, para você praticar em casa.</InfoButton>
+          </div>
         </div>
       </header>
 

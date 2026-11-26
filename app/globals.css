@@ -42,7 +42,7 @@
 /* ── Padrão novo (página de lançamento) ─────────────────────────────────────
    Verde da marca, menta e superfícies de vidro. As telas migram uma a uma
    para estes tokens (prefixo --sn-); os componentes ficam em components/ds.
-   Contrastes conferidos sobre branco: ink 10,4:1 · muted 5,0:1 · danger 6,6:1. */
+   Contrastes conferidos sobre branco: ink 10,4:1, muted 5,0:1, subtle 4,9:1 (4,55:1 no vidro), danger 6,6:1. */
 :root {
   --sn-ink: #25463c;
   --sn-ink-strong: #1c362e;
@@ -52,7 +52,7 @@
   --sn-mint-soft: #e4f2e8;
   --sn-mint-hover: #cde7d5;
   --sn-text-muted: #5c7568;
-  --sn-text-subtle: #7b9085;
+  --sn-text-subtle: #607669;
   --sn-placeholder: #91a198;
   --sn-hairline: #3159471a;
   --sn-hairline-strong: #31594729;
@@ -80,6 +80,13 @@
   --sn-shadow-pop: 0 30px 70px -24px #1c362e40;
   --sn-focus-ring: 0 0 0 2px #7cc99b88;
 
+  /* Campos: rótulo e texto digitado no MESMO tamanho (o rótulo se destaca
+     pelo peso e pela cor). No celular sobe para 16px: abaixo disso o iPhone
+     dá zoom na página ao tocar no campo. */
+  --sn-field-label: 14px;
+  --sn-field-text: 14px;
+  --sn-field-hint: 12px;
+
   --sn-radius-sm: 10px;
   --sn-radius-md: 14px;
   --sn-radius-lg: 20px;
@@ -89,6 +96,10 @@
   --sn-font: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --sn-ease: cubic-bezier(.2, .7, .2, 1);
   --sn-duration: 180ms;
+}
+
+@media (max-width: 640px) {
+  :root { --sn-field-label: 16px; --sn-field-text: 16px; --sn-field-hint: 13px; }
 }
 
 html {
@@ -176,9 +187,9 @@ body {
   .sn-badge-danger { color: var(--sn-danger); background: var(--sn-danger-soft); }
 
   .sn-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
-  .sn-label { font-family: var(--sn-font); font-size: 13px; font-weight: 500; color: var(--sn-ink); }
-  .sn-hint { margin: 0; font-size: 12px; color: var(--sn-text-muted); }
-  .sn-error { margin: 0; font-size: 12px; color: var(--sn-danger); }
+  .sn-label { font-family: var(--sn-font); font-size: var(--sn-field-label); font-weight: 500; color: var(--sn-ink); }
+  .sn-hint { margin: 0; font-size: var(--sn-field-hint); color: var(--sn-text-muted); }
+  .sn-error { margin: 0; font-size: var(--sn-field-hint); color: var(--sn-danger); }
   .sn-control {
     width: 100%;
     min-height: 46px;
@@ -186,7 +197,7 @@ body {
     border: 1px solid var(--sn-hairline-strong);
     border-radius: var(--sn-radius-md);
     font-family: var(--sn-font);
-    font-size: 15px;
+    font-size: var(--sn-field-text);
     color: var(--sn-ink);
     background: #ffffffcc;
     outline: none;

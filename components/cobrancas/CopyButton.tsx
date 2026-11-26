@@ -32,7 +32,7 @@ export function CopyButton({ value, label = 'Copiar', className }: CopyButtonPro
       }
       aria-live="polite"
     >
-      {copied ? 'Copiado ✓' : label}
+      {copied ? 'Copiado' : label}
     </button>
   )
 }

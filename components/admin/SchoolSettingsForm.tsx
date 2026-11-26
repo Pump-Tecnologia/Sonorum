@@ -148,7 +148,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
               </Field>
               <Field label="Tipo da chave" htmlFor="pixKeyType" error={fe.pixKeyType}>
                 <Select id="pixKeyType" name="pixKeyType" defaultValue={school.pixKeyType ?? ''}>
-                  <option value="">—</option>
+                  <option value="">Selecione…</option>
                   {PIX_KEY_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}

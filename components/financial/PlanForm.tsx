@@ -86,7 +86,7 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
             label="Valor com desconto de pontualidade (R$)"
             htmlFor={`early-${k}`}
             error={fe.earlyPayAmount}
-            hint="Deixe vazio se não houver desconto. Vale quando o aluno paga até o vencimento."
+            hint="Vale até o vencimento. Vazio, sem desconto."
           >
             <Input id={`early-${k}`} name="earlyPayAmount" type="number" min="0" step="0.01" defaultValue={plan?.early_pay_amount ?? ''} placeholder="Sem desconto" />
           </Field>
