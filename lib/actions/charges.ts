@@ -131,7 +131,7 @@ export async function createCharge(
     dueDate: new Date(dueDate + 'T12:00:00').toLocaleDateString('pt-BR'),
     planName,
     payUrl: `${appBaseUrl()}/pagar/${inserted.id}`,
-  }, { relatedId: inserted.id }).catch(() => {})
+  }, { schoolId: me.schoolId, relatedId: inserted.id }).catch(() => {})
 
   revalidatePath('/financial')
   return { ok: true, chargeId: inserted.id }
@@ -204,7 +204,7 @@ export async function updateChargeStatus(formData: FormData) {
       await notify('charge.paid', studentId, {
         amount: paidAmount ?? Number(charge.amount),
         paymentMethod,
-      }, { relatedId: chargeId })
+      }, { schoolId: me.schoolId, relatedId: chargeId })
     }
   }
 
@@ -313,7 +313,7 @@ export async function generateMonthlyCharges(formData: FormData) {
         dueDate: new Date(c.due_date + 'T12:00:00').toLocaleDateString('pt-BR'),
         planName: enr.plan?.name ?? null,
         payUrl: `${appBaseUrl()}/pagar/${c.id}`,
-      }, { relatedId: c.id })
+      }, { schoolId: me.schoolId, relatedId: c.id })
     }))
   }
 

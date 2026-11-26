@@ -24,7 +24,9 @@ export interface NotifyResult {
 }
 
 interface NotifyOptions {
-  schoolId?: string | null
+  // Escola em nome de quem o aviso sai. O aluno precisa ser dela, senão nada é enviado nem
+  // registrado: o admin client ignora RLS, então esta é a barreira entre escolas.
+  schoolId: string | null
   relatedId?: string | null
   // Override do destinatário (cron/scripts) — senão lê de users.notify_to.
   notifyTo?: NotifyTo
@@ -37,8 +39,9 @@ const DEFAULT_CHANNELS: Array<'email' | 'whatsapp'> = ['email', 'whatsapp']
 // Resolve destinatários do aluno conforme users.notify_to.
 async function resolveRecipients(
   studentId: string,
+  senderSchoolId: string | null,
   override?: NotifyTo,
-): Promise<{ recipients: Recipient[]; schoolId: string | null; studentName: string; schoolName: string | null; brandPrimary: string | null; logoUrl: string | null; whatsappOfficial: boolean; emailEnabled: boolean }> {
+): Promise<{ recipients: Recipient[]; blocked: boolean; schoolId: string | null; studentName: string; schoolName: string | null; brandPrimary: string | null; logoUrl: string | null; whatsappOfficial: boolean; emailEnabled: boolean }> {
   const admin = await createAdminClient()
   const { data: student } = await admin
     .from('users')
@@ -46,8 +49,9 @@ async function resolveRecipients(
     .eq('id', studentId)
     .maybeSingle()
 
-  if (!student) {
-    return { recipients: [], schoolId: null, studentName: '', schoolName: null, brandPrimary: null, logoUrl: null, whatsappOfficial: false, emailEnabled: false }
+  const isSendersStudent = Boolean(senderSchoolId) && student?.school_id === senderSchoolId
+  if (!student || !isSendersStudent) {
+    return { recipients: [], blocked: Boolean(student), schoolId: null, studentName: '', schoolName: null, brandPrimary: null, logoUrl: null, whatsappOfficial: false, emailEnabled: false }
   }
 
   const target = (override ?? (student.notify_to as NotifyTo | null) ?? 'both')
@@ -74,6 +78,7 @@ async function resolveRecipients(
 
   return {
     recipients,
+    blocked: false,
     schoolId: student.school_id ?? null,
     studentName: student.name ?? '',
     schoolName: school?.custom_name || school?.name || null,
@@ -91,11 +96,12 @@ async function resolveRecipients(
 export async function notify(
   event: NotificationEvent,
   studentId: string,
-  payload: NotificationPayload = {},
-  options: NotifyOptions = {},
+  payload: NotificationPayload,
+  options: NotifyOptions,
 ): Promise<NotifyResult> {
   const admin = await createAdminClient()
-  const { recipients, schoolId, studentName, schoolName, brandPrimary, logoUrl, whatsappOfficial, emailEnabled } = await resolveRecipients(studentId, options.notifyTo)
+  const { recipients, blocked, schoolId, studentName, schoolName, brandPrimary, logoUrl, whatsappOfficial, emailEnabled } = await resolveRecipients(studentId, options.schoolId, options.notifyTo)
+  if (blocked) console.warn(`[notify] ${event} bloqueado: aluno ${studentId} não é da escola ${options.schoolId}`)
 
   // Enriquecimento do payload (template usa essas chaves).
   const fullPayload: NotificationPayload = {

@@ -7,6 +7,7 @@ import { notify } from '@/lib/notifications/notify'
 import type { NotificationEvent } from '@/lib/notifications/types'
 import { getStudentProgress } from '@/lib/data/progress'
 import { appBaseUrl } from '@/lib/payments'
+import { deliverLessonReport } from '@/lib/reports/lesson-report'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export type NotifyActionState = {
@@ -67,7 +68,7 @@ export async function sendStudentReport(
     attendanceRate: progress.attendance.rate,
     goalsDone: progress.goals.completed,
     goalsTotal: progress.goals.total,
-  })
+  }, { schoolId: me.schoolId })
 
   return { ok: true, whatsappLinks: result.whatsapp.links }
 }
@@ -109,7 +110,7 @@ export async function notifyCharge(
     planName: enr?.plan?.name ?? charge.description ?? null,
     paymentMethod: charge.payment_method,
     payUrl: `${appBaseUrl()}/pagar/${chargeId}`,
-  }, { relatedId: chargeId })
+  }, { schoolId: me.schoolId, relatedId: chargeId })
 
   revalidatePath('/financial')
   return { ok: true, whatsappLinks: result.whatsapp.links }
@@ -131,38 +132,12 @@ export async function sendLessonReport(
   const lessonId = String(formData.get('lessonId') ?? '')
   if (!lessonId) return { ok: false, error: 'Aula inválida.' }
 
-  const admin = await createAdminClient()
-  const { data: lesson } = await admin
-    .from('lessons')
-    .select('id, title, start_datetime, notes, student_id, school_id, report:lesson_reports(technique_score, theory_score, repertoire_score, practice_score, current_song, initial_bpm, reached_bpm)')
-    .eq('id', lessonId)
-    .maybeSingle()
-
-  if (!lesson || lesson.school_id !== me.schoolId) return { ok: false, error: 'Aula não encontrada.' }
-  const report = (Array.isArray(lesson.report) ? lesson.report[0] : lesson.report) as
-    | { technique_score: number; theory_score: number; repertoire_score: number; practice_score: number; current_song: string | null; initial_bpm: number | null; reached_bpm: number | null }
-    | null
-  if (!report) return { ok: false, error: 'Preencha o relatório da aula antes de enviar.' }
-
-  const lessonDate = new Date(lesson.start_datetime).toLocaleDateString('pt-BR')
-  const bpm = report.initial_bpm && report.reached_bpm ? `${report.initial_bpm} → ${report.reached_bpm}` : null
-
-  const result = await notify('lesson.report', lesson.student_id, {
-    lessonTitle: lesson.title,
-    lessonDate,
-    reportUrl: `${appBaseUrl()}/relatorio/${lessonId}`,
-    technique: report.technique_score,
-    theory: report.theory_score,
-    repertoire: report.repertoire_score,
-    practice: report.practice_score,
-    currentSong: report.current_song,
-    bpm,
-    notes: lesson.notes ?? null,
-  }, { relatedId: lessonId })
+  const delivery = await deliverLessonReport(lessonId, me.schoolId)
+  if (!delivery.ok) return delivery
 
   revalidatePath(`/lessons/${lessonId}/planner`)
   revalidatePath('/admin/reports')
-  return { ok: true, whatsappLinks: result.whatsapp.links }
+  return { ok: true, whatsappLinks: delivery.result.whatsapp.links }
 }
 
 // Salva o relatório da aula E, em planos com Relatórios, já envia ao aluno —
@@ -246,7 +221,7 @@ export async function notifyLesson(
     time,
     room,
     teacherName,
-  }, { relatedId: lessonId })
+  }, { schoolId: me.schoolId, relatedId: lessonId })
 
   revalidatePath('/schedule')
   return { ok: true, whatsappLinks: result.whatsapp.links }

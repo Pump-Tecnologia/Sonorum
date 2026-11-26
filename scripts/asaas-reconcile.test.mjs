@@ -135,8 +135,8 @@ test('reconcileStudentCharge dá baixa automática em charges e dispara notifica
     '@/lib/notifications/notify': { notify: async () => {} },
     '@/lib/payments': { getPaymentProvider: () => ({ name: 'asaas' }) },
     '@/lib/notifications/notify': {
-      notify: async (event, studentId, payload) => {
-        notifiedEvent = { event, studentId, payload }
+      notify: async (event, studentId, payload, options) => {
+        notifiedEvent = { event, studentId, payload, options }
       },
     },
     '@/lib/supabase/server': {
@@ -152,6 +152,7 @@ test('reconcileStudentCharge dá baixa automática em charges e dispara notifica
                       amount: 250.0,
                       status: 'pending',
                       student_id: 'student-uuid-1',
+                      school_id: 'school-uuid-1',
                     },
                   }),
                 }),
@@ -162,6 +163,7 @@ test('reconcileStudentCharge dá baixa automática em charges e dispara notifica
                       amount: 250.0,
                       status: 'pending',
                       student_id: 'student-uuid-1',
+                      school_id: 'school-uuid-1',
                     },
                   }),
                 }),
@@ -193,5 +195,6 @@ test('reconcileStudentCharge dá baixa automática em charges e dispara notifica
   assert.equal(updatedCharge.asaas_charge_id, 'pay_asaas_999')
   assert.equal(notifiedEvent.event, 'charge.paid')
   assert.equal(notifiedEvent.studentId, 'student-uuid-1')
+  assert.equal(notifiedEvent.options.schoolId, 'school-uuid-1')
 })
 

@@ -167,7 +167,7 @@ export async function createLesson(
   await notify('lesson.scheduled', d.studentId, {
     title: d.title,
     when: firstStart.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-  })
+  }, { schoolId: me.schoolId })
 
   revalidatePath('/schedule')
   return { ok: true }
@@ -421,7 +421,7 @@ export async function cancelLesson(formData: FormData) {
   if (lesson) {
     await notify('lesson.canceled', lesson.student_id, {
       when: new Date(lesson.start_datetime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-    }, { relatedId: lessonId })
+    }, { schoolId: me.schoolId, relatedId: lessonId })
   }
 
   revalidatePath('/schedule')
