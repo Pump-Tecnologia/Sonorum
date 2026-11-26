@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from 'react'
 
 import { LinkButton, SubmitButton } from '@/components/ds/Button'
+import { ExternalLink } from '@/components/ds/ExternalLink'
 import { Field, FieldRow, FormAlert, Input, Select, Textarea } from '@/components/ds/Field'
 import { contentMeta } from '@/components/resources/resource-meta'
 import { ResourcePreview, type PreviewKind } from '@/components/resources/ResourcePreview'
@@ -132,7 +133,7 @@ export function ResourceForm({
             />
             {currentFile && (
               <div className={styles.current}>
-                <a href={currentFile.url} target="_blank" rel="noopener noreferrer">Ver o arquivo atual</a>
+                <ExternalLink href={currentFile.url}>Ver o arquivo atual</ExternalLink>
                 <label><input type="checkbox" name="removeFile" checked={removeCurrent} onChange={(e) => setRemoveCurrent(e.target.checked)} /> Remover</label>
               </div>
             )}

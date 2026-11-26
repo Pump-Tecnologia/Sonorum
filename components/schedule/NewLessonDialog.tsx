@@ -63,7 +63,7 @@ export function NewLessonDialog({ open, range, students, teachers, rooms, role, 
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Nova aula" subtitle="Marque uma vez e, se quiser, repita toda semana.">
+    <Dialog open={open} onClose={onClose} title="Nova aula" info="Marque uma vez e, se quiser, repita toda semana.">
       {state.error && <FormAlert>{state.error}</FormAlert>}
 
       {/* O React limpa o form depois de cada action, inclusive com erro de

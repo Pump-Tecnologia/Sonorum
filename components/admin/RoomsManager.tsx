@@ -2,8 +2,8 @@
 
 import { useActionState } from 'react'
 
+import { SubmitButton } from '@/components/ds/Button'
 import { DeleteButton } from '@/components/admin/DeleteButton'
-import { SubmitButton } from '@/components/auth/SubmitButton'
 import { InfoButton } from '@/components/ds/InfoButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
@@ -62,7 +62,7 @@ export function RoomsManager({ rooms }: { rooms: Room[] }) {
               <Input id="name" name="name" placeholder="Sala 1, Estúdio" required />
             </Field>
           </div>
-          <SubmitButton fullWidth={false} pendingLabel="Criando…">Adicionar</SubmitButton>
+          <SubmitButton pendingLabel="Criando…">Adicionar</SubmitButton>
         </div>
       </form>
     </Card>

@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { createTemplate, updateTemplate, type TemplateActionState } from '@/lib/actions/resource-templates'
@@ -83,7 +83,7 @@ export function TemplateForm({ template }: { template?: TemplateData }) {
           <Textarea id="body" name="body" rows={6} defaultValue={template?.body ?? ''} className="font-mono" />
         </Field>
 
-        <SubmitButton pendingLabel="Salvando…">{isEdit ? 'Salvar alterações' : 'Criar recurso'}</SubmitButton>
+        <SubmitButton className="w-full" pendingLabel="Salvando…">{isEdit ? 'Salvar alterações' : 'Criar recurso'}</SubmitButton>
       </form>
     </Card>
   )

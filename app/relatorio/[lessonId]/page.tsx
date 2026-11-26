@@ -52,7 +52,7 @@ export default async function ReportPage({ params }: { params: Promise<{ lessonI
         <div className="flex items-center gap-3">
           {school?.logo_path && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={school.logo_path} alt="" className="h-10 w-10 rounded-lg object-contain" />
+            <img src={school.logo_path} alt="" width={40} height={40} className="h-10 w-10 rounded-lg object-contain" />
           )}
           <span className="text-lg font-semibold" style={{ color: accent }}>{schoolName}</span>
         </div>

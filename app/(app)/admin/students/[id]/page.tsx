@@ -10,6 +10,7 @@ import { StudentNotes } from '@/components/admin/StudentNotes'
 import { Avatar } from '@/components/ds/Avatar'
 import { LinkButton } from '@/components/ds/Button'
 import { IconArrowLeft } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { MoreMenu } from '@/components/ds/MoreMenu'
 import { StatusPill } from '@/components/ds/StatusPill'
 import dsStyles from '@/components/ds/ds.module.css'
@@ -106,9 +107,9 @@ export default async function StudentDetailPage({
             action={sendStudentReport}
             hidden={{ studentId: student.id }}
             label="Enviar relatório"
-            title="Envia o resumo de aulas, frequência e metas por e-mail e WhatsApp"
             className={dsStyles.heroSoftButton}
           />
+          <InfoButton label="Sobre o relatório" align="end">Envia ao aluno o resumo de aulas, frequência e metas por e-mail e WhatsApp.</InfoButton>
           <LinkButton href={`/admin/students/${student.id}/edit`}>Editar dados</LinkButton>
           <MoreMenu label={`Mais ações para ${student.name}`}>
             <ResetPasswordButton userId={student.id} userName={student.name} className={dsStyles.menuItem} />

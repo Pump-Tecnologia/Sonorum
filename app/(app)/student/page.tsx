@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
 import { LinkButton } from '@/components/ds/Button'
-import { IconArrowRight, IconCheck } from '@/components/ds/icons'
+import { IconArrowRight } from '@/components/ds/icons'
 import { StatusPill } from '@/components/ds/StatusPill'
 import { DashHeader, Panel } from '@/components/dashboard/parts'
+import { GoalToggle } from '@/components/students/GoalToggle'
 import styles from '@/components/dashboard/dashboard.module.css'
 import { lessonStatus } from '@/lib/constants/lessons'
-import { toggleGoal } from '@/lib/actions/student-detail'
 import { requireCurrentUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { getStudentLessonTeachers } from '@/lib/data/student-lesson-teachers'
@@ -120,19 +120,14 @@ export default async function StudentDashboard() {
             <ul className={styles.goals}>
               {goals.map((g) => (
                 <li key={g.id} className={styles.goal}>
-                  <form action={toggleGoal}>
-                    <input type="hidden" name="goalId" value={g.id} />
-                    <input type="hidden" name="studentId" value={user.id} />
-                    <input type="hidden" name="completed" value={String(g.completed)} />
-                    <button
-                      type="submit"
-                      aria-pressed={g.completed}
-                      aria-label={g.completed ? `Desmarcar: ${g.text}` : `Concluir: ${g.text}`}
-                      className={styles.check}
-                    >
-                      <IconCheck />
-                    </button>
-                  </form>
+                  <GoalToggle
+                    goalId={g.id}
+                    studentId={user.id}
+                    completed={g.completed}
+                    labelWhenDone={`Desmarcar: ${g.text}`}
+                    labelWhenPending={`Concluir: ${g.text}`}
+                    className={styles.check}
+                  />
                   <span className={cn(styles.goalText, g.completed && styles.goalDone)}>{g.text}</span>
                 </li>
               ))}

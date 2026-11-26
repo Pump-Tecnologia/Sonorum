@@ -141,6 +141,7 @@
 .dialog::backdrop { background: #1c362e52; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .dialogBody { padding: 28px; }
 .dialogHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.dialogTitleRow { display: flex; align-items: center; gap: 8px; }
 .dialogTitle { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -.6px; line-height: 1.15; color: var(--sn-ink); }
 .dialogSubtitle { margin: 6px 0 0; font-size: 14px; color: var(--sn-text-muted); }
 .dialogFooter { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
@@ -248,3 +249,6 @@ select.control {
 /* Área de toque de 44px sem mudar o desenho do botão */
 .infoTrigger { position: relative; }
 .infoTrigger::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; }
+
+/* Ícone de link que abre em nova aba (ExternalLink). */
+.externalIcon { display: inline-block; width: 1em; height: 1em; flex: none; margin-left: .3em; vertical-align: -.125em; }

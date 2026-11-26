@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { Field, Input } from '@/components/ui/Field'
 import { updateProfile, type ProfileActionState } from '@/lib/actions/profile'
 
@@ -37,7 +37,7 @@ export function ProfileForm({ user }: { user: User }) {
         <Input id="phone" name="phone" defaultValue={user.phone ?? ''} />
       </Field>
 
-      <SubmitButton pendingLabel="Salvando…">Salvar perfil</SubmitButton>
+      <SubmitButton className="w-full" pendingLabel="Salvando…">Salvar perfil</SubmitButton>
     </form>
   )
 }

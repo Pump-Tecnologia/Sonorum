@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { Field, Input } from '@/components/ui/Field'
 import { updateOwnPassword, type ProfileActionState } from '@/lib/actions/profile'
 
@@ -35,7 +35,7 @@ export function PasswordForm() {
         <Input id="confirmation" name="confirmation" type="password" autoComplete="new-password" required />
       </Field>
 
-      <SubmitButton pendingLabel="Salvando…">Alterar senha</SubmitButton>
+      <SubmitButton className="w-full" pendingLabel="Salvando…">Alterar senha</SubmitButton>
     </form>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { CreatePersonResult } from '@/components/admin/CreatePersonResult'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
@@ -50,7 +50,7 @@ export function CreateTeacherForm() {
         <MultiInstrumentField name="instruments" label="Instrumentos" />
         {fe.instruments && <p className="sn-error" role="alert">{fe.instruments}</p>}
 
-        <SubmitButton pendingLabel="Criando…">Criar professor</SubmitButton>
+        <SubmitButton className="w-full" pendingLabel="Criando…">Criar professor</SubmitButton>
       </form>
     </Card>
   )

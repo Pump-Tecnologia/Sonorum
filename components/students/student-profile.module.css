@@ -95,6 +95,7 @@
 .check:hover { border-color: var(--sn-green); }
 .check[aria-pressed="true"] { background: var(--sn-green); border-color: var(--sn-green); }
 .check:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
+.check:disabled { cursor: progress; }
 .goalText { flex: 1; min-width: 0; font-size: 15px; color: var(--sn-ink); }
 .goalDone { color: var(--sn-text-muted); text-decoration: line-through; text-decoration-color: #31594766; }
 .remove { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--sn-text-subtle); cursor: pointer; opacity: .7; transition: background-color var(--sn-duration) var(--sn-ease), color var(--sn-duration) var(--sn-ease), opacity var(--sn-duration); }
@@ -122,7 +123,8 @@
 .noteDate { margin: 0 0 4px; font-size: 12px; font-weight: 500; color: var(--sn-text-subtle); }
 .noteDate::first-letter { text-transform: uppercase; }
 .noteText { margin: 0; font-size: 15px; line-height: 1.5; color: var(--sn-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
-.note .remove { position: absolute; top: 8px; right: 8px; }
+.noteActions { position: absolute; top: 8px; right: 8px; }
+.noteActions:has(:global(.sn-btn)) { padding: 4px; border-radius: var(--sn-radius-pill); background: #fff; box-shadow: var(--sn-shadow-pop); }
 
 @media (max-width: 1024px) {
   .grid { grid-template-columns: minmax(0, 1fr); }

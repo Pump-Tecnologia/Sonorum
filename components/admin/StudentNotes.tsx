@@ -1,5 +1,5 @@
 import { SubmitButton } from '@/components/ds/Button'
-import { IconTrash } from '@/components/ds/icons'
+import { RemoveIconButton } from '@/components/ds/RemoveIconButton'
 import styles from '@/components/students/student-profile.module.css'
 import { addNote, deleteNote } from '@/lib/actions/student-detail'
 
@@ -36,13 +36,13 @@ export function StudentNotes({ studentId, notes }: { studentId: string; notes: N
             <li key={n.id} className={styles.note}>
               <p className={styles.noteDate}>{noteDate(n.date)}</p>
               <p className={styles.noteText}>{n.content}</p>
-              <form action={deleteNote}>
-                <input type="hidden" name="noteId" value={n.id} />
-                <input type="hidden" name="studentId" value={studentId} />
-                <button type="submit" className={styles.remove} aria-label="Remover anotação" title="Remover anotação">
-                  <IconTrash />
-                </button>
-              </form>
+              <RemoveIconButton
+                action={deleteNote}
+                hidden={{ noteId: n.id, studentId }}
+                label="Remover anotação"
+                className={styles.remove}
+                formClassName={styles.noteActions}
+              />
             </li>
           ))}
         </ul>

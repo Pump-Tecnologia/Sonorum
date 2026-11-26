@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { RestoreButton } from '@/components/admin/RestoreButton'
+import { ExternalLink } from '@/components/ds/ExternalLink'
 import { IconArrowRight, IconPlus } from '@/components/ds/icons'
 import { InfoButton } from '@/components/ds/InfoButton'
 import { MoreMenu } from '@/components/ds/MoreMenu'
@@ -116,9 +117,7 @@ export function ResourceCard({ r, fileUrl, mode, index }: { r: ResourceItem; fil
         ) : (
           <div className={styles.cardFoot}>
             {target && (
-              <a href={target} target="_blank" rel="noopener noreferrer" className={styles.open}>
-                {content.openLabel} <IconArrowRight />
-              </a>
+              <ExternalLink href={target} className={styles.open}>{content.openLabel}</ExternalLink>
             )}
             {mode === 'teacher' && (
               <>
@@ -164,9 +163,7 @@ export function ResourceRow({ r, fileUrl }: { r: ResourceItem; fileUrl: string |
       <Level difficulty={r.difficulty} />
       <div className={styles.rowActions}>
         {target && (
-          <a href={target} target="_blank" rel="noopener noreferrer" className={styles.open}>
-            {content.openLabel} <IconArrowRight />
-          </a>
+          <ExternalLink href={target} className={styles.open}>{content.openLabel}</ExternalLink>
         )}
         <Link href={`/resources/${r.id}/edit`} className={styles.edit}>Editar</Link>
         <TeacherMenu r={r} />
