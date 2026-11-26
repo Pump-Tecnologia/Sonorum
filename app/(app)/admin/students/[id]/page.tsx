@@ -24,6 +24,8 @@ import type { StatusTone } from '@/lib/constants/lessons'
 import { getStudentProgress } from '@/lib/data/progress'
 import { createClient } from '@/lib/supabase/server'
 
+export const metadata = { title: 'Ficha do aluno' }
+
 const STATUS: Record<string, { label: string; tone: StatusTone }> = {
   active: { label: 'Ativo', tone: 'success' },
   paused: { label: 'Pausado', tone: 'warning' },
