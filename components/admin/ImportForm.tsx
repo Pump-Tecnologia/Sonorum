@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { InfoButton } from '@/components/ds/InfoButton'
 import { Field, Textarea } from '@/components/ui/Field'
 import type { ImportState } from '@/lib/actions/import'
@@ -47,7 +47,7 @@ export function ImportForm({ action, help, placeholder }: { action: Action; help
       )}
 
       <div className="flex items-center gap-2">
-        <SubmitButton fullWidth={false} pendingLabel="Importando…">Importar</SubmitButton>
+        <SubmitButton pendingLabel="Importando…">Importar</SubmitButton>
         <InfoButton label="Sobre a importação">
           Cada conta criada recebe um link de uso único para definir a senha. Até 200 pessoas por importação.
         </InfoButton>

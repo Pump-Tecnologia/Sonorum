@@ -31,6 +31,7 @@
   -webkit-backdrop-filter: var(--sn-glass-blur); backdrop-filter: var(--sn-glass-blur);
 }
 .panelHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.titleRow { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .panelTitle { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.2px; color: var(--sn-ink); }
 .panelHint { margin: 0; font-size: 13px; color: var(--sn-text-muted); }
 

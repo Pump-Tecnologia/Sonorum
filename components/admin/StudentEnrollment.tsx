@@ -65,6 +65,7 @@ export function StudentEnrollment({
               action={cancelEnrollment}
               hidden={{ studentId }}
               label="Encerrar matrícula"
+              pendingLabel="Encerrando…"
               confirmText="Encerrar a matrícula ativa deste aluno? As cobranças já geradas permanecem no histórico."
               buttonClassName={styles.planCancel}
             />

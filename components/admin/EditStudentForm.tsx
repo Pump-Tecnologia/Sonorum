@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { InfoButton } from '@/components/ds/InfoButton'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
@@ -102,7 +102,7 @@ export function EditStudentForm({ student }: { student: StudentData }) {
           <Textarea id="permanentNotes" name="permanentNotes" defaultValue={student.permanent_notes ?? ''} />
         </Field>
 
-        <SubmitButton pendingLabel="Salvando…">Salvar alterações</SubmitButton>
+        <SubmitButton className="w-full" pendingLabel="Salvando…">Salvar alterações</SubmitButton>
       </form>
     </Card>
   )

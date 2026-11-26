@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
 import { updateTeacher, type UpdateActionState } from '@/lib/actions/update-user'
@@ -48,7 +48,7 @@ export function EditTeacherForm({ teacher }: { teacher: TeacherData }) {
           <Input id="instruments" name="instruments" defaultValue={(teacher.instruments ?? []).join(', ')} />
         </Field>
 
-        <SubmitButton pendingLabel="Salvando…">Salvar alterações</SubmitButton>
+        <SubmitButton className="w-full" pendingLabel="Salvando…">Salvar alterações</SubmitButton>
       </form>
     </Card>
   )

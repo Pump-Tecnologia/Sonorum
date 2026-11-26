@@ -136,6 +136,7 @@ a.row:hover .chevron { transform: translateX(2px); color: var(--sn-ink); }
 .check:hover { border-color: var(--sn-green); }
 .check[aria-pressed="true"] { background: var(--sn-green); border-color: var(--sn-green); }
 .check:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
+.check:disabled { cursor: progress; }
 .goalText { flex: 1; min-width: 0; font-size: 15px; }
 .goalDone { color: var(--sn-text-muted); text-decoration: line-through; text-decoration-color: #31594766; }
 .lastNote { margin: 12px 0 0; font-size: 15px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }

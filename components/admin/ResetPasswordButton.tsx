@@ -1,34 +1,17 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState } from 'react'
 
+import { useArmed } from '@/components/ds/useArmed'
 import { resetUserPassword, type ResetPasswordState } from '@/lib/actions/credentials'
 
 const initial: ResetPasswordState = { ok: false }
-
-// Auto-desarma a pergunta se o usuário não agir (mesmo tempo do DeleteButton).
-const DISARM_MS = 4000
 
 // Envia um link de uso único para o usuário definir uma nova senha.
 // Confirmação em duas etapas na própria linha (sem a caixa do navegador): 1º clique pergunta, 2º envia.
 export function ResetPasswordButton({ userId, userName, className }: { userId: string; userName: string; className?: string }) {
   const [state, action, pending] = useActionState(resetUserPassword, initial)
-  const [armed, setArmed] = useState(false)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  function clearTimer() {
-    if (timer.current) clearTimeout(timer.current)
-  }
-  function arm() {
-    setArmed(true)
-    clearTimer()
-    timer.current = setTimeout(() => setArmed(false), DISARM_MS)
-  }
-  function disarm() {
-    clearTimer()
-    setArmed(false)
-  }
-  useEffect(() => clearTimer, [])
+  const { armed, arm, disarm } = useArmed()
 
   const inMenu = Boolean(className)
   const buttonClass = className ?? 'sn-btn sn-btn-sm sn-btn-ghost'

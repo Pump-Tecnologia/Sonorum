@@ -3,9 +3,8 @@
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
 import { Card } from '@/components/ui/Card'
-import { LinkButton } from '@/components/ds/Button'
+import { LinkButton, SubmitButton } from '@/components/ds/Button'
 import { InfoButton } from '@/components/ds/InfoButton'
 import { Field, Input, Select } from '@/components/ui/Field'
 import { updateSchoolSettings, type SettingsActionState } from '@/lib/actions/settings'
@@ -105,7 +104,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
                 {school.logoUrl && (
                   <div className="sn-subpanel mt-2 flex items-center justify-between gap-3 py-2.5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={school.logoUrl} alt="Logo atual" className="h-8 w-8 object-contain" />
+                    <img src={school.logoUrl} alt="Logo atual" width={32} height={32} className="h-8 w-8 object-contain" />
                     <label className="flex cursor-pointer items-center gap-2 text-sm text-(--sn-ink)">
                       <input type="checkbox" name="removeLogo" className="h-4 w-4 accent-(--sn-ink)" /> Remover logo
                     </label>
@@ -165,7 +164,7 @@ export function SchoolSettingsForm({ school, canBrand }: { school: SchoolData; c
             </Field>
           </div>
 
-          <SubmitButton pendingLabel="Salvando…">Salvar configurações</SubmitButton>
+          <SubmitButton className="w-full" pendingLabel="Salvando…">Salvar configurações</SubmitButton>
         </form>
       </Card>
   )

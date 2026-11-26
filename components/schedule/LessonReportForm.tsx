@@ -4,7 +4,7 @@ import { useActionState } from 'react'
 
 import { Button } from '@/components/ds/Button'
 import { Field, FieldRow, Input } from '@/components/ds/Field'
-import { IconExternal } from '@/components/ds/icons'
+import { ExternalLink } from '@/components/ds/ExternalLink'
 import dsStyles from '@/components/ds/ds.module.css'
 import { InfoButton } from '@/components/ds/InfoButton'
 import styles from '@/components/schedule/planner.module.css'
@@ -110,16 +110,14 @@ export function LessonReportForm({
       {/* Ações manuais: ver/baixar a página e enviar por WhatsApp (clique direto) */}
       {hasReport && (
         <div className={styles.share}>
-          <a href={reportUrl} target="_blank" rel="noopener noreferrer" className={styles.textLink}>
-            Ver relatório <IconExternal />
-          </a>
+          <ExternalLink href={reportUrl} className={styles.textLink}>Ver relatório</ExternalLink>
           {waUrl && (
-            <a href={waUrl} target="_blank" rel="noopener noreferrer" className={`${dsStyles.button} ${dsStyles.soft} ${dsStyles.small}`}>
+            <ExternalLink href={waUrl} showIcon={false} className={`${dsStyles.button} ${dsStyles.soft} ${dsStyles.small}`}>
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.7 1.2 2.9.1.2 2 3 4.8 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.5-.3ZM12 3a9 9 0 0 0-7.6 13.7L3 21l4.5-1.2A9 9 0 1 0 12 3Zm0 16.3a7.3 7.3 0 0 1-3.7-1l-.3-.2-2.6.7.7-2.6-.2-.3a7.3 7.3 0 1 1 6.1 3.4Z" />
               </svg>
               Enviar no WhatsApp
-            </a>
+            </ExternalLink>
           )}
         </div>
       )}

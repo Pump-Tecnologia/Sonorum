@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { CreatePersonResult } from '@/components/admin/CreatePersonResult'
 import { InfoButton } from '@/components/ds/InfoButton'
 import { Card } from '@/components/ui/Card'
@@ -98,7 +98,7 @@ export function CreateStudentForm({ teachers }: { teachers: { id: string; name: 
           <Textarea id="objectives" name="objectives" rows={4} />
         </Field>
 
-        <SubmitButton pendingLabel="Criando…">Criar aluno</SubmitButton>
+        <SubmitButton className="w-full" pendingLabel="Criando…">Criar aluno</SubmitButton>
       </form>
     </Card>
   )

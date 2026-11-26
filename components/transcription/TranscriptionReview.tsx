@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { InstrumentSelect } from '@/components/ui/InstrumentFields'
@@ -90,7 +90,7 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
           </Field>
 
           <div className="flex flex-wrap items-center gap-4">
-            <SubmitButton pendingLabel="Aprovando…">Aprovar e publicar na biblioteca</SubmitButton>
+            <SubmitButton className="w-full" pendingLabel="Aprovando…">Aprovar e publicar na biblioteca</SubmitButton>
             {/* formAction sobrescreve o action do form e envia o MESMO FormData
                 (título, cifra, etc.) para salvar sem aprovar. */}
             <button

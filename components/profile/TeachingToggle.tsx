@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useTransition } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { InfoButton } from '@/components/ds/InfoButton'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
@@ -73,7 +73,7 @@ export function TeachingToggle({ isTeacher, instruments }: TeachingToggleProps) 
             />
           </Field>
           <div>
-            <SubmitButton fullWidth={false} pendingLabel="Salvando…">Salvar instrumentos</SubmitButton>
+            <SubmitButton pendingLabel="Salvando…">Salvar instrumentos</SubmitButton>
           </div>
         </form>
       )}

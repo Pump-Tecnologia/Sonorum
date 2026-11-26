@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { Field, Input, Textarea } from '@/components/ui/Field'
 import { cn } from '@/lib/cn'
 import { BILLING_TYPES } from '@/lib/finance'
@@ -130,7 +130,7 @@ export function CreatePlanForm({ redirectTo }: { redirectTo?: string }) {
     <form action={action} className="space-y-4">
       {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
       <PlanFields fe={fe} />
-      <SubmitButton pendingLabel="Criando…">Criar plano</SubmitButton>
+      <SubmitButton className="w-full" pendingLabel="Criando…">Criar plano</SubmitButton>
     </form>
   )
 }
@@ -149,7 +149,7 @@ export function EditPlanForm({ plan, onClose }: { plan: Plan; onClose: () => voi
       {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
       <PlanFields plan={plan} fe={fe} />
       <div className="flex gap-2">
-        <SubmitButton pendingLabel="Salvando…">Salvar</SubmitButton>
+        <SubmitButton className="w-full" pendingLabel="Salvando…">Salvar</SubmitButton>
         <button type="button" onClick={onClose} className="sn-btn sn-btn-ghost">Cancelar</button>
       </div>
     </form>

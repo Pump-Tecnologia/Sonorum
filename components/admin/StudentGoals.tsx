@@ -1,6 +1,8 @@
-import { IconCheck, IconPlus, IconTrash } from '@/components/ds/icons'
+import { IconPlus } from '@/components/ds/icons'
+import { RemoveIconButton } from '@/components/ds/RemoveIconButton'
+import { GoalToggle } from '@/components/students/GoalToggle'
 import styles from '@/components/students/student-profile.module.css'
-import { addGoal, deleteGoal, toggleGoal } from '@/lib/actions/student-detail'
+import { addGoal, deleteGoal } from '@/lib/actions/student-detail'
 import { cn } from '@/lib/cn'
 
 interface Goal {
@@ -24,27 +26,21 @@ export function StudentGoals({ studentId, goals }: { studentId: string; goals: G
         <ul className={styles.goals}>
           {goals.map((g) => (
             <li key={g.id} className={styles.goal}>
-              <form action={toggleGoal}>
-                <input type="hidden" name="goalId" value={g.id} />
-                <input type="hidden" name="studentId" value={studentId} />
-                <input type="hidden" name="completed" value={String(g.completed)} />
-                <button
-                  type="submit"
-                  className={styles.check}
-                  aria-pressed={g.completed}
-                  aria-label={g.completed ? `Marcar “${g.text}” como pendente` : `Concluir “${g.text}”`}
-                >
-                  {g.completed && <IconCheck />}
-                </button>
-              </form>
+              <GoalToggle
+                goalId={g.id}
+                studentId={studentId}
+                completed={g.completed}
+                labelWhenDone={`Marcar “${g.text}” como pendente`}
+                labelWhenPending={`Concluir “${g.text}”`}
+                className={styles.check}
+              />
               <span className={cn(styles.goalText, g.completed && styles.goalDone)}>{g.text}</span>
-              <form action={deleteGoal}>
-                <input type="hidden" name="goalId" value={g.id} />
-                <input type="hidden" name="studentId" value={studentId} />
-                <button type="submit" className={styles.remove} aria-label={`Remover a meta “${g.text}”`} title="Remover meta">
-                  <IconTrash />
-                </button>
-              </form>
+              <RemoveIconButton
+                action={deleteGoal}
+                hidden={{ goalId: g.id, studentId }}
+                label={`Remover a meta “${g.text}”`}
+                className={styles.remove}
+              />
             </li>
           ))}
         </ul>

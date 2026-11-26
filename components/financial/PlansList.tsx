@@ -2,8 +2,8 @@
 
 import { useActionState, useEffect, useState } from 'react'
 
+import { SubmitButton } from '@/components/ds/Button'
 import { DeleteButton } from '@/components/admin/DeleteButton'
-import { SubmitButton } from '@/components/auth/SubmitButton'
 import { EditPlanForm, type Plan } from '@/components/financial/PlanForm'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -63,7 +63,7 @@ function EnrollInline({ planId, perClass, students, onDone }: { planId: string; 
         <InfoButton label="Sobre a matrícula">Se o aluno já tem uma matrícula ativa, ela é substituída por esta.</InfoButton>
         <div className="flex shrink-0 items-center gap-2">
           <button type="button" onClick={onDone} className="sn-btn sn-btn-sm sn-btn-ghost">Cancelar</button>
-          <SubmitButton fullWidth={false} pendingLabel="Matriculando…">Matricular</SubmitButton>
+          <SubmitButton pendingLabel="Matriculando…">Matricular</SubmitButton>
         </div>
       </div>
     </form>

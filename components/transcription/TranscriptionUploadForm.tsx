@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react'
 
-import { SubmitButton } from '@/components/auth/SubmitButton'
+import { SubmitButton } from '@/components/ds/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
 import { InstrumentSelect } from '@/components/ui/InstrumentFields'
@@ -44,7 +44,7 @@ export function TranscriptionUploadForm() {
           />
         </Field>
 
-        <SubmitButton pendingLabel="Enviando…">Transcrever</SubmitButton>
+        <SubmitButton className="w-full" pendingLabel="Enviando…">Transcrever</SubmitButton>
       </form>
     </Card>
   )

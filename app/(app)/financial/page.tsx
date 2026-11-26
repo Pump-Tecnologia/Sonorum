@@ -5,8 +5,11 @@ import { PageHeader } from '@/components/app/PageHeader'
 import { CopyButton } from '@/components/cobrancas/CopyButton'
 import { LockedFeatureCard } from '@/components/billing/LockedFeatureCard'
 import { Avatar } from '@/components/ds/Avatar'
+import { ExternalLink } from '@/components/ds/ExternalLink'
 import { IconChevronLeft, IconChevronRight } from '@/components/ds/icons'
+import { InfoButton } from '@/components/ds/InfoButton'
 import { MoreMenu } from '@/components/ds/MoreMenu'
+import { PlainSubmit } from '@/components/ds/PlainSubmit'
 import dsStyles from '@/components/ds/ds.module.css'
 import { ChargeCreator, type StudentPlanOption } from '@/components/financial/ChargeCreator'
 import { ChargeStatusForm } from '@/components/financial/ChargeStatusForm'
@@ -198,7 +201,10 @@ export default async function FinancialPage({
         {/* Cobranças do mês */}
         <section className={styles.panel} aria-labelledby="charges-title">
           <div className={styles.panelHead}>
-            <h2 id="charges-title" className={styles.panelTitle}>Cobranças do mês</h2>
+            <div className={styles.titleRow}>
+              <h2 id="charges-title" className={styles.panelTitle}>Cobranças do mês</h2>
+              <InfoButton label="Sobre as cobranças do mês">Lembrar envia o lembrete da cobrança ao aluno por e-mail e WhatsApp.</InfoButton>
+            </div>
             {charges.length > 0 && <p className={styles.panelHint}>{charges.length} {charges.length === 1 ? 'cobrança' : 'cobranças'}</p>}
           </div>
 
@@ -245,14 +251,13 @@ export default async function FinancialPage({
                           action={notifyCharge}
                           hidden={{ chargeId: c.id, kind: eff === 'overdue' ? 'charge.overdue' : 'charge.due_soon' }}
                           label="Lembrar"
-                          title="Envia o lembrete por e-mail e WhatsApp"
                           className={styles.remind}
                         />
                       )}
                       {showMenu && (
                         <MoreMenu label={`Mais ações para a cobrança de ${name}`}>
                           {waUrl && (
-                            <a href={waUrl} target="_blank" rel="noopener noreferrer" className={styles.menuLink}>Enviar no WhatsApp</a>
+                            <ExternalLink href={waUrl} className={styles.menuLink}>Enviar no WhatsApp</ExternalLink>
                           )}
                           <CopyButton value={payUrl} label="Copiar link de pagamento" className={dsStyles.menuItem} />
                         </MoreMenu>
@@ -269,10 +274,13 @@ export default async function FinancialPage({
           {/* Nova cobrança */}
           <section className={styles.panel} aria-labelledby="new-charge-title">
             <div className={styles.panelHead}>
-              <h2 id="new-charge-title" className={styles.panelTitle}>Nova cobrança</h2>
+              <div className={styles.titleRow}>
+                <h2 id="new-charge-title" className={styles.panelTitle}>Nova cobrança</h2>
+                <InfoButton label="Sobre a nova cobrança">Gerar o mês inteiro cria as cobranças deste mês para todos os alunos com plano.</InfoButton>
+              </div>
               <form action={generateMonthlyCharges}>
                 <input type="hidden" name="month" value={month} />
-                <button type="submit" className={styles.bulk} title="Gera as cobranças do mês para todos os alunos com plano">Gerar o mês inteiro</button>
+                <PlainSubmit className={styles.bulk} pendingLabel="Gerando…">Gerar o mês inteiro</PlainSubmit>
               </form>
             </div>
             {!hasPix && (
