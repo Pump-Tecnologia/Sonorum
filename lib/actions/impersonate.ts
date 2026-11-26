@@ -47,9 +47,11 @@ export async function impersonate(formData: FormData) {
   })
   if (linkError || !linkData?.properties?.hashed_token) return
 
-  // Desloga sessão atual e abre a do alvo usando o token do magic link
+  // Abre a sessão do alvo por cima da atual, sem deslogar antes. Os cookies novos
+  // só chegam ao navegador na resposta: se quem clicou sair da página no meio, a
+  // sessão original continua valendo (antes o signOut global já a tinha revogado,
+  // em todos os aparelhos, e a pessoa caía no login).
   const supabase = await createClient()
-  await supabase.auth.signOut()
   const { error: verifyError } = await supabase.auth.verifyOtp({
     type: 'magiclink',
     token_hash: linkData.properties.hashed_token,
@@ -124,8 +126,10 @@ export async function stopImpersonating() {
   })
   if (!linkData?.properties?.hashed_token) return
 
+  // Guarda a sessão de impersonação para encerrar só ela depois. O signOut global
+  // de antes derrubava o usuário real (professor, aluno) em todos os aparelhos.
   const supabase = await createClient()
-  await supabase.auth.signOut()
+  const { data: { session: impersonationSession } } = await supabase.auth.getSession()
   const { error: verifyError } = await supabase.auth.verifyOtp({
     type: 'magiclink',
     token_hash: linkData.properties.hashed_token,
@@ -133,6 +137,10 @@ export async function stopImpersonating() {
   if (verifyError) {
     jar.delete(IMPERSONATOR_COOKIE)
     redirect('/login')
+  }
+  if (impersonationSession?.access_token) {
+    const { error: revokeError } = await admin.auth.admin.signOut(impersonationSession.access_token, 'local')
+    if (revokeError) console.error('[impersonate] não encerrou a sessão de impersonação', revokeError.message)
   }
 
   // Fecha a trilha só depois de confirmar a volta para a conta original.
