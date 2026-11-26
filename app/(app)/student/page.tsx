@@ -14,7 +14,7 @@ import { studentLessonFilters } from '@/lib/queries/student-lesson-filters'
 import { hourInBR, longDateInBR } from '@/lib/timezone'
 import { cn } from '@/lib/cn'
 
-export const metadata = { title: 'Dashboard' }
+export const metadata = { title: 'Início' }
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
 

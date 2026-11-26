@@ -128,6 +128,9 @@ export function ScheduleCalendar({ students, teachers, rooms, role, userId }: Sc
   const [period, setPeriod] = useState({ title: '', view: 'dayGridMonth' as CalendarView, isCurrent: true })
   const [creating, setCreating] = useState<{ key: number; range?: { start: string; end: string } } | null>(null)
   const [selected, setSelected] = useState<SelectedLesson | null>(null)
+  // Enquanto as aulas chegam, a agenda avisa (senão o mês parece vazio).
+  const [loadingLessons, setLoadingLessons] = useState(true)
+  const fetchingLessons = useRef(true)
 
   const canManage = ['admin', 'teacher'].includes(role)
   const api = () => calendarRef.current?.getApi()
@@ -189,7 +192,8 @@ export function ScheduleCalendar({ students, teachers, rooms, role, userId }: Sc
         onCreate={() => openCreate()}
       />
 
-      <div className={styles.calendar}>
+      <div className={styles.calendar} aria-busy={loadingLessons}>
+        {loadingLessons && <p className={styles.loading} role="status">Carregando aulas…</p>}
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
@@ -205,6 +209,13 @@ export function ScheduleCalendar({ students, teachers, rooms, role, userId }: Sc
           eventContent={renderEvent}
           datesSet={handleDatesSet}
           events="/api/lessons"
+          // A pílula some só quando as aulas da busca já estão na tela: o calendário
+          // avisa "aulas colocadas" também ao montar, ainda vazio, antes de buscar.
+          loading={(isLoading) => {
+            fetchingLessons.current = isLoading
+            if (isLoading) setLoadingLessons(true)
+          }}
+          eventsSet={() => { if (!fetchingLessons.current) setLoadingLessons(false) }}
           eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
           slotMinTime="07:00:00"
           slotMaxTime="22:00:00"

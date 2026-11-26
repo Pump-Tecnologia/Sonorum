@@ -40,7 +40,7 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   // NOTA: a nav cresce conforme as fases são migradas. Mantida só com rotas
   // que já existem para não gerar 404.
   admin: [
-    { label: 'Dashboard', href: '/admin', icon: 'home' },
+    { label: 'Início', href: '/admin', icon: 'home' },
     { label: 'Agenda', href: '/schedule', icon: 'calendar' },
     { label: 'Professores', href: '/admin/teachers', icon: 'teacher' },
     { label: 'Alunos', href: '/admin/students', icon: 'users' },
@@ -53,14 +53,14 @@ export const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { label: 'Configurações', href: '/admin/settings', icon: 'settings' },
   ],
   teacher: [
-    { label: 'Dashboard', href: '/teacher', icon: 'home' },
+    { label: 'Início', href: '/teacher', icon: 'home' },
     { label: 'Agenda', href: '/schedule', icon: 'calendar' },
     { label: 'Recursos', href: '/resources', icon: 'folder' },
     { label: 'Modelos de aula', href: '/modelos', icon: 'book' },
     ...TRANSCRIPTION_NAV,
   ],
   student: [
-    { label: 'Dashboard', href: '/student', icon: 'home' },
+    { label: 'Início', href: '/student', icon: 'home' },
     { label: 'Minha agenda', href: '/student/schedule', icon: 'calendar' },
     { label: 'Meu progresso', href: '/student/progress', icon: 'progress' },
     { label: 'Materiais', href: '/student/materials', icon: 'folder' },

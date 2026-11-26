@@ -51,7 +51,7 @@ export function InstrumentFields({
             if (!instrumentsForCategory(next).includes(instrument)) setInstrument('')
           }}
         >
-          <option value="">—</option>
+          <option value="">Selecione…</option>
           {INST_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </S>
       </F>
@@ -181,7 +181,7 @@ export function InstrumentSelect({
   return (
     <Field label={label} htmlFor={name} error={error}>
       <Select id={name} name={name} defaultValue={current}>
-        <option value="">{optional ? '— (opcional)' : 'Selecione…'}</option>
+        <option value="">{optional ? 'Nenhum' : 'Selecione…'}</option>
         {current && !known && <option value={current}>{current}</option>}
         {INST_CATEGORIES.map((c) => (
           <optgroup key={c} label={c}>

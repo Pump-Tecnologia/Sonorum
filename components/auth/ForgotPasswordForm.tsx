@@ -6,6 +6,7 @@ import { useActionState } from 'react'
 import { AuthField, AuthInput } from '@/components/auth/AuthField'
 import { AuthSubmit } from '@/components/auth/AuthSubmit'
 import styles from '@/components/auth/auth.module.css'
+import { IconArrowLeft } from '@/components/ds/icons'
 import { requestPasswordReset } from '@/lib/auth/actions'
 import type { ActionState } from '@/lib/auth/schemas'
 
@@ -22,7 +23,7 @@ export function ForgotPasswordForm() {
           Se houver uma conta com esse e-mail, enviamos um link para redefinir a senha.
         </p>
         <Link href="/login" className={styles.backLink}>
-          ← Voltar ao login
+          <IconArrowLeft className={styles.backIcon} /> Voltar ao login
         </Link>
       </div>
     )

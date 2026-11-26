@@ -68,7 +68,7 @@
 
 /* status com troca rápida: o select fica por cima da pílula, invisível */
 .statusPick { position: relative; display: inline-flex; align-items: center; gap: 6px; }
-.statusSelect { appearance: none; -webkit-appearance: none; display: inline-flex; align-items: center; min-height: 28px; padding: 0 26px 0 12px; border: 0; border-radius: var(--sn-radius-pill); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+.statusSelect { appearance: none; -webkit-appearance: none; display: inline-flex; align-items: center; min-height: 34px; padding: 0 26px 0 12px; border: 0; border-radius: var(--sn-radius-pill); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235c7568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; }
 .statusSelect:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
@@ -76,12 +76,12 @@
 .status-paid { background-color: #e9f4ed; color: #2f6b4f; }
 .status-overdue { background-color: var(--sn-danger-soft); color: var(--sn-danger); }
 .status-cancelled { background-color: #eef3ef; color: var(--sn-text-muted); }
-.methodSelect { min-height: 28px; padding: 0 10px; border: 1px solid var(--sn-hairline-strong); border-radius: var(--sn-radius-pill); background: #fff; font: inherit; font-size: 13px; color: var(--sn-ink); }
-.confirm { min-height: 28px; padding: 0 12px; border: 0; border-radius: var(--sn-radius-pill); background: var(--sn-ink); color: #fff; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.methodSelect { min-height: 34px; padding: 0 10px; border: 1px solid var(--sn-hairline-strong); border-radius: var(--sn-radius-pill); background: #fff; font: inherit; font-size: 13px; color: var(--sn-ink); }
+.confirm { min-height: 34px; padding: 0 12px; border: 0; border-radius: var(--sn-radius-pill); background: var(--sn-ink); color: #fff; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
 .confirm:hover { background: var(--sn-ink-strong); }
 
 /* botão "Lembrar" (WhatsAppNotifyButton aceita className) */
-.remind { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 14px; border: 0; border-radius: var(--sn-radius-pill); background: var(--sn-mint-soft); color: var(--sn-ink-soft); font-family: var(--sn-font); font-size: 13px; font-weight: 500; cursor: pointer; }
+.remind { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border: 0; border-radius: var(--sn-radius-pill); background: var(--sn-mint-soft); color: var(--sn-ink-soft); font-family: var(--sn-font); font-size: 13px; font-weight: 500; cursor: pointer; }
 .remind:hover:not(:disabled) { background: var(--sn-mint-hover); border-color: transparent; }
 .remind svg { width: 14px; height: 14px; }
 .menuLink { display: flex; align-items: center; width: 100%; min-height: 40px; padding: 0 12px; border-radius: var(--sn-radius-sm); color: var(--sn-ink); font-size: 14px; text-decoration: none; }
@@ -159,3 +159,8 @@
   .stepButton, .todayLink { transition: none; }
 }
 .spaced { margin-bottom: 14px; }
+
+/* Celular: controles da linha com altura de toque confortável */
+@media (max-width: 640px) {
+  .statusSelect, .methodSelect, .confirm, .remind { min-height: 40px; }
+}

@@ -10,7 +10,7 @@ import { greetingInBR, hourInBR, longDateInBR } from '@/lib/timezone'
 import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/cn'
 
-export const metadata = { title: 'Dashboard' }
+export const metadata = { title: 'Início' }
 
 const NEXT_SOON_MINUTES = 360
 

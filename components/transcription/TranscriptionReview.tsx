@@ -84,7 +84,7 @@ export function TranscriptionReview({ job, audioUrl }: { job: ReviewJob; audioUr
             label="Cifra gerada pela IA"
             htmlFor="body"
             error={fe.body}
-            hint="A transcrição automática não é perfeita. Ajuste acordes e tempos antes de aprovar."
+            hint="Ajuste acordes e tempos antes de aprovar."
           >
             <Textarea id="body" name="body" rows={16} defaultValue={job.body ?? ''} className="font-mono" required />
           </Field>

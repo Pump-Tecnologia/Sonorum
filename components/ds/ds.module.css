@@ -159,9 +159,9 @@
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
 .field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
-.label { font-size: 13px; font-weight: 500; color: var(--sn-ink); }
-.hint { margin: 0; font-size: 12px; color: var(--sn-text-muted); }
-.error { margin: 0; font-size: 12px; color: var(--sn-danger); }
+.label { font-size: var(--sn-field-label); font-weight: 500; color: var(--sn-ink); }
+.hint { margin: 0; font-size: var(--sn-field-hint); color: var(--sn-text-muted); }
+.error { margin: 0; font-size: var(--sn-field-hint); color: var(--sn-danger); }
 .control {
   width: 100%;
   min-height: 46px;
@@ -169,7 +169,7 @@
   border: 1px solid var(--sn-hairline-strong);
   border-radius: var(--sn-radius-md);
   font-family: var(--sn-font);
-  font-size: 15px;
+  font-size: var(--sn-field-text);
   color: var(--sn-ink);
   background: #ffffffcc;
   outline: none;
@@ -244,3 +244,7 @@ select.control {
 /* ── Confirmação em dois passos (ações que não dá para desfazer) ─────────── */
 .confirmForm { display: inline-flex; max-width: 100%; }
 .confirmRow { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; font-weight: 500; color: var(--sn-danger); }
+
+/* Área de toque de 44px sem mudar o desenho do botão */
+.infoTrigger { position: relative; }
+.infoTrigger::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; }

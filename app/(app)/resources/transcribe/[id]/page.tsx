@@ -5,6 +5,7 @@ import { TranscriptionReview } from '@/components/transcription/TranscriptionRev
 import { TranscriptionUpsell } from '@/components/transcription/TranscriptionUpsell'
 import { Card } from '@/components/ui/Card'
 import { LinkButton } from '@/components/ui/Button'
+import { IconArrowLeft } from '@/components/ds/icons'
 import { transcriptionAccess } from '@/lib/auth/plan'
 import { STATUS_LABEL, type TranscriptionStatus } from '@/lib/constants/transcription'
 import { createClient } from '@/lib/supabase/server'
@@ -43,7 +44,7 @@ export default async function ReviewTranscriptionPage({ params }: { params: Prom
               A IA ainda está processando o áudio. Atualize a página em instantes.
             </p>
           )}
-          <LinkButton href="/resources/transcribe" variant="ghost" size="sm">← Voltar para a fila</LinkButton>
+          <LinkButton href="/resources/transcribe" variant="ghost" size="sm"><IconArrowLeft /> Voltar para a fila</LinkButton>
         </Card>
       </>
     )

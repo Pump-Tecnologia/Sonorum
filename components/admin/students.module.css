@@ -23,7 +23,7 @@
 }
 .search:focus-within { box-shadow: var(--sn-focus-ring), var(--sn-glass-shadow); }
 .searchIcon { flex-shrink: 0; width: 20px; height: 20px; color: var(--sn-text-muted); }
-.searchInput { flex: 1; min-width: 0; padding: 10px 4px; border: 0; background: transparent; outline: none; font: inherit; font-size: 15px; color: var(--sn-ink); }
+.searchInput { flex: 1; min-width: 0; padding: 10px 4px; border: 0; background: transparent; outline: none; font: inherit; font-size: var(--sn-field-text); color: var(--sn-ink); }
 .searchInput::placeholder { color: var(--sn-placeholder); }
 .searchButton { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--sn-mint-soft); color: var(--sn-ink-soft); cursor: pointer; transition: background-color var(--sn-duration) var(--sn-ease), transform var(--sn-duration) var(--sn-ease); }
 .searchButton svg { width: 18px; height: 18px; }

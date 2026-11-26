@@ -15,7 +15,7 @@ import { dateInBR, greetingInBR, hourInBR, longDateInBR } from '@/lib/timezone'
 import { listActiveTeachers } from '@/lib/queries/teachers'
 import { createClient } from '@/lib/supabase/server'
 
-export const metadata = { title: 'Dashboard' }
+export const metadata = { title: 'Início' }
 
 // Cor da barra de cada categoria de instrumento (mesmos tons da agenda).
 const CATEGORY_TONE: Record<string, InstrumentTone> = {
