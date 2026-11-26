@@ -49,7 +49,8 @@ export default async function UpgradePage() {
   }
 
   const today = dateInBR()
-  const active = expirationDate != null && expirationDate >= today
+  // Sem data de vencimento o plano vale sem prazo (como em getPlanContext): conta como ativo.
+  const active = expirationDate == null || expirationDate >= today
 
   // Os planos Solo/Solo Pro (1 professor só) só aparecem pra quem já está
   // neles ou pra escola que ainda tem só 1 professor cadastrado — não faz
@@ -104,7 +105,7 @@ export default async function UpgradePage() {
               <CheckoutButton
                 action={startSaasSubscriptionCheckout}
                 planType={plan}
-                label={isCurrent ? 'Renovar assinatura' : 'Assinar'}
+                label={isCurrent && expirationDate ? 'Renovar assinatura' : 'Assinar'}
                 variant={isCurrent ? 'outline' : 'primary'}
               />
             </li>
