@@ -99,7 +99,9 @@ test('falha ao salvar relatório não revalida nem tenta notificar o aluno', asy
 test('planejamento atômico, unicidade, histórico, concorrência e isolamento', async () => {
   const bin = execFileSync('pg_config', ['--bindir'], { encoding: 'utf8' }).trim()
   const dir = mkdtempSync(path.join(tmpdir(), 'sonorum-planning-'))
-  const pg = (name, args) => execFileSync(path.join(bin, name), args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] })
+  // Sem locale fixo, o Postgres do macOS se recusa a subir.
+  const env = { ...process.env, LC_ALL: 'C' }
+  const pg = (name, args) => execFileSync(path.join(bin, name), args, { env, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] })
   let started = false
   try {
     pg('initdb', ['-D', path.join(dir, 'data'), '-A', 'trust', '--no-locale'])
@@ -153,6 +155,11 @@ test('planejamento atômico, unicidade, histórico, concorrência e isolamento',
     assert.equal(sql('select count(*) from public.lesson_plans'), '1')
     assert.equal(sql('select warmup from public.lesson_plans'), 'histórico A')
 
+    // 0042: tudo abaixo roda já com a trava de escola do planejamento ligada.
+    const guard = file('0042_lesson_plan_same_school.sql')
+    sql(guard)
+    sql(guard) // reaplicar é seguro
+
     const as = (who, query, role = 'authenticated') => `set role ${role}; set test.user_id='${who}'; ${query}`
     const save = (goal, warmup, lesson = id(21), extra = '') => `select public.save_lesson_plan('${lesson}','${goal}','{"warmup":"${warmup}","specific_data":{"v":1}${extra}}'::jsonb)`
     assert.equal(sql(as(id(1), save('Objetivo novo', 'Escalas'))), 't')
@@ -187,6 +194,28 @@ test('planejamento atômico, unicidade, histórico, concorrência e isolamento',
     assert.equal(sql('select count(*) from public.lesson_reports'), '1')
     assert.equal(sql(as(id(3), 'select technique_score from public.lesson_reports')), '5')
     assert.equal(sql(as(id(4), 'select count(*) from public.lesson_reports')), '0')
+
+    // A policy só confere a escola do plano; a trava confere também a da aula.
+    const insertPlan = (school, lesson) => `insert into public.lesson_plans(school_id,lesson_id,warmup) values('${school}','${lesson}','intruso')`
+    const notOurs = /Aula não pertence à escola do planejamento/
+    assert.throws(() => sql(as(id(1), insertPlan(id(11), id(22)))), notOurs)
+    assert.throws(() => sql(as(id(2), `update public.lesson_plans set lesson_id='${id(22)}' where lesson_id='${id(21)}'`)), notOurs)
+    assert.throws(() => sql(insertPlan(id(11), id(22))), notOurs) // vale também sem RLS
+    assert.throws(() => sql(as(id(1), insertPlan(id(12), id(22)))), /row-level security/)
+    // A escola dona da aula planeja normalmente.
+    assert.equal(sql(as(id(4), save('Da escola B', 'Escalas B', id(22)))), 't')
+    // Plano cruzado anterior à trava continua editável enquanto escola e aula não mudam.
+    sql(`insert into public.lessons(id,school_id,student_id,title,start_datetime,end_datetime)
+        values('${id(23)}','${id(12)}','${id(4)}','Antiga',now(),now()+interval '1 hour');
+      alter table public.lesson_plans disable trigger lesson_plans_same_school;
+      ${insertPlan(id(11), id(23))};
+      alter table public.lesson_plans enable trigger lesson_plans_same_school;`)
+    sql(as(id(1), `update public.lesson_plans set warmup='editado', school_id=school_id where lesson_id='${id(23)}'`))
+    assert.equal(sql(`select warmup from public.lesson_plans where lesson_id='${id(23)}'`), 'editado')
+    // Excluir a aula leva o plano junto, sem esbarrar na trava.
+    sql(`delete from public.lessons where id='${id(22)}'`)
+    assert.equal(sql(`select count(*) from public.lesson_plans where lesson_id='${id(22)}'`), '0')
+    assert.equal(sql("select has_function_privilege('authenticated','public.enforce_lesson_plan_school()','execute')"), 'f')
   } finally {
     if (started) pg('pg_ctl', ['-D', path.join(dir, 'data'), '-m', 'immediate', '-w', 'stop'])
     rmSync(dir, { recursive: true, force: true })
