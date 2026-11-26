@@ -16,7 +16,7 @@ export default async function StudentProgressPage() {
   return (
     <>
       <PageHeader title="Meu progresso" />
-      <ProgressPanel progress={progress} />
+      <ProgressPanel progress={progress} hideTitle />
     </>
   )
 }
