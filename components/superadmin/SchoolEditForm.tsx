@@ -2,11 +2,11 @@
 
 import { useActionState } from 'react'
 
-import { AppCard } from '@/components/app/AppCard'
-import { AppField, AppInput, AppSelect } from '@/components/app/AppField'
-import { AppSubmit } from '@/components/app/AppSubmit'
-import styles from '@/components/app/app.module.css'
+import { SubmitButton } from '@/components/ds/Button'
+import { Field, FieldRow, Input, Select } from '@/components/ds/Field'
 import { InfoButton } from '@/components/ds/InfoButton'
+import { SchoolPlanOptions } from '@/components/superadmin/SchoolPlanOptions'
+import { Card } from '@/components/ui/Card'
 import { updateSchool, type SchoolActionState } from '@/lib/actions/schools'
 import { OVERRIDABLE_FEATURES, type OverridableFeature } from '@/lib/constants/plans'
 import { TRANSCRIPTION_ENABLED } from '@/lib/constants/transcription'
@@ -30,7 +30,7 @@ const FEATURE_LABELS: Record<OverridableFeature, string> = {
   whatsappOfficial: 'WhatsApp oficial',
 }
 
-// '' = segue o plano · 'on' = força ativar · 'off' = força desativar
+// '' segue o plano, 'on' força ativar e 'off' força desativar
 function overrideValue(overrides: Record<string, boolean>, key: OverridableFeature): string {
   if (overrides[key] === true) return 'on'
   if (overrides[key] === false) return 'off'
@@ -42,66 +42,59 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
   const fe = state.fieldErrors ?? {}
 
   return (
-    <AppCard className={styles.cardNarrow}>
-      <form action={action} className={styles.form}>
+    <Card className="max-w-xl">
+      <form action={action} className="space-y-5">
         <input type="hidden" name="schoolId" value={school.id} />
 
-        {state.ok && <p className={styles.success}>Escola atualizada</p>}
-        {state.error && <p className={styles.alert}>{state.error}</p>}
+        {state.ok && <p className="sn-notice-ok" role="status">Escola atualizada</p>}
+        {state.error && <p className="sn-alert" role="alert">{state.error}</p>}
 
-        <div className={`${styles.formRow} ${styles.formRow2}`}>
-          <AppField label="Plano" htmlFor="planType" error={fe.planType}>
-            <AppSelect id="planType" name="planType" defaultValue={school.planType}>
-              <option value="free">Essencial (grátis)</option>
-              <option value="solo_free">Solo Essencial (grátis)</option>
-              <option value="solo">Solo</option>
-              <option value="solo_pro">Solo Pro</option>
-              <option value="professional">Profissional</option>
-              <option value="premium">Premium</option>
-              <option value="enterprise">Sob medida</option>
-            </AppSelect>
-          </AppField>
+        <FieldRow>
+          <Field label="Plano" htmlFor="planType" error={fe.planType}>
+            <Select id="planType" name="planType" defaultValue={school.planType}>
+              <SchoolPlanOptions />
+            </Select>
+          </Field>
 
-          <AppField label="Mensalidade (R$)" htmlFor="monthlyPrice" error={fe.monthlyPrice}>
-            <AppInput
+          <Field label="Mensalidade (R$)" htmlFor="monthlyPrice" error={fe.monthlyPrice}>
+            <Input
               id="monthlyPrice"
               name="monthlyPrice"
               type="number"
               min="0"
               step="0.01"
+              inputMode="decimal"
               defaultValue={String(school.monthlyPrice)}
+              invalid={Boolean(fe.monthlyPrice)}
             />
-          </AppField>
-        </div>
+          </Field>
+        </FieldRow>
 
-        <AppField
-          label="Vencimento do plano (opcional)"
-          htmlFor="expirationDate"
-          error={fe.expirationDate}
-        >
-          <AppInput
+        <Field label="Vencimento do plano (opcional)" htmlFor="expirationDate" error={fe.expirationDate}>
+          <Input
             id="expirationDate"
             name="expirationDate"
             type="date"
             defaultValue={school.expirationDate ?? ''}
+            invalid={Boolean(fe.expirationDate)}
           />
-        </AppField>
+        </Field>
 
-        {/* Overrides de recursos por escola — sobretudo para o plano "Sob medida" */}
-        <div>
-          <div className="mt-2 mb-3 flex items-center gap-1">
-            <h2 className={styles.cardTitle} style={{ margin: 0 }}>Recursos da escola</h2>
+        {/* Overrides de recursos por escola, sobretudo para o plano "Sob medida" */}
+        <section aria-labelledby="school-features-title">
+          <div className="mb-3 flex items-center gap-1">
+            <h2 id="school-features-title" className="m-0 text-[17px] font-semibold tracking-tight text-(--sn-ink)">Recursos da escola</h2>
             <InfoButton label="Sobre os recursos da escola">
               “Padrão do plano” segue o que o plano libera. Ativado ou Desativado vale só para esta escola, por exemplo no plano Sob medida.
             </InfoButton>
           </div>
-          <div className={`${styles.formRow} ${styles.formRow2}`}>
+          <FieldRow>
             {(TRANSCRIPTION_ENABLED
               ? OVERRIDABLE_FEATURES
               : OVERRIDABLE_FEATURES.filter((k) => k !== 'transcription')
             ).map((key) => (
-              <AppField key={key} label={FEATURE_LABELS[key]} htmlFor={`ov_${key}`}>
-                <AppSelect
+              <Field key={key} label={FEATURE_LABELS[key]} htmlFor={`ov_${key}`}>
+                <Select
                   id={`ov_${key}`}
                   name={`ov_${key}`}
                   defaultValue={overrideValue(school.featureOverrides, key)}
@@ -109,15 +102,14 @@ export function SchoolEditForm({ school }: { school: SchoolEditData }) {
                   <option value="">Padrão do plano</option>
                   <option value="on">Ativado</option>
                   <option value="off">Desativado</option>
-                </AppSelect>
-              </AppField>
+                </Select>
+              </Field>
             ))}
-          </div>
-        </div>
+          </FieldRow>
+        </section>
 
-        <AppSubmit pendingLabel="Salvando…">Salvar alterações</AppSubmit>
+        <SubmitButton className="w-full" pendingLabel="Salvando…">Salvar alterações</SubmitButton>
       </form>
-
-    </AppCard>
+    </Card>
   )
 }

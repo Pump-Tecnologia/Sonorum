@@ -74,7 +74,7 @@
 .tileValue small { font-size: 14px; color: var(--sn-text-muted); letter-spacing: 0; }
 .spark { margin-top: 8px; color: var(--sn-green); }
 .delta { margin-left: 6px; font-size: 12px; font-weight: 600; }
-.deltaUp { color: #2f6b4f; }
+.deltaUp { color: var(--sn-success); }
 .deltaDown { color: var(--sn-danger); }
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
 .statsFirst { margin-top: 0; }

@@ -37,11 +37,11 @@ export function EditTeacherForm({ teacher }: { teacher: TeacherData }) {
         )}
 
         <Field label="Nome" htmlFor="name" error={fe.name}>
-          <Input id="name" name="name" defaultValue={teacher.name} required />
+          <Input id="name" name="name" autoComplete="off" defaultValue={teacher.name} required />
         </Field>
 
         <Field label="E-mail" htmlFor="email" error={fe.email}>
-          <Input id="email" name="email" type="email" defaultValue={teacher.email} required />
+          <Input id="email" name="email" type="email" autoComplete="off" defaultValue={teacher.email} required />
         </Field>
 
         <Field label="Instrumentos" htmlFor="instruments" error={fe.instruments} hint="Separe por vírgula">

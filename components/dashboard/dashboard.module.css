@@ -50,7 +50,7 @@ a.stat:hover .statLabel svg { opacity: 1; transform: translateX(2px); }
 .statValue { margin: 10px 0 0; font-size: clamp(30px, 1.5rem + 1vw, 40px); font-weight: 300; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .statValue small { margin-left: 2px; font-size: 16px; color: var(--sn-text-muted); letter-spacing: 0; }
 .statHint { margin: 8px 0 0; font-size: 13px; color: var(--sn-text-muted); }
-.up { color: #2f6b4f; }
+.up { color: var(--sn-success); }
 .down { color: var(--sn-danger); }
 
 /* ── Grade (bento) ───────────────────────────────────────────────────────── */

@@ -1,9 +1,8 @@
 import { PageHeader } from '@/components/app/PageHeader'
-import { AppLinkButton } from '@/components/app/AppButton'
 import { AppEmpty, AppTable, cellMuted, cellPrimary, cellSub, tableRight } from '@/components/app/AppTable'
 import { DeleteButton } from '@/components/admin/DeleteButton'
-import { SubmitButton } from '@/components/ds/Button'
-import { LinkButton } from '@/components/ui/Button'
+import { LinkButton, SubmitButton } from '@/components/ds/Button'
+import { IconPlus } from '@/components/ds/icons'
 import { deleteTemplate, provisionAllSchools } from '@/lib/actions/resource-templates'
 import { createClient } from '@/lib/supabase/server'
 
@@ -35,7 +34,7 @@ export default async function LibraryPage() {
             <form action={provisionAllSchools}>
               <SubmitButton variant="soft" pendingLabel="Enviando…">Enviar para as escolas</SubmitButton>
             </form>
-            <AppLinkButton href="/superadmin/biblioteca/new">Novo recurso</AppLinkButton>
+            <LinkButton href="/superadmin/biblioteca/new"><IconPlus /> Novo recurso</LinkButton>
           </div>
         }
       />
@@ -63,7 +62,7 @@ export default async function LibraryPage() {
               <td className={cellMuted}>v{t.version}</td>
               <td className={tableRight}>
                 <div className="flex items-center justify-end gap-2">
-                  <LinkButton href={`/superadmin/biblioteca/${t.id}/edit`} variant="secondary" size="sm">Editar</LinkButton>
+                  <LinkButton href={`/superadmin/biblioteca/${t.id}/edit`} variant="soft" size="sm">Editar</LinkButton>
                   <DeleteButton
                     action={deleteTemplate}
                     hidden={{ templateId: t.id }}

@@ -53,10 +53,10 @@ function EnrollInline({ planId, perClass, students, onDone }: { planId: string; 
           </Select>
         </Field>
         <Field label="Vencimento" htmlFor={`enr-due-${planId}`} error={fe.dueDay} hint="dia do mês">
-          <Input id={`enr-due-${planId}`} name="dueDay" type="number" min="1" max="31" placeholder="10" required />
+          <Input id={`enr-due-${planId}`} name="dueDay" type="number" min="1" max="31" inputMode="numeric" placeholder="10" required />
         </Field>
         <Field label="Valor" htmlFor={`enr-amount-${planId}`} error={fe.customAmount} hint={perClass ? 'por aula' : 'opcional'}>
-          <Input id={`enr-amount-${planId}`} name="customAmount" type="number" min="0" step="0.01" placeholder="igual ao plano" />
+          <Input id={`enr-amount-${planId}`} name="customAmount" type="number" min="0" step="0.01" inputMode="decimal" placeholder="igual ao plano" />
         </Field>
       </div>
       <div className="flex items-center justify-between gap-3">
@@ -103,7 +103,7 @@ export function PlansList({ plans, counts, students }: { plans: Plan[]; counts: 
                     <span className="ml-0.5 text-sm text-(--sn-text-muted)">{unit}</span>
                   </span>
                   {p.early_pay_amount != null && (
-                    <span className="text-sm font-medium text-[#2f6b4f]">
+                    <span className="text-sm font-medium text-(--sn-success)">
                       {formatBRL(p.early_pay_amount)}
                       <span className="text-xs font-normal text-(--sn-text-muted)"> até o vencimento</span>
                     </span>

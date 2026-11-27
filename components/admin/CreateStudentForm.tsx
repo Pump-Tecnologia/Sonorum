@@ -42,13 +42,13 @@ export function CreateStudentForm({ teachers }: { teachers: { id: string; name: 
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nome" htmlFor="name" error={fe.name}>
-            <Input id="name" name="name" required />
+            <Input id="name" name="name" autoComplete="off" required />
           </Field>
           <Field label="E-mail" htmlFor="email" error={fe.email}>
-            <Input id="email" name="email" type="email" required />
+            <Input id="email" name="email" type="email" autoComplete="off" required />
           </Field>
           <Field label="Telefone" htmlFor="phone" error={fe.phone}>
-            <Input id="phone" name="phone" />
+            <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" />
           </Field>
           <Field label="Contato do responsável" htmlFor="parentContact" error={fe.parentContact}>
             <Input id="parentContact" name="parentContact" />

@@ -76,7 +76,7 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
         </div>
 
         <Field label={isPerClass ? 'Valor por aula (R$)' : 'Valor mensal (R$)'} htmlFor={`amount-${k}`} error={fe.amount}>
-          <Input id={`amount-${k}`} name="amount" type="number" min="0" step="0.01" defaultValue={plan?.amount ?? ''} required placeholder="0,00" />
+          <Input id={`amount-${k}`} name="amount" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={plan?.amount ?? ''} required placeholder="0,00" />
         </Field>
 
         {isPerClass ? (
@@ -88,7 +88,7 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
             error={fe.earlyPayAmount}
             hint="Vale até o vencimento. Vazio, sem desconto."
           >
-            <Input id={`early-${k}`} name="earlyPayAmount" type="number" min="0" step="0.01" defaultValue={plan?.early_pay_amount ?? ''} placeholder="Sem desconto" />
+            <Input id={`early-${k}`} name="earlyPayAmount" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={plan?.early_pay_amount ?? ''} placeholder="Sem desconto" />
           </Field>
         )}
       </div>
@@ -98,10 +98,10 @@ function PlanFields({ plan, fe }: { plan?: Plan; fe: Record<string, string> }) {
         <SectionLabel>Restrição de idade (opcional)</SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Idade mínima" htmlFor={`minage-${k}`} error={fe.minAge}>
-            <Input id={`minage-${k}`} name="minAge" type="number" min="0" max="120" defaultValue={plan?.min_age ?? ''} placeholder="—" />
+            <Input id={`minage-${k}`} name="minAge" type="number" min="0" max="120" inputMode="numeric" defaultValue={plan?.min_age ?? ''} placeholder="—" />
           </Field>
           <Field label="Idade máxima" htmlFor={`maxage-${k}`} error={fe.maxAge}>
-            <Input id={`maxage-${k}`} name="maxAge" type="number" min="0" max="120" defaultValue={plan?.max_age ?? ''} placeholder="—" />
+            <Input id={`maxage-${k}`} name="maxAge" type="number" min="0" max="120" inputMode="numeric" defaultValue={plan?.max_age ?? ''} placeholder="—" />
           </Field>
         </div>
       </div>

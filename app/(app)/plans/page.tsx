@@ -22,10 +22,10 @@ export default async function PlansPage() {
       <>
         <PageHeader
           title="Planos de mensalidade"
-          info="Crie planos, matricule alunos e cobre no Financeiro"
+          info="Crie planos, matricule alunos e cobre no Financeiro."
         />
         <LockedFeatureCard
-          title="Planos de Mensalidade"
+          title="Planos de mensalidade"
           subtitle="Organize as modalidades de cobrança dos seus alunos"
           description="Crie planos mensais ou baseados em aulas realizadas, com regras flexíveis de vencimento e descontos de pontualidade para incentivar o pagamento em dia."
           benefits={[
@@ -65,7 +65,7 @@ export default async function PlansPage() {
     <>
       <PageHeader
         title="Planos de mensalidade"
-        info="Crie planos, matricule alunos e cobre no Financeiro"
+        info="Crie planos, matricule alunos e cobre no Financeiro."
         action={<LinkButton href="/plans/new"><IconPlus /> Novo plano</LinkButton>}
       />
 

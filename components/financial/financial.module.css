@@ -41,7 +41,7 @@
 .statLabel { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 500; color: var(--sn-text-muted); }
 .statLabel::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dot, var(--sn-green)); }
 .statValue { margin: 10px 0 0; font-size: clamp(28px, 1.4rem + 1vw, 38px); font-weight: 300; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--sn-ink); }
-.statPaid { --dot: #2f6b4f; }
+.statPaid { --dot: var(--sn-success); }
 .statPending { --dot: #c89a3c; }
 .statOverdue { --dot: var(--sn-danger); }
 
@@ -63,7 +63,7 @@
 .meta { font-size: 13px; color: var(--sn-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .money { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .amount { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--sn-ink); }
-.early { font-size: 12px; color: #2f6b4f; }
+.early { font-size: 12px; color: var(--sn-success); }
 .actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .empty { margin: 0; padding: 28px 8px; text-align: center; font-size: 14px; color: var(--sn-text-muted); }
 
@@ -74,7 +74,7 @@
   background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; }
 .statusSelect:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
 .status-pending { background-color: var(--sn-warning-soft); color: var(--sn-warning); }
-.status-paid { background-color: #e9f4ed; color: #2f6b4f; }
+.status-paid { background-color: var(--sn-success-soft); color: var(--sn-success); }
 .status-overdue { background-color: var(--sn-danger-soft); color: var(--sn-danger); }
 .status-cancelled { background-color: #eef3ef; color: var(--sn-text-muted); }
 .methodSelect { min-height: 34px; padding: 0 10px; border: 1px solid var(--sn-hairline-strong); border-radius: var(--sn-radius-pill); background: #fff; font: inherit; font-size: 13px; color: var(--sn-ink); }
@@ -94,7 +94,7 @@
 .planNote strong { display: block; font-weight: 600; color: var(--sn-ink); }
 .warn { margin: 0; padding: 12px 14px; border-radius: var(--sn-radius-md); background: var(--sn-warning-soft); font-size: 14px; color: var(--sn-warning); }
 .warn a { color: inherit; font-weight: 600; }
-.ok { margin: 0; padding: 12px 14px; border-radius: var(--sn-radius-md); background: #e9f4ed; font-size: 14px; color: #2f6b4f; }
+.ok { margin: 0; padding: 12px 14px; border-radius: var(--sn-radius-md); background: var(--sn-success-soft); font-size: 14px; color: var(--sn-success); }
 .toggle { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--sn-radius-md); background: #ffffffb3; box-shadow: inset 0 0 0 1px var(--sn-hairline); font-size: 14px; color: var(--sn-ink); cursor: pointer; }
 .toggle input { margin-top: 2px; width: 16px; height: 16px; accent-color: var(--sn-ink); }
 .toggle small { display: block; margin-top: 2px; font-size: 12px; color: var(--sn-text-muted); }
