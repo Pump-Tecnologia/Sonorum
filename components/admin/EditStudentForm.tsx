@@ -52,13 +52,13 @@ export function EditStudentForm({ student }: { student: StudentData }) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nome" htmlFor="name" error={fe.name}>
-            <Input id="name" name="name" defaultValue={student.name} required />
+            <Input id="name" name="name" autoComplete="off" defaultValue={student.name} required />
           </Field>
           <Field label="E-mail" htmlFor="email" error={fe.email}>
-            <Input id="email" name="email" type="email" defaultValue={student.email} required />
+            <Input id="email" name="email" type="email" autoComplete="off" defaultValue={student.email} required />
           </Field>
           <Field label="Telefone" htmlFor="phone" error={fe.phone}>
-            <Input id="phone" name="phone" defaultValue={student.phone ?? ''} />
+            <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" defaultValue={student.phone ?? ''} />
           </Field>
           <Field label="Responsável" htmlFor="parentContact" error={fe.parentContact}>
             <Input id="parentContact" name="parentContact" defaultValue={student.parent_contact ?? ''} />

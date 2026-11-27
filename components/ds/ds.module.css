@@ -119,7 +119,7 @@
 .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .status-neutral { color: var(--sn-text-muted); background: #eef3ef; }
 .status-brand { color: var(--sn-ink-soft); background: var(--sn-mint-soft); }
-.status-success { color: #2f6b4f; background: #e9f4ed; }
+.status-success { color: var(--sn-success); background: var(--sn-success-soft); }
 .status-warning { color: var(--sn-warning); background: var(--sn-warning-soft); }
 .status-danger { color: var(--sn-danger); background: var(--sn-danger-soft); }
 

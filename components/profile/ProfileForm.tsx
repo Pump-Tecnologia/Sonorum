@@ -26,15 +26,15 @@ export function ProfileForm({ user }: { user: User }) {
       )}
 
       <Field label="Nome" htmlFor="name" error={fe.name}>
-        <Input id="name" name="name" defaultValue={user.name} required />
+        <Input id="name" name="name" autoComplete="name" defaultValue={user.name} required />
       </Field>
 
       <Field label="E-mail" htmlFor="email" error={fe.email}>
-        <Input id="email" name="email" type="email" defaultValue={user.email} required />
+        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={user.email} required />
       </Field>
 
       <Field label="Telefone" htmlFor="phone" error={fe.phone}>
-        <Input id="phone" name="phone" defaultValue={user.phone ?? ''} />
+        <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={user.phone ?? ''} />
       </Field>
 
       <SubmitButton className="w-full" pendingLabel="Salvando…">Salvar perfil</SubmitButton>

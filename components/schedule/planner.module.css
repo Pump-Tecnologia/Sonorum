@@ -75,7 +75,7 @@
 .toolbarLink:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
 .confirm { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 4px 4px 4px 14px; border-radius: var(--sn-radius-pill); background: var(--sn-warning-soft); color: var(--sn-warning); font-size: 13px; font-weight: 500; }
 .toolbarNote { margin: 0; padding: 0 8px; font-size: 13px; font-weight: 500; }
-.ok { color: #2f6b4f; }
+.ok { color: var(--sn-success); }
 .bad { color: var(--sn-danger); }
 
 .goalsInput.goalsInput { line-height: 1.5; }

@@ -37,7 +37,7 @@ export function ResetPasswordButton({ userId, userName, className }: { userId: s
           {pending ? 'Enviando…' : 'Redefinir senha'}
         </button>
       )}
-      {state.ok && !pending && <span className={inMenu ? 'px-3 pb-2 text-[13px] text-[#2f6b4f]' : 'text-[13px] text-[#2f6b4f]'} role="status">Link enviado</span>}
+      {state.ok && !pending && <span className={inMenu ? 'px-3 pb-2 text-[13px] text-(--sn-success)' : 'text-[13px] text-(--sn-success)'} role="status">Link enviado</span>}
       {state.error && !pending && <span className={inMenu ? 'sn-error px-3 pb-2' : 'sn-error'} role="alert">{state.error}</span>}
     </form>
   )

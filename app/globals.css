@@ -56,6 +56,8 @@
   --sn-placeholder: #91a198;
   --sn-hairline: #3159471a;
   --sn-hairline-strong: #31594729;
+  --sn-success: #2f6b4f;
+  --sn-success-soft: #e9f4ed;
   --sn-danger: #a33a2e;
   --sn-danger-soft: #f8e9e7;
   --sn-warning: #8a5a10;
@@ -182,7 +184,7 @@ body {
   }
   .sn-badge-neutral { color: var(--sn-text-muted); background: #eef3ef; }
   .sn-badge-brand { color: var(--sn-ink-soft); background: var(--sn-mint-soft); }
-  .sn-badge-success { color: #2f6b4f; background: #e9f4ed; }
+  .sn-badge-success { color: var(--sn-success); background: var(--sn-success-soft); }
   .sn-badge-warning { color: var(--sn-warning); background: var(--sn-warning-soft); }
   .sn-badge-danger { color: var(--sn-danger); background: var(--sn-danger-soft); }
 

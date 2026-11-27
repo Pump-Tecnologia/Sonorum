@@ -462,80 +462,9 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   PRIMITIVES — Button, Card, Badge, Table, Field, Submit (App*)
-   Mesmo visual de components/ds: pílulas, vidro e tokens --sn-*.
+   PRIMITIVES — Table (AppTable)
+   Mesmo visual de components/ds: vidro e tokens --sn-*.
    ───────────────────────────────────────────────────────────────────────── */
-
-/* ── Button ──────────────────────────────────────────────────────────────── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 18px;
-  border: 1px solid transparent;
-  border-radius: var(--sn-radius-pill);
-  font-family: var(--sn-font);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  white-space: nowrap;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color var(--sn-duration), color var(--sn-duration), box-shadow var(--sn-duration), transform var(--sn-duration) var(--sn-ease);
-}
-.btn svg { width: 16px; height: 16px; flex: none; }
-.btn:focus-visible { outline: 2px solid var(--sn-green); outline-offset: 3px; }
-.btn:disabled { opacity: .55; cursor: default; transform: none; }
-
-.btnPrimary { background: var(--sn-ink); color: #fff; box-shadow: 0 10px 24px -12px #1c362e8c; }
-.btnPrimary:hover:not(:disabled) { background: var(--sn-ink-strong); transform: translateY(-1px); }
-.btnSecondary { background: var(--sn-mint-soft); color: var(--sn-ink-soft); }
-.btnSecondary:hover:not(:disabled) { background: var(--sn-mint-hover); }
-.btnOutline { background: #ffffffa6; color: var(--sn-ink); box-shadow: inset 0 0 0 1px var(--sn-hairline-strong); }
-.btnOutline:hover:not(:disabled) { background: var(--sn-mint-soft); box-shadow: none; }
-.btnGhost { background: transparent; color: var(--sn-ink); }
-.btnGhost:hover:not(:disabled) { background: #ffffff99; }
-.btnDanger { background: var(--sn-danger-soft); color: var(--sn-danger); }
-.btnDanger:hover:not(:disabled) { background: #f3d9d5; }
-
-/* ── Card (vidro) ────────────────────────────────────────────────────────── */
-.card {
-  padding: 24px;
-  border-radius: var(--sn-radius-xl);
-  background: var(--sn-glass);
-  border: var(--sn-glass-border);
-  box-shadow: var(--sn-glass-shadow);
-  -webkit-backdrop-filter: var(--sn-glass-blur);
-  backdrop-filter: var(--sn-glass-blur);
-}
-.cardTitle {
-  margin: 0 0 18px;
-  font-family: var(--sn-font);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -.2px;
-  color: var(--sn-ink);
-}
-
-/* ── Badge (pílula) ──────────────────────────────────────────────────────── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 11px;
-  border-radius: var(--sn-radius-pill);
-  font-family: var(--sn-font);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.2;
-}
-.badgeNeutral { background: #eef3ef; color: var(--sn-text-muted); }
-.badgeBrand { background: var(--sn-mint-soft); color: var(--sn-ink-soft); }
-.badgeSuccess { background: #e9f4ed; color: #2f6b4f; }
-.badgeWarning { background: var(--sn-warning-soft); color: var(--sn-warning); }
-.badgeDanger { background: var(--sn-danger-soft); color: var(--sn-danger); }
 
 /* ── Table (lista em vidro) ──────────────────────────────────────────────── */
 .tableWrap {
@@ -577,85 +506,6 @@
   color: var(--sn-text-muted);
 }
 
-/* ── Form ────────────────────────────────────────────────────────────────── */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.formRow {
-  display: grid;
-  gap: 12px;
-}
-@media (min-width: 640px) {
-  .formRow2 { grid-template-columns: 1fr 1fr; }
-}
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-}
-.label {
-  font-family: var(--sn-font);
-  font-size: var(--sn-field-label);
-  font-weight: 500;
-  color: var(--sn-ink);
-}
-.input,
-.select,
-.textarea {
-  width: 100%;
-  min-height: 46px;
-  padding: 11px 14px;
-  border: 1px solid var(--sn-hairline-strong);
-  border-radius: var(--sn-radius-md);
-  background: #ffffffcc;
-  font-family: var(--sn-font);
-  font-size: var(--sn-field-text);
-  color: var(--sn-ink);
-  outline: none;
-  transition: border-color var(--sn-duration), box-shadow var(--sn-duration), background-color var(--sn-duration);
-}
-.input::placeholder,
-.textarea::placeholder { color: var(--sn-placeholder); }
-.input:hover, .select:hover, .textarea:hover { border-color: #31594740; }
-.input:focus,
-.select:focus,
-.textarea:focus {
-  border-color: var(--sn-green);
-  box-shadow: var(--sn-focus-ring);
-  background: #fff;
-}
-.input[aria-invalid='true'],
-.select[aria-invalid='true'],
-.textarea[aria-invalid='true'] { border-color: var(--sn-danger); }
-.select {
-  appearance: none;
-  padding-right: 40px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2350826a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-}
-.textarea { min-height: 84px; resize: vertical; line-height: 1.5; }
-.hint { font-size: var(--sn-field-hint); color: var(--sn-text-muted); }
-.error { font-size: var(--sn-field-hint); color: var(--sn-danger); }
-
-.alert {
-  padding: 12px 14px;
-  border-radius: var(--sn-radius-md);
-  background: var(--sn-danger-soft);
-  color: var(--sn-danger);
-  font-size: 14px;
-}
-.success {
-  padding: 12px 14px;
-  border-radius: var(--sn-radius-md);
-  background: var(--sn-mint-soft);
-  color: var(--sn-ink-soft);
-  font-size: 14px;
-}
-
 /* ── Cell helpers para listas com nome principal + texto auxiliar ───────── */
 .cellPrimary {
   font-size: 15px;
@@ -695,7 +545,7 @@
 .rowLink:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn, .input, .select, .textarea, .table tbody tr, .pageBack svg { transition: none; }
+  .table tbody tr, .pageBack svg { transition: none; }
 }
 
 /* ── Lembrete flutuante de aula começando (professor) ────────────────────── */
@@ -729,9 +579,6 @@
 .reminderMissed { min-height: 44px; padding: 0 16px; border: 0; border-radius: var(--sn-radius-pill); background: transparent; box-shadow: inset 0 0 0 1px #f8e9e74d; color: var(--sn-danger-soft); font-family: var(--sn-font); font-size: 14px; font-weight: 500; cursor: pointer; }
 .reminderMissed:hover:not(:disabled) { background: #f8e9e714; }
 .reminderMissed:disabled { opacity: .6; cursor: wait; }
-
-/* Cartão de formulário curto (superadmin): não estica na largura toda */
-.cardNarrow { max-width: 600px; }
 
 /* Área de toque de 44px sem mudar o desenho do botão */
 .reminderClose { position: relative; }

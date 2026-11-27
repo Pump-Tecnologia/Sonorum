@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
@@ -83,6 +84,9 @@ export async function impersonate(formData: FormData) {
     school_id: target.school_id,
   })
 
+  // A faixa "Usando como" fica no layout compartilhado: sem limpar o cache do
+  // navegador, o redirect reaproveita o layout antigo por alguns segundos.
+  revalidatePath('/', 'layout')
   redirect(homeForRole(target.role))
 }
 
@@ -154,6 +158,7 @@ export async function stopImpersonating() {
   })
 
   jar.delete(IMPERSONATOR_COOKIE)
+  revalidatePath('/', 'layout')
   redirect(homeForRole(original.role))
 }
 

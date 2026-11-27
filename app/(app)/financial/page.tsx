@@ -55,10 +55,10 @@ export default async function FinancialPage({
       <>
         <PageHeader
           title="Financeiro"
-          info="Controle de mensalidades, cobranças e inadimplência"
+          info="Controle de mensalidades, cobranças e inadimplência."
         />
         <LockedFeatureCard
-          title="Módulo Financeiro e Cobranças"
+          title="Financeiro e cobranças"
           subtitle="Automatize a gestão de mensalidades da sua escola"
           description="Controle com facilidade quem pagou, quem está pendente e quem está inadimplente. Emita cobranças via Pix e Boletos com baixa automática, envie lembretes por WhatsApp e tenha total visibilidade da saúde financeira do seu negócio."
           benefits={[
