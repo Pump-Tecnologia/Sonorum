@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 
 import { InstrumentFields } from '@/components/ui/InstrumentFields'
-import { Button } from '@/components/ui/Button'
+import { SubmitButton } from '@/components/ds/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Textarea } from '@/components/ui/Field'
 import {
@@ -29,7 +29,7 @@ const initial: TemplateActionState = { ok: false }
 export function ModeloForm({ template }: { template?: TemplateData }) {
   const isEdit = Boolean(template)
   const action = isEdit ? updateLessonPlanTemplate : createLessonPlanTemplate
-  const [state, formAction, pending] = useActionState(action, initial)
+  const [state, formAction] = useActionState(action, initial)
   const fieldErrors = state.fieldErrors ?? {}
 
   return (
@@ -75,9 +75,7 @@ export function ModeloForm({ template }: { template?: TemplateData }) {
       </Card>
 
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Criar modelo'}
-        </Button>
+        <SubmitButton pendingLabel="Salvando…">{isEdit ? 'Salvar alterações' : 'Criar modelo'}</SubmitButton>
         {state.error && <span className="sn-error" role="alert">{state.error}</span>}
       </div>
     </form>

@@ -385,14 +385,18 @@
 .pageBack:hover { color: var(--sn-ink); }
 .pageBack:hover svg { transform: translateX(-2px); }
 .pageBack:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
-.pageTitleRow { display: flex; align-items: center; gap: 4px; }
+/* Título em linha com o "i": o botão acompanha a última palavra (nowrap só
+   entre o título e o botão) em vez de ficar solto na ponta ou numa linha sozinho. */
+.pageTitleRow { font-size: clamp(28px, 1.5rem + 1.2vw, 40px); line-height: 1.08; white-space: nowrap; }
+.pageTitleRow > span { margin-left: 4px; }
 .pageTitle {
+  display: inline;
   margin: 0;
+  white-space: normal;
   font-family: var(--sn-font);
-  font-size: clamp(28px, 1.5rem + 1.2vw, 40px);
+  font-size: inherit;
   font-weight: 600;
   letter-spacing: -.035em;
-  line-height: 1.08;
   color: var(--sn-ink);
   overflow-wrap: anywhere;
 }
@@ -504,6 +508,22 @@
   padding: 48px 16px;
   text-align: center;
   color: var(--sn-text-muted);
+}
+
+/* No celular a tabela vira cartões: nome no topo, cada dado com o nome da
+   coluna (data-label) ao lado e as ações embaixo, sem rolar de lado. */
+@media (max-width: 640px) {
+  .table thead { display: none; }
+  .table, .table tbody, .table tr { display: block; }
+  .table tbody tr { padding: 16px 20px; box-shadow: inset 0 1px 0 var(--sn-hairline); }
+  .table tbody tr:first-child { box-shadow: none; }
+  .table td, .table td:first-child, .table td:last-child { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 3px 0; box-shadow: none; }
+  .table td:first-child { display: block; padding-bottom: 8px; }
+  .table td:last-child { padding-top: 10px; }
+  .table td:last-child > div { justify-content: flex-start; }
+  .table td[data-label] { color: var(--sn-ink); }
+  .table td[data-label]::before { content: attr(data-label); color: var(--sn-text-muted); }
+  .table .tableEmpty { padding: 40px 0; text-align: center; }
 }
 
 /* ── Cell helpers para listas com nome principal + texto auxiliar ───────── */

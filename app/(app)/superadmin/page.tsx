@@ -104,7 +104,7 @@ export default async function SuperAdminDashboard() {
       <div className={styles.stats}>
         <StatTile label="Escolas" value={totalSchools} hint={newSchools > 0 ? `+${newSchools} ${newSchools === 1 ? 'nova' : 'novas'} este mês` : undefined} trend={newSchools > 0 ? 'up' : undefined} />
         <StatTile label="Alunos na rede" value={totalStudents} hint={newStudents > 0 ? `+${newStudents} este mês` : undefined} trend={newStudents > 0 ? 'up' : undefined} />
-        <StatTile label="Receita da rede no mês" value={<MoneyValue value={revenueMonth} />} />
+        <StatTile label="Receita da rede no mês" money value={<MoneyValue value={revenueMonth} />} />
         <StatTile label="Aulas na rede no mês" value={lessonsMonth.count ?? 0} />
       </div>
 
@@ -151,7 +151,7 @@ export default async function SuperAdminDashboard() {
             <p className={styles.empty}>Nenhuma escola ainda.</p>
           ) : (
             <div className={styles.tableWrap}>
-              <table className={styles.table}>
+              <table className={`${styles.table} ${styles.tableStack}`}>
                 <thead>
                   <tr><th>Escola</th><th>Plano</th><th className={styles.num}>Alunos</th><th className={styles.num}>Faturamento no mês</th><th>Status</th><th /></tr>
                 </thead>
@@ -164,10 +164,10 @@ export default async function SuperAdminDashboard() {
                           <span className={styles.rowName}>{s.custom_name || s.name}</span>
                           {adminUser && <span className={`${styles.rowMeta} ${styles.block}`}>Admin: {adminUser.name}</span>}
                         </td>
-                        <td><StatusPill tone={s.plan_type === 'free' ? 'neutral' : 'brand'}>{PLAN_LABEL[s.plan_type] ?? s.plan_type}</StatusPill></td>
-                        <td className={styles.num}>{s.alunos}</td>
-                        <td className={styles.num}><MoneyValue value={s.faturamento} /></td>
-                        <td><StatusPill tone={s.ativa ? 'success' : 'danger'}>{s.ativa ? 'Ativa' : 'Expirada'}</StatusPill></td>
+                        <td data-label="Plano"><StatusPill tone={s.plan_type === 'free' ? 'neutral' : 'brand'}>{PLAN_LABEL[s.plan_type] ?? s.plan_type}</StatusPill></td>
+                        <td className={styles.num} data-label="Alunos">{s.alunos}</td>
+                        <td className={styles.num} data-label="Faturamento no mês"><MoneyValue value={s.faturamento} /></td>
+                        <td data-label="Status"><StatusPill tone={s.ativa ? 'success' : 'danger'}>{s.ativa ? 'Ativa' : 'Expirada'}</StatusPill></td>
                         <td className={styles.num}>
                           <div className={styles.rowEnd}>
                             <LinkButton href={`/superadmin/schools/${s.id}/edit`} variant="soft" size="sm">Editar</LinkButton>

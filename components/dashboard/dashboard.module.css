@@ -10,8 +10,10 @@
 .header { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 16px 24px; margin-bottom: 24px; }
 .kicker { margin: 0; font-size: 14px; font-weight: 500; color: var(--sn-text-muted); }
 .kicker::first-letter { text-transform: uppercase; }
-.title { margin: 4px 0 0; font-size: clamp(30px, 2rem + 1.4vw, 48px); font-weight: 600; letter-spacing: -.04em; line-height: 1.05; }
-.titleRow { display: flex; align-items: center; gap: 4px; }
+.title { display: inline; margin: 0; white-space: normal; font-size: inherit; font-weight: 600; letter-spacing: -.04em; }
+/* Título em linha com o "i": se quebrar, o botão segue a última palavra. */
+.titleRow { margin-top: 4px; font-size: clamp(30px, 2rem + 1.4vw, 48px); line-height: 1.05; white-space: nowrap; }
+.titleRow > span { margin-left: 4px; }
 .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 
 /* ── Superfície de vidro ─────────────────────────────────────────────────── */
@@ -48,6 +50,10 @@ a.stat:focus-visible { outline: none; box-shadow: var(--sn-focus-ring); }
 .statLabel svg { width: 16px; height: 16px; color: var(--sn-text-subtle); opacity: 0; transition: opacity var(--sn-duration), transform var(--sn-duration) var(--sn-ease); }
 a.stat:hover .statLabel svg { opacity: 1; transform: translateX(2px); }
 .statValue { margin: 10px 0 0; font-size: clamp(30px, 1.5rem + 1vw, 40px); font-weight: 300; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+/* Dinheiro numa linha só: a fonte encolhe com a largura do cartão (no celular,
+   em duas colunas, "R$ 2.369,00" quebrava no meio). */
+.statFit { container-type: inline-size; }
+.statMoney { white-space: nowrap; overflow-wrap: normal; font-size: min(clamp(30px, 1.5rem + 1vw, 40px), max(20px, 16cqi)); }
 .statValue small { margin-left: 2px; font-size: 16px; color: var(--sn-text-muted); letter-spacing: 0; }
 .statHint { margin: 8px 0 0; font-size: 13px; color: var(--sn-text-muted); }
 .up { color: var(--sn-success); }
@@ -165,6 +171,19 @@ a.row:hover .chevron { transform: translateX(2px); color: var(--sn-ink); }
   .row .avatar { display: none; }
   .rowTime { width: 44px; font-size: 14px; }
   .rowEnd { gap: 6px; }
+
+  /* Tabela em cartões: cada linha empilha os dados com o nome da coluna ao lado
+     e as ações ficam visíveis, sem rolar de lado. */
+  .tableStack thead { display: none; }
+  .tableStack, .tableStack tbody, .tableStack tr { display: block; }
+  .tableStack tr { padding: 14px 10px; box-shadow: inset 0 1px 0 var(--sn-hairline); }
+  .tableStack tr:first-child { padding-top: 0; box-shadow: none; }
+  .tableStack td { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; box-shadow: none; }
+  .tableStack td:first-child { display: block; padding: 0 0 8px; }
+  .tableStack td[data-label]::before { content: attr(data-label); font-size: 13px; color: var(--sn-text-muted); }
+  .tableStack td:last-child { padding-top: 10px; }
+  .tableStack .rowName { display: block; }
+  .tableStack .rowEnd { flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .stat, .statLabel svg, .panelLink svg, a.row, .chevron, .check { transition: none; }

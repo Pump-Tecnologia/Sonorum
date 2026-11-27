@@ -57,9 +57,9 @@ export default async function LibraryPage() {
                 <span className={cellPrimary}>{t.title}</span>
                 <span className={cellSub}>{t.category ?? 'Sem categoria'}{t.instrument_category ? ` de ${t.instrument_category}` : ''}</span>
               </td>
-              <td className={cellMuted}>{t.instrument ?? 'Qualquer'}</td>
-              <td className={cellMuted}>{t.difficulty ?? 'Livre'}</td>
-              <td className={cellMuted}>v{t.version}</td>
+              <td className={cellMuted} data-label="Instrumento">{t.instrument ?? 'Qualquer'}</td>
+              <td className={cellMuted} data-label="Dificuldade">{t.difficulty ?? 'Livre'}</td>
+              <td className={cellMuted} data-label="Versão">v{t.version}</td>
               <td className={tableRight}>
                 <div className="flex items-center justify-end gap-2">
                   <LinkButton href={`/superadmin/biblioteca/${t.id}/edit`} variant="soft" size="sm">Editar</LinkButton>

@@ -2,14 +2,13 @@
 
 import { useActionState, useEffect, useState } from 'react'
 
-import { SubmitButton } from '@/components/ds/Button'
+import { Button, SubmitButton } from '@/components/ds/Button'
 import { DeleteButton } from '@/components/admin/DeleteButton'
 import { EditPlanForm, type Plan } from '@/components/financial/PlanForm'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { IconPlus } from '@/components/ds/icons'
 import { InfoButton } from '@/components/ds/InfoButton'
+import { StatusPill } from '@/components/ds/StatusPill'
 import { Field, Input, Select } from '@/components/ui/Field'
 import { deletePlan } from '@/lib/actions/plans'
 import { enrollStudent, type EnrollActionState } from '@/lib/actions/enrollments'
@@ -92,8 +91,8 @@ export function PlansList({ plans, counts, students }: { plans: Plan[]; counts: 
               <>
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="m-0 text-[17px] font-semibold tracking-tight text-(--sn-ink)">{p.name}</p>
-                  <Badge tone={perClass ? 'warning' : 'neutral'}>{billingTypeLabel(p.billing_type)}</Badge>
-                  {!p.active && <Badge tone="danger">Inativo</Badge>}
+                  <StatusPill tone={perClass ? 'warning' : 'neutral'}>{billingTypeLabel(p.billing_type)}</StatusPill>
+                  {!p.active && <StatusPill tone="danger">Inativo</StatusPill>}
                 </div>
                 {p.description && <p className="mt-1 mb-0 text-sm text-(--sn-text-muted)">{p.description}</p>}
 

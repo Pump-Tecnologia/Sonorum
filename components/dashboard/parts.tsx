@@ -33,20 +33,22 @@ interface StatTileProps {
   /** Cor do texto de apoio: alta (verde) ou baixa (vermelho). */
   trend?: 'up' | 'down'
   href?: string
+  /** Valor em reais: fica numa linha só e encolhe a fonte quando falta espaço. */
+  money?: boolean
 }
 
 /** Número grande e fino sobre vidro. Com `href`, o cartão inteiro vira link. */
-export function StatTile({ label, value, hint, trend, href }: StatTileProps) {
+export function StatTile({ label, value, hint, trend, href, money }: StatTileProps) {
   const body = (
     <>
       <p className={styles.statLabel}>{label}{href && <IconArrowRight />}</p>
-      <p className={styles.statValue}>{value}</p>
+      <p className={cn(styles.statValue, money && styles.statMoney)}>{value}</p>
       {hint && <p className={cn(styles.statHint, trend && styles[trend])}>{hint}</p>}
     </>
   )
   return href
-    ? <Link href={href} className={styles.stat}>{body}</Link>
-    : <div className={styles.stat}>{body}</div>
+    ? <Link href={href} className={cn(styles.stat, money && styles.statFit)}>{body}</Link>
+    : <div className={cn(styles.stat, money && styles.statFit)}>{body}</div>
 }
 
 interface PanelProps {

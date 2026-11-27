@@ -61,7 +61,7 @@ export function EditStudentForm({ student }: { student: StudentData }) {
             <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" defaultValue={student.phone ?? ''} />
           </Field>
           <Field label="Responsável" htmlFor="parentContact" error={fe.parentContact}>
-            <Input id="parentContact" name="parentContact" defaultValue={student.parent_contact ?? ''} />
+            <Input id="parentContact" name="parentContact" defaultValue={student.parent_contact ?? ''} autoComplete="off" />
           </Field>
           <InstrumentFields
             defaultCategory={student.instrument_category}

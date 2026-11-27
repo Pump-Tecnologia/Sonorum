@@ -2,9 +2,8 @@
 
 import { useActionState, useState, useTransition } from 'react'
 
-import { SubmitButton } from '@/components/ds/Button'
+import { Button, SubmitButton } from '@/components/ds/Button'
 import { InfoButton } from '@/components/ds/InfoButton'
-import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
 import {
   disableSelfTeaching,
@@ -50,8 +49,8 @@ export function TeachingToggle({ isTeacher, instruments }: TeachingToggleProps) 
           <h2 className="sn-card-title">Também dou aula</h2>
           <InfoButton label="Sobre dar aula">Ligado, você aparece como professor na agenda e pode lançar aulas suas.</InfoButton>
         </div>
-        <Button variant={checked ? 'secondary' : 'primary'} onClick={toggle} disabled={isPending}>
-          {checked ? 'Desativar' : 'Ativar'}
+        <Button variant={checked ? 'soft' : 'primary'} onClick={toggle} disabled={isPending} aria-busy={isPending}>
+          {isPending ? (checked ? 'Desativando…' : 'Ativando…') : checked ? 'Desativar' : 'Ativar'}
         </Button>
       </div>
       {error && <p className="sn-alert mt-3" role="alert">{error}</p>}
