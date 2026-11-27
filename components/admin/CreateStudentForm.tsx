@@ -51,7 +51,7 @@ export function CreateStudentForm({ teachers }: { teachers: { id: string; name: 
             <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" />
           </Field>
           <Field label="Contato do responsável" htmlFor="parentContact" error={fe.parentContact}>
-            <Input id="parentContact" name="parentContact" />
+            <Input id="parentContact" name="parentContact" autoComplete="off" />
           </Field>
           <InstrumentFields categoryError={fe.instrumentCategory} instrumentError={fe.instrument} />
           <Field label="Professor fixo (opcional)" htmlFor="defaultTeacherId" error={fe.defaultTeacherId} hint="Sugerido ao agendar aulas">

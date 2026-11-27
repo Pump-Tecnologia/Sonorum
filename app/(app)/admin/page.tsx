@@ -226,6 +226,7 @@ export default async function AdminDashboard() {
           <StatTile
             href="/financial"
             label="Receita prevista no mês"
+            money
             value={<MoneyValue value={expectedRevenue} />}
             hint={revenueTrend?.text}
             trend={revenueTrend?.trend}
